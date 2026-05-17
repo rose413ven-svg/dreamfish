@@ -1,0 +1,310 @@
+/* ===========================================
+   combo-text.css — 콤보 텍스트 (Day 7)
+   ============================================
+   슬롯 화면 안 HUD ↔ 슬롯 그리드 사이.
+   기본은 hidden, .combo-text--show 시 표시.
+   .combo-text--pulse 시 팡 터지는 펄스 (200~300ms).
+   단계별 색상/글로우, 9~10 별 파티클.
+   ============================================ */
+
+.combo-text {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0.2rem 0 0.1rem;
+  font-family: var(--font-impact, 'Bebas Neue', sans-serif);
+  letter-spacing: 0.06em;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 240ms cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 8;
+  white-space: nowrap;
+  user-select: none;
+  /* 기본 크기 — 단계별로 커짐 */
+  font-size: 2.0rem;
+  will-change: transform, opacity;  /* Day 17 후속 v2 폰 최적화 */
+}
+
+.combo-text--show {
+  opacity: 1;
+}
+
+/* 숫자/라벨 — 같은 색 상속 받음 */
+.combo-text__num {
+  font-size: 1.2em;  /* 숫자만 약간 더 크게 */
+  font-weight: 700;
+}
+.combo-text__label {
+  font-weight: 500;
+}
+
+/* 별 파티클 — 기본 hidden, 9~10단계만 표시 */
+.combo-text__star {
+  position: absolute;
+  font-size: 1.4rem;
+  opacity: 0;
+  pointer-events: none;
+  color: #ffd96a;
+  filter: drop-shadow(0 0 6px rgba(255, 217, 106, 0.85));
+}
+
+/* ============================================
+   팡 펄스 — 새 콤보 발생 시 매번 재발동
+   ============================================ */
+.combo-text--pulse {
+  animation: combo-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes combo-pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  50%  { transform: scale(1.35); opacity: 1; }
+  80%  { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ============================================
+   단계별 크기 (1~10, 10+ = 10 동일)
+   ============================================ */
+/* Day 7: 단계별 font-size 차등 삭제 — 모든 단계 1콤보 크기(2.0rem) 통일.
+   기본 .combo-text font-size: 2.0rem 가 모든 단계에 적용됨. */
+
+/* ============================================
+   단계별 색상/글로우
+   ============================================ */
+
+/* 1단계 — 흰색 + 글로우 */
+.combo-text[data-level="1"] {
+  color: #ffffff;
+  text-shadow:
+    0 0 10px rgba(255, 255, 255, 0.95),
+    0 0 22px rgba(255, 255, 255, 0.6),
+    0 0 38px rgba(255, 255, 255, 0.3);
+}
+
+/* 2단계 — 형광 연두 */
+.combo-text[data-level="2"] {
+  color: #b0ff5a;
+  text-shadow:
+    0 0 10px rgba(176, 255, 90, 0.95),
+    0 0 22px rgba(176, 255, 90, 0.6),
+    0 0 38px rgba(176, 255, 90, 0.3);
+}
+
+/* 3단계 — 형광 하늘 */
+.combo-text[data-level="3"] {
+  color: #5ad5ff;
+  text-shadow:
+    0 0 10px rgba(90, 213, 255, 0.95),
+    0 0 22px rgba(90, 213, 255, 0.6),
+    0 0 38px rgba(90, 213, 255, 0.3);
+}
+
+/* 4단계 — 형광 연보라 */
+.combo-text[data-level="4"] {
+  color: #c5a8ff;
+  text-shadow:
+    0 0 10px rgba(197, 168, 255, 0.95),
+    0 0 22px rgba(197, 168, 255, 0.6),
+    0 0 38px rgba(197, 168, 255, 0.3);
+}
+
+/* 5단계 — 형광 주황 */
+.combo-text[data-level="5"] {
+  color: #ff9933;
+  text-shadow:
+    0 0 10px rgba(255, 153, 51, 0.95),
+    0 0 22px rgba(255, 153, 51, 0.65),
+    0 0 38px rgba(255, 153, 51, 0.35);
+}
+
+/* 6단계 — 빨강 */
+.combo-text[data-level="6"] {
+  color: #ff3838;
+  text-shadow:
+    0 0 10px rgba(255, 56, 56, 0.95),
+    0 0 22px rgba(255, 56, 56, 0.7),
+    0 0 38px rgba(255, 56, 56, 0.4);
+}
+
+/* 7단계 — 황금 */
+.combo-text[data-level="7"] {
+  color: #ffd96a;
+  text-shadow:
+    0 0 12px rgba(255, 217, 106, 1),
+    0 0 26px rgba(255, 217, 106, 0.75),
+    0 0 44px rgba(255, 217, 106, 0.45);
+}
+
+/* 8~10단계 — 무지개 그라디언트 + 글로우 */
+.combo-text[data-level="8"],
+.combo-text[data-level="9"],
+.combo-text[data-level="10"] {
+  background-image: linear-gradient(
+    90deg,
+    #ff3838 0%, #ff9933 18%, #ffd96a 36%, #6aff6a 54%, #6abfff 72%, #c5a8ff 86%, #ff6aff 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  /* text-shadow는 transparent 텍스트에 안 먹어서 filter glow */
+  filter:
+    drop-shadow(0 0 12px rgba(255, 255, 255, 0.6))
+    drop-shadow(0 0 26px rgba(255, 217, 106, 0.45));
+}
+
+/* 9단계 — 별 파티클 2개 (작게) */
+.combo-text[data-level="9"] .combo-text__star--1,
+.combo-text[data-level="9"] .combo-text__star--2 {
+  opacity: 1;
+  font-size: 1.4rem;
+  animation: combo-star-twinkle 1.4s ease-in-out infinite;
+}
+.combo-text[data-level="9"] .combo-text__star--1 {
+  left: -2.2rem;
+  top: 0;
+  animation-delay: 0s;
+}
+.combo-text[data-level="9"] .combo-text__star--2 {
+  right: -2.2rem;
+  top: 0;
+  animation-delay: 0.5s;
+}
+
+/* 10단계 — 별 파티클 4개 (사방으로 더 많이) */
+.combo-text[data-level="10"] .combo-text__star {
+  opacity: 1;
+  font-size: 1.6rem;
+  animation: combo-star-twinkle 1.2s ease-in-out infinite;
+}
+.combo-text[data-level="10"] .combo-text__star--1 {
+  left: -2.4rem;
+  top: -0.4rem;
+  animation-delay: 0s;
+}
+.combo-text[data-level="10"] .combo-text__star--2 {
+  right: -2.4rem;
+  top: -0.4rem;
+  animation-delay: 0.3s;
+}
+.combo-text[data-level="10"] .combo-text__star--3 {
+  left: -1.4rem;
+  bottom: -0.6rem;
+  animation-delay: 0.6s;
+  font-size: 1.2rem;
+}
+.combo-text[data-level="10"] .combo-text__star--4 {
+  right: -1.4rem;
+  bottom: -0.6rem;
+  animation-delay: 0.9s;
+  font-size: 1.2rem;
+}
+
+@keyframes combo-star-twinkle {
+  0%, 100% { opacity: 0.4; transform: scale(0.7) rotate(0deg); }
+  50%      { opacity: 1;   transform: scale(1.2) rotate(180deg); }
+}
+
+/* ============================================
+   Day 15 — 골든힛 타임 카운트 모드 (Phase 2C)
+   ============================================
+   콤보 자리 재활용 — data-mode="golden-hit" 시 황금빛 표시.
+   숫자 = 남은 횟수 (3 → 0), 라벨 = "GOLDEN HIT".
+   ============================================ */
+
+/* 콤보 단계 색 무력화 — 황금 강제 */
+.combo-text[data-mode="golden-hit"] {
+  color: #FFD96A;
+  text-shadow:
+    0 0 1.0rem rgba(255, 217, 106, 0.7),
+    0 0 2.0rem rgba(255, 217, 106, 0.4);
+  animation: golden-hit-count-pulse 1.4s ease-in-out infinite;
+}
+.combo-text[data-mode="golden-hit"] .combo-text__num {
+  color: #FFD96A;
+  font-size: 2.4rem;     /* 콤보보다 약간 크게 (대표 강조) */
+}
+.combo-text[data-mode="golden-hit"] .combo-text__label {
+  color: #FFE090;
+  letter-spacing: 0.12em;
+  /* Day 16 후속 (대표 결정): GOLDEN CHANCE 깜빡 효과 — 골든힛 시간 한정 강조 */
+  animation: golden-chance-blink 0.9s ease-in-out infinite;
+}
+
+/* 콤보 별 파티클 비활성화 (골든힛 모드) */
+.combo-text[data-mode="golden-hit"] .combo-text__star {
+  display: none;
+}
+
+@keyframes golden-hit-count-pulse {
+  0%, 100% { opacity: 0.92; }
+  50%      { opacity: 1.0; }
+}
+
+/* Day 16 후속 — GOLDEN CHANCE 라벨 깜빡 (밝기 큰 변동으로 시선 끌기) */
+@keyframes golden-chance-blink {
+  0%, 100% {
+    opacity: 1.0;
+    text-shadow:
+      0 0 8px rgba(255, 217, 106, 0.85),
+      0 0 14px rgba(255, 217, 106, 0.45);
+  }
+  50% {
+    opacity: 0.35;
+    text-shadow:
+      0 0 4px rgba(255, 217, 106, 0.30);
+  }
+}
+
+/* ============================================
+   Day 20 — 트윙클(꿈조각) 타임 자동 캐스트 카운트 모드
+   ============================================
+   콤보 자리 재활용 — data-mode="twinkle" 시 흰색·연푸른빛 표시.
+   숫자 = 남은 캐스트 횟수, 라벨 = "Twinkle chance".
+   ============================================ */
+
+/* 콤보 단계 색 무력화 — 흰색 강제 */
+.combo-text[data-mode="twinkle"] {
+  color: #FFFFFF;
+  text-shadow:
+    0 0 1.0rem rgba(215, 239, 255, 0.7),
+    0 0 2.0rem rgba(181, 220, 255, 0.4);
+  animation: twinkle-count-pulse 1.4s ease-in-out infinite;
+}
+.combo-text[data-mode="twinkle"] .combo-text__num {
+  color: #FFFFFF;
+  font-size: 2.4rem;     /* 콤보보다 약간 크게 (대표 강조 — 골든힛과 동일) */
+}
+.combo-text[data-mode="twinkle"] .combo-text__label {
+  color: #D7EFFF;
+  letter-spacing: 0.08em;
+  text-transform: none;    /* "Twinkle chance" mixed case 유지 (대표 명시) */
+  animation: twinkle-chance-blink 0.9s ease-in-out infinite;
+}
+
+/* 콤보 별 파티클 비활성화 (트윙클 모드) */
+.combo-text[data-mode="twinkle"] .combo-text__star {
+  display: none;
+}
+
+@keyframes twinkle-count-pulse {
+  0%, 100% { opacity: 0.92; }
+  50%      { opacity: 1.0; }
+}
+
+@keyframes twinkle-chance-blink {
+  0%, 100% {
+    opacity: 1.0;
+    text-shadow:
+      0 0 8px rgba(215, 239, 255, 0.85),
+      0 0 14px rgba(181, 220, 255, 0.45);
+  }
+  50% {
+    opacity: 0.45;
+    text-shadow:
+      0 0 4px rgba(215, 239, 255, 0.30);
+  }
+}

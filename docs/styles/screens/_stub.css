@@ -1,0 +1,77 @@
+/* ===========================================
+   _stub.css — Phase 1 화면 stub 공통 스타일
+   ============================================
+   부트스트랩 [Phase 1]: 9개 화면 빈 박스 + "다음" 버튼만.
+   tokens.css 변수만 사용. 직선 1.4px / 노 이모지 정책 준수.
+   Phase 1 검증 후 화면별 CSS로 교체될 임시 스타일.
+   ============================================ */
+
+.stub-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3.2rem;
+  padding: 4rem 2.4rem;
+  background-color: var(--bg-deepest);
+  color: var(--line-primary);
+  font-family: var(--font-base);
+}
+
+.stub-screen__label {
+  font-family: var(--font-impact);
+  font-size: 1.4rem;
+  letter-spacing: 0.18em;
+  color: var(--line-secondary);
+  text-transform: uppercase;
+}
+
+.stub-screen__title {
+  font-size: 2.2rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--line-primary);
+  text-align: center;
+}
+
+.stub-screen__hint {
+  font-size: 1.3rem;
+  color: var(--line-soft);
+  text-align: center;
+  max-width: 28rem;
+  line-height: 1.6;
+}
+
+.stub-screen__box {
+  width: min(28rem, 70vw);
+  aspect-ratio: 1 / 1;
+  border: var(--line-thin) solid var(--line-secondary);
+  border-radius: var(--radius-sharp);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--line-soft);
+  font-size: 1.2rem;
+  letter-spacing: 0.15em;
+}
+
+.stub-screen__next {
+  min-width: 16rem;
+  padding: 1.4rem 2.8rem;
+  border: var(--line-thin) solid var(--line-primary);
+  border-radius: var(--radius-soft);
+  background-color: transparent;
+  color: var(--line-primary);
+  font-family: var(--font-base);
+  font-size: 1.5rem;
+  letter-spacing: 0.08em;
+  transition: background-color 200ms var(--fade-easing),
+              color 200ms var(--fade-easing);
+}
+
+.stub-screen__next:active {
+  background-color: var(--line-primary);
+  color: var(--bg-deepest);
+}

@@ -1,0 +1,1200 @@
+/* ===========================================
+   bag.css — 가방 모달 (Bag-2)
+   ============================================
+   톤: 슬롯 화면과 동일한 어두운 밤하늘 + 단정한 미니멀.
+   값 단위는 rem (반응형) — Resp B 방식.
+
+   섹션:
+     1. 루트 + 오버레이 + 진입 트랜지션
+     2. 패널 (테두리 / 배경 / 살짝 떠있는 그림자)
+     3. 헤더 (제목 / 카운트 / 닫기)
+     4. 정렬 토글 (등급별 / 부위별)
+     5. 그리드 (7×8)
+     6. 셀 — 빈 칸 / 장비 / 강화석
+     7. 셀 — 등급별 (6단계 색 + 글로우 + 신화 펄스)
+     8. 셀 — 마크 (E 장착 / 자물쇠 잠금 / +N 강화)
+   ============================================ */
+
+
+/* ============================================
+   1. 루트 + 오버레이
+   ============================================ */
+
+.bag-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+  /* 가운데 정렬 + 위/아래 여백 (뒤 화면 살짝 노출) */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.6rem 1rem;  /* 위아래 1.6rem, 좌우 1rem — 폰에선 ~14/9px */
+  box-sizing: border-box;
+}
+
+.bag-root--open {
+  pointer-events: auto;
+}
+
+.bag-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 19, 0);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  transition:
+    background 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    backdrop-filter 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.bag-root--open .bag-overlay {
+  background: rgba(5, 8, 19, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+
+/* ============================================
+   2. 패널 (코지 톤, 살짝 떠있는 느낌)
+   ============================================ */
+
+.bag-panel {
+  position: relative;
+  width: 100%;
+  max-width: var(--max-w);
+  height: 100%;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(104, 144, 200, 0.08), transparent 60%),
+    linear-gradient(180deg, #0a1024 0%, #050813 100%);
+  border: 1px solid rgba(200, 212, 240, 0.12);
+  border-radius: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  padding: 1.8rem 1.6rem 1.4rem;
+  gap: 1.2rem;
+  box-sizing: border-box;
+  /* 살짝 떠있는 그림자 (코지) */
+  box-shadow:
+    0 1.6rem 3.2rem rgba(0, 0, 0, 0.5),
+    0 0 4rem rgba(104, 144, 200, 0.05);
+  /* 진입 애니메이션 */
+  opacity: 0;
+  transform: translateY(1.6rem) scale(0.98);
+  transition:
+    opacity 320ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.bag-root--open .bag-panel {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+
+/* ============================================
+   3. 헤더
+   ============================================ */
+
+.bag-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(200, 212, 240, 0.08);
+}
+
+.bag-title {
+  font-family: var(--font-base);
+  font-size: 1.9rem;
+  font-weight: 600;
+  color: var(--line-primary);
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.bag-count {
+  flex: 1;
+  font-family: var(--font-impact);  /* Bebas Neue */
+  font-size: 1.7rem;
+  color: var(--line-soft);
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+.bag-count__num {
+  color: var(--line-primary);
+}
+.bag-count__sep {
+  color: var(--line-soft);
+  opacity: 0.6;
+  font-size: 1.4rem;
+}
+
+.bag-close {
+  width: 3.6rem;
+  height: 3.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--line-soft);
+  transition: color 180ms, background 180ms;
+}
+.bag-close:hover,
+.bag-close:active {
+  color: var(--accent-bright);
+  background: rgba(200, 212, 240, 0.06);
+}
+.bag-close svg {
+  width: 2rem;
+  height: 2rem;
+}
+
+
+/* ============================================
+   4. 정렬 버튼 (단일)
+   ============================================ */
+
+.bag-sort {
+  display: flex;
+  justify-content: flex-end;  /* 우측 정렬 */
+  padding: 0 0.4rem;
+}
+
+.bag-sort__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-base);
+  font-size: 1.2rem;
+  color: var(--line-soft);
+  padding: 0.6rem 1rem;
+  border-radius: 4px;
+  border: 1px solid rgba(200, 212, 240, 0.10);
+  background: rgba(200, 212, 240, 0.03);
+  letter-spacing: 0.04em;
+  transition:
+    color 180ms,
+    border-color 180ms,
+    background 180ms,
+    transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.bag-sort__btn svg {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+.bag-sort__btn:hover {
+  color: var(--accent-bright);
+  border-color: rgba(200, 212, 240, 0.25);
+  background: rgba(200, 212, 240, 0.06);
+}
+.bag-sort__btn:active {
+  transform: scale(0.96);
+}
+
+/* 클릭 시 짧은 펄스 (재정렬 시각 피드백) */
+.bag-sort__btn--pulse {
+  animation: bag-sort-pulse 480ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes bag-sort-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 217, 160, 0.45);
+    border-color: rgba(255, 217, 160, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 1.2rem rgba(255, 217, 160, 0);
+    border-color: rgba(200, 212, 240, 0.10);
+  }
+}
+
+
+/* ============================================
+   5. 그리드 (7×10, 스크롤)
+   ============================================
+   panel = flex column. header/sortBar는 고정 크기, grid는 flex: 1로 남은 공간 채우고
+   넘치면 세로 스크롤. min-height: 0 = flex item에서 overflow 동작 핵심.
+   ============================================ */
+
+.bag-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  /* aspect-ratio 와 grid-auto-rows: 1fr 충돌로 셀 잘림 방지 — flex 없이 자체 크기 */
+  gap: 0.4rem;
+  align-content: start;
+  /* 스크롤 처리 */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* hover 시 셀 translateY(-1px) 가 스크롤 컨테이너 위쪽 경계에 클리핑되는 것 방지 */
+  padding-top: 0.2rem;
+}
+
+/* 미니멀 스크롤바 — 코지 톤 (청은빛 얇은 thumb) */
+.bag-grid::-webkit-scrollbar {
+  width: 0.4rem;
+}
+.bag-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+.bag-grid::-webkit-scrollbar-thumb {
+  background: rgba(168, 197, 232, 0.25);
+  border-radius: 0.2rem;
+}
+.bag-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 197, 232, 0.4);
+}
+/* Firefox */
+.bag-grid {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 197, 232, 0.25) transparent;
+}
+
+
+/* ============================================
+   6. 셀 — 공통 + 빈 칸 + 장비 베이스 + 강화석
+   ============================================ */
+
+.bag-cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(12, 26, 58, 0.5);
+  border: 1px solid rgba(200, 212, 240, 0.05);
+  transition:
+    transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 200ms,
+    border-color 200ms;
+}
+
+/* 빈 칸 */
+.bag-cell--empty {
+  background: rgba(10, 16, 36, 0.4);
+  border: 1px dashed rgba(200, 212, 240, 0.08);
+}
+
+/* 장비 셀 베이스 */
+.bag-cell--equipment {
+  cursor: pointer;
+}
+.bag-cell--equipment:hover {
+  transform: translateY(-1px);
+}
+.bag-cell--equipment:active {
+  transform: scale(0.96);
+}
+
+/* 부위 아이콘 */
+.bag-cell__icon {
+  width: 56%;
+  height: 56%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bag-cell__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* 강화석 셀 */
+.bag-cell--stone {
+  background: linear-gradient(135deg,
+    rgba(37, 99, 235, 0.12) 0%,
+    rgba(200, 212, 240, 0.06) 60%,
+    rgba(12, 26, 58, 0.5) 100%);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  cursor: default;
+}
+.bag-cell--stone .bag-cell__icon {
+  color: #8fc8e8;
+  filter: drop-shadow(0 0 4px rgba(143, 200, 232, 0.45));
+}
+.bag-cell__stack {
+  position: absolute;
+  bottom: 0.2rem;
+  right: 0.3rem;
+  font-family: var(--font-impact);
+  font-size: 1.1rem;
+  color: var(--line-primary);
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+}
+
+
+/* ============================================
+   7. 등급별 색 (6단계) + 글로우
+   ============================================ */
+
+/* common — 흰색 (Day 16 후속) */
+.bag-cell--common {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.10), rgba(12, 26, 58, 0.6));
+  border: 0.24rem solid rgba(255, 255, 255, 0.70);
+}
+.bag-cell--common .bag-cell__icon {
+  color: #FFFFFF;
+}
+
+/* uncommon — 초록 */
+.bag-cell--uncommon {
+  background: linear-gradient(160deg, rgba(157, 227, 107, 0.12), rgba(12, 26, 58, 0.6));
+  border: 0.24rem solid rgba(157, 227, 107, 0.75);
+  box-shadow: 0 0 10px rgba(157, 227, 107, 0.18);
+}
+.bag-cell--uncommon .bag-cell__icon {
+  color: #c5f095;
+}
+
+/* rare — 파랑 */
+.bag-cell--rare {
+  background: linear-gradient(160deg, rgba(37, 99, 235, 0.14), rgba(12, 26, 58, 0.6));
+  border: 0.24rem solid rgba(37, 99, 235, 0.80);
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.26);
+}
+.bag-cell--rare .bag-cell__icon {
+  color: #a3dcfa;
+  filter: drop-shadow(0 0 3px rgba(37, 99, 235, 0.45));
+}
+
+/* epic — 보라 */
+.bag-cell--epic {
+  background: linear-gradient(160deg, rgba(176, 128, 208, 0.16), rgba(12, 26, 58, 0.6));
+  border: 0.24rem solid rgba(176, 128, 208, 0.85);
+  box-shadow: 0 0 14px rgba(176, 128, 208, 0.32);
+}
+.bag-cell--epic .bag-cell__icon {
+  color: #d4b3e8;
+  filter: drop-shadow(0 0 4px rgba(176, 128, 208, 0.55));
+}
+
+/* legendary — 황금 */
+.bag-cell--legendary {
+  background: linear-gradient(160deg, rgba(255, 217, 106, 0.18), rgba(12, 26, 58, 0.6));
+  border: 0.24rem solid rgba(255, 217, 106, 0.95);
+  box-shadow:
+    0 0 16px rgba(255, 217, 106, 0.40),
+    inset 0 0 8px rgba(255, 217, 106, 0.10);
+}
+.bag-cell--legendary .bag-cell__icon {
+  color: #ffe9a8;
+  filter: drop-shadow(0 0 5px rgba(255, 217, 106, 0.7));
+}
+
+/* mythic — 진한 분홍 + 펄스 (Day 16 후속 — 신화보스 색과 통일) */
+.bag-cell--mythic {
+  background: linear-gradient(160deg, rgba(255, 73, 166, 0.20), rgba(12, 26, 58, 0.6));
+  border: 0.24rem solid rgba(255, 73, 166, 1.0);
+  animation: bag-mythic-pulse 2.4s ease-in-out infinite;
+}
+.bag-cell--mythic .bag-cell__icon {
+  color: #ffaad4;
+  filter: drop-shadow(0 0 6px rgba(255, 73, 166, 0.85));
+}
+
+@keyframes bag-mythic-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 12px rgba(255, 73, 166, 0.30),
+      inset 0 0 6px rgba(255, 73, 166, 0.10);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(255, 73, 166, 0.55),
+      inset 0 0 10px rgba(255, 73, 166, 0.18);
+  }
+}
+
+
+/* ============================================
+   8. 셀 — 마크 (E / 자물쇠 / +N 강화)
+   ============================================ */
+
+/* 'E' 장착 마크 — 우상단 황금 뱃지 */
+.bag-cell__equipped {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.3rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: linear-gradient(140deg, #ffe9a8 0%, #e8c870 60%, #b89a3a 100%);
+  color: #2a1f0a;
+  font-family: var(--font-impact);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 0 6px rgba(255, 217, 106, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(40, 30, 10, 0.4);
+  z-index: 2;
+}
+
+/* Day 19 — 장착 장비보다 한 가지라도 좋은 옵션 보유 후보 표시 (대표 결정 — 항목 7).
+   - 위치: E 배지와 동일한 우상단 (E 배지는 장착 장비 전용, 화살표는 미장착 후보 전용 → 충돌 X)
+   - 색: 연두 (등장 색 / 도감 등급 색과 충돌 적은 톤 — bag-cell 우하단 빨간점과도 색 구분)
+   - 사이즈: E 배지보다 약간 작고 사각 (배지 느낌 X, 아이콘 강조) */
+.bag-cell__upgrade {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.25rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9DE36B;                                /* 연두 — 채도 부드러운 톤 */
+  filter:
+    drop-shadow(0 0 4px rgba(157, 227, 107, 0.85))
+    drop-shadow(0 0 2px rgba(0, 0, 0, 0.95));    /* 어떤 등급 배경 위에서도 시인성 보장 */
+  pointer-events: none;
+  z-index: 2;
+}
+.bag-cell__upgrade svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Day 16 후속: 장착 중인 셀에서 노란 테두리/outline/box-shadow 모두 제거.
+   - 이유: 전설등급 색(#FFD96A)과 노란 outline이 겹쳐 등급 구분이 안 됐던 문제 해결.
+   - 우상단 'E' 황금 배지(.bag-cell__equipped)만 유지 — 시각적으로 충분.
+   - 등급 보더 색은 그대로 유지 (장비 등급 식별성 우선).
+   - .bag-cell--equipped 별도 룰 없음 — 등급 보더 + E 배지가 기본 상태 그대로 표시됨. */
+
+/* ============================================
+   잠금 자물쇠 — 우하단 (Bag-5: 잠금 시에만 표시)
+   ============================================
+   잠금/해제 토글은 컨텍스트 메뉴 헤더에서 수행.
+   가방 셀에서는 잠금된 장비에만 표시되며, 클릭은 받지 않음
+   (셀 클릭 = 컨텍스트 메뉴 열기로 단일화).
+   색상은 청은빛 — 'E' 황금 뱃지(우상단)와 톤 분리.
+   ============================================ */
+.bag-cell__lock {
+  position: absolute;
+  bottom: 0.2rem;
+  right: 0.3rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a8c5e8;
+  filter: drop-shadow(0 0 2px rgba(168, 197, 232, 0.5));
+  pointer-events: none;
+  z-index: 2;
+}
+.bag-cell__lock svg {
+  width: 100%;
+  height: 100%;
+}
+/* 잠금 셀 — 살짝 dim (기존 유지) */
+.bag-cell--locked .bag-cell__icon {
+  opacity: 0.78;
+}
+
+/* 강화 단계 +N — 좌상단 (Bag-5: 우하단 자물쇠와 분리, 4코너 균형) */
+.bag-cell__level {
+  position: absolute;
+  top: 0.2rem;
+  left: 0.3rem;
+  font-family: var(--font-impact);
+  font-size: 1rem;
+  color: var(--accent-warm);
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.85);
+}
+
+/* ============================================
+   합성 추가 옵션 마크 — 좌하단 분홍별 (Day 13 — 메인 가방에도 표시 통일).
+   ============================================
+   기존: 합성 화면 (compose-screen) 의 셀에서만 표시.
+   변경: 메인 가방 모달 셀에도 동일 분홍별 표시 (대표 결정 — 합성 추가 옵션
+        보유 장비를 가방에서도 한눈에 알아볼 수 있게).
+   별 크기 키움 (대표 요청 "별 크기 더 크게").
+   ============================================ */
+.bag-cell__compose-mark {
+  position: absolute;
+  bottom: 0.15rem;
+  left: 0.3rem;
+  font-size: 1.3rem;                 /* 메인 가방 셀이 더 큰 편 → 1.3rem (이전 가방 0.7rem) */
+  color: var(--accent-magic);        /* tokens.css 의 #FF9DCB 분홍 */
+  text-shadow:
+    0 0 4px rgba(255, 157, 203, 0.75),
+    0 0 8px rgba(255, 157, 203, 0.45);
+  pointer-events: none;
+  line-height: 1;
+  z-index: 2;
+}
+
+
+/* ============================================
+   9. 컨텍스트 메뉴 (셀 클릭 시 — 4개 액션)
+   ============================================
+   가방 패널 안에 띄우는 작은 모달 (모달-인-모달).
+   진입: overlay fade + panel scale-up.
+   ============================================ */
+
+.bag-context {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  pointer-events: none;
+}
+
+.bag-context__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 19, 0);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  transition:
+    background 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    backdrop-filter 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.bag-context--open .bag-context__overlay {
+  background: rgba(5, 8, 19, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  pointer-events: auto;
+}
+
+.bag-context__panel {
+  position: relative;
+  width: 100%;
+  max-width: 28rem;
+  background: linear-gradient(180deg, #131a36 0%, #0a1024 100%);
+  border: 1px solid rgba(200, 212, 240, 0.18);
+  border-radius: 1rem;
+  padding: 1.6rem 1.4rem 1.2rem;
+  box-shadow: 0 1.6rem 3rem rgba(0, 0, 0, 0.5);
+  /* 진입 트랜지션 */
+  opacity: 0;
+  transform: scale(0.94);
+  transition:
+    opacity 240ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.bag-context--open .bag-context__panel {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+/* 등급별 패널 상단 라인 — 정체성 색 강조 */
+.bag-context__panel::before {
+  content: '';
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  top: 0;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: rgba(200, 212, 240, 0.5);
+}
+.bag-context--common    .bag-context__panel::before { background: #FFFFFF; }
+.bag-context--uncommon  .bag-context__panel::before { background: #9DE36B; }
+.bag-context--rare      .bag-context__panel::before { background: #2563EB; }
+.bag-context--epic      .bag-context__panel::before { background: #B080D0; }
+.bag-context--legendary .bag-context__panel::before {
+  background: #FFD96A;
+  box-shadow: 0 0 8px rgba(255, 217, 106, 0.55);
+}
+.bag-context--mythic    .bag-context__panel::before {
+  background: #FF49A6;
+  box-shadow: 0 0 8px rgba(255, 73, 166, 0.65);
+}
+
+/* 헤더 — 이름 + 등급 라벨 */
+.bag-context__header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid rgba(200, 212, 240, 0.08);
+  margin-bottom: 0.8rem;
+}
+.bag-context__name {
+  font-family: var(--font-base);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--line-primary);
+  letter-spacing: 0.01em;
+}
+
+/* ============================================
+   Bag-5: 자물쇠 토글 버튼 — 헤더 안 (이름 옆)
+   ============================================
+   해제 = 회색 (탭 가능함을 시사), 잠금 = 청은빛 활성 + 부드러운 글로우.
+   margin-right: auto 로 자물쇠 뒤 공간 흡수 → 등급은 자동으로 우측 끝.
+   ============================================ */
+.bag-context__lock-toggle {
+  margin-right: auto;
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  color: rgba(200, 212, 240, 0.4);
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.18s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.bag-context__lock-toggle svg {
+  width: 100%;
+  height: 100%;
+  transition: filter 0.18s ease;
+}
+.bag-context__lock-toggle:hover {
+  background: rgba(168, 197, 232, 0.08);
+  color: rgba(200, 212, 240, 0.7);
+}
+.bag-context__lock-toggle:active {
+  transform: scale(0.92);
+}
+.bag-context__lock-toggle--on {
+  color: #a8c5e8;
+  background: rgba(168, 197, 232, 0.14);
+}
+.bag-context__lock-toggle--on svg {
+  filter: drop-shadow(0 0 3px rgba(168, 197, 232, 0.55));
+}
+.bag-context__lock-toggle--on:hover {
+  color: #c0d6f0;
+  background: rgba(168, 197, 232, 0.22);
+}
+
+/* ============================================
+   Day 9 — 'E' 장착 뱃지 (헤더 안)
+   ============================================
+   클릭 장비가 현재 장착 중이면 헤더에 'E' 표시.
+   가방 셀의 .bag-cell__equipped 와 톤 통일 (황금 그라데이션 원형).
+   ============================================ */
+.bag-context__equipped-badge {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: linear-gradient(140deg, #ffe9a8 0%, #e8c870 60%, #b89a3a 100%);
+  color: #2a1f0a;
+  font-family: var(--font-impact);
+  font-size: 1.0rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 0 6px rgba(255, 217, 106, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(40, 30, 10, 0.4);
+  flex-shrink: 0;
+}
+
+.bag-context__grade {
+  font-family: var(--font-impact);
+  font-size: 1.2rem;
+  letter-spacing: 0.06em;
+  color: var(--line-soft);
+}
+.bag-context--common    .bag-context__grade { color: #FFFFFF; }
+.bag-context--uncommon  .bag-context__grade { color: #c5f095; }
+.bag-context--rare      .bag-context__grade { color: #a3dcfa; }
+.bag-context--epic      .bag-context__grade { color: #d4b3e8; }
+.bag-context--legendary .bag-context__grade { color: #ffe9a8; }
+.bag-context--mythic    .bag-context__grade { color: #ffaad4; }
+
+/* 설명 */
+.bag-context__desc {
+  font-family: var(--font-base);
+  font-size: 1.2rem;
+  color: var(--line-soft);
+  line-height: 1.4;
+  margin-bottom: 0.8rem;
+  letter-spacing: 0.01em;
+}
+
+/* ============================================
+   옵션 리스트 (Day 6 — 장비 옵션 시스템)
+   ============================================
+   설명 아래, 액션 버튼 위.
+   - 한 행 = 옵션명(좌) + 수치(우)
+   - 베이스 + 강화 누적 합산값 표시
+   - 음수 옵션도 황금색 통일 (모두 좋은 효과)
+   - 옵션 0개면 빈 영역 (margin만 유지 X — display:none이 자연스러움)
+   ============================================ */
+.bag-context__options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.8rem 0;
+  margin-bottom: 1rem;
+  border-top: 1px dashed rgba(200, 212, 240, 0.1);
+  border-bottom: 1px dashed rgba(200, 212, 240, 0.1);
+}
+.bag-context__options:empty {
+  display: none;
+}
+.bag-context__option {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+.bag-context__option-name {
+  flex: 1;
+  font-family: var(--font-base);
+  font-size: 1.3rem;
+  color: rgba(200, 212, 240, 0.8);
+  letter-spacing: 0.01em;
+}
+.bag-context__option-value {
+  font-family: var(--font-impact);
+  font-size: 1.5rem;
+  color: #ffd96a;  /* 황금 — 좋은 효과 통일 */
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 4px rgba(255, 217, 106, 0.25);
+  flex-shrink: 0;
+  min-width: 3rem;
+  text-align: right;
+}
+
+/* ============================================
+   옵션 차이 (Day 9 — 비교 시스템)
+   ============================================
+   ▲N% (초록): 클릭 장비가 더 좋음
+   ▼N% (빨강): 클릭 장비가 더 약함
+   NEW (황금): 클릭만 가진 옵션 (장착 장비엔 없음)
+   비어있음:   둘 다 같거나 비교 X (장착 X) → display:none
+   ============================================ */
+.bag-context__option-diff {
+  font-family: var(--font-impact);
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  min-width: 4rem;
+  text-align: right;
+}
+.bag-context__option-diff:empty {
+  display: none;
+}
+.bag-context__option-diff--up {
+  color: #9DE36B;   /* 초록 — uncommon 색과 동일 */
+  text-shadow: 0 0 4px rgba(157, 227, 107, 0.45);
+}
+.bag-context__option-diff--down {
+  color: #ff6f6f;   /* 빨강 — mythic 색과 동일 */
+  text-shadow: 0 0 4px rgba(255, 111, 111, 0.45);
+}
+.bag-context__option-diff--new {
+  color: #ffd96a;
+  text-shadow: 0 0 6px rgba(255, 217, 106, 0.55);
+  font-size: 1.0rem;       /* NEW는 살짝 작게 */
+  letter-spacing: 0.12em;  /* 글자 살짝 늘려 단정한 강조 */
+}
+
+/* 잃을 옵션 — 장착만 가지고 있어 클릭 장비로 바꾸면 잃는 옵션
+   행 전체에 빨간 톤 + 이름에 line-through */
+.bag-context__option--lost .bag-context__option-name {
+  color: rgba(200, 212, 240, 0.45);
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 111, 111, 0.45);
+}
+.bag-context__option--lost .bag-context__option-value {
+  color: rgba(255, 111, 111, 0.7);
+  text-shadow: 0 0 3px rgba(255, 111, 111, 0.2);
+}
+
+/* ============================================
+   합성 추가 옵션 행 — Day 13 (대표 결정 — 컨텍스트 메뉴에도 KG 보너스 표시 통일)
+   ============================================
+   합성 시 부착된 extraOptions 를 일반 옵션 행 다음에 분홍 줄로 별도 표시.
+   compose-result-options__row--extra 와 동일한 시각 패턴 (★ 분홍별 + 분홍 텍스트).
+   ============================================ */
+.bag-context__option--extra {
+  border-top: 1px dashed rgba(255, 157, 203, 0.30);
+  margin-top: 0.4rem;
+  padding-top: 0.6rem;
+}
+.bag-context__option--extra ~ .bag-context__option--extra {
+  /* 연속된 extra 행 — 윗쪽 구분선 제거 (첫 extra 행에만 구분선) */
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0.2rem;
+}
+.bag-context__option--extra .bag-context__option-name,
+.bag-context__option--extra .bag-context__option-value {
+  color: var(--accent-magic);                /* tokens.css 분홍 #FF9DCB */
+  text-shadow: 0 0 5px rgba(255, 157, 203, 0.4);
+}
+.bag-context__option-mark {
+  display: inline-block;
+  font-size: 1.3rem;                          /* 별 크기 키움 (대표 요청) */
+  color: var(--accent-magic);
+  text-shadow:
+    0 0 5px rgba(255, 157, 203, 0.65),
+    0 0 10px rgba(255, 157, 203, 0.35);
+  margin-right: 0.4rem;
+  line-height: 1;
+}
+
+/* 액션 버튼 4개 — 2×2 그리드 */
+.bag-context__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.bag-context__btn {
+  position: relative;             /* Day 16 — 도감 빨간점 .codex-dot 절대위치 부모 */
+  font-family: var(--font-base);
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--line-primary);
+  padding: 1rem 0.4rem;
+  background: rgba(200, 212, 240, 0.04);
+  border: 1px solid rgba(200, 212, 240, 0.12);
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    background 180ms,
+    border-color 180ms,
+    transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.bag-context__btn:hover {
+  background: rgba(200, 212, 240, 0.08);
+  border-color: rgba(200, 212, 240, 0.28);
+}
+.bag-context__btn:active {
+  transform: scale(0.96);
+}
+
+/* primary (장착/해제) — 황금 강조 */
+.bag-context__btn--primary {
+  background: linear-gradient(180deg,
+    rgba(255, 217, 160, 0.18) 0%,
+    rgba(255, 217, 160, 0.06) 100%);
+  border-color: rgba(255, 217, 160, 0.5);
+  color: #ffe9a8;
+  text-shadow: 0 0 4px rgba(255, 217, 160, 0.3);
+}
+.bag-context__btn--primary:hover {
+  background: linear-gradient(180deg,
+    rgba(255, 217, 160, 0.28) 0%,
+    rgba(255, 217, 160, 0.10) 100%);
+  border-color: rgba(255, 217, 160, 0.7);
+}
+
+/* ============================================
+   Bag-5: 비활성화 버튼 — 잠긴 장비의 강화/합성
+   ============================================
+   잠긴 장비에서는 강화/합성 버튼이 회색 처리되며 클릭 차단.
+   단정한 미니멀리즘 — 토스트나 알림창 없이 시각적 신호만으로 안내.
+   ============================================ */
+.bag-context__btn--disabled,
+.bag-context__btn--disabled:hover,
+.bag-context__btn--disabled:active {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.28);
+  text-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+  pointer-events: none;
+}
+
+/* ============================================
+   강화석 컨텍스트 메뉴 (Day 6)
+   ============================================
+   bag-context 베이스 재사용. --stone variant 로 청은빛 톤.
+   액션 버튼 X — 보유 개수 + 짧은 설명만.
+   ============================================ */
+
+.bag-context--stone {
+  border-color: rgba(168, 197, 232, 0.4);
+}
+
+/* 헤더 (강화석 이름 + 우측 보유 개수) — 청은빛 */
+.bag-context--stone .bag-context__name {
+  color: #d4e3f5;
+}
+.bag-context--stone .bag-context__grade {
+  color: #a8c5e8;
+  font-family: var(--font-base);
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+}
+
+/* 본문 — 짧은 설명만 (큰 카운트는 헤더 우측에 표시) */
+.bag-context__stone-body {
+  padding: 0.4rem 0;
+}
+
+.bag-context--stone .bag-context__desc {
+  text-align: center;
+  margin-bottom: 0;
+  color: rgba(200, 212, 240, 0.6);
+  font-style: italic;
+}
+
+/* ============================================
+   Day 10 — 컨텍스트 메뉴 세트 영역 (C-1)
+   ============================================
+   결정 (대표):
+   - 위치: 설명(.bag-context__desc) 아래, 옵션(.bag-context__options) 위쪽
+   - 클릭 장비 등급 기준 진행도 N/4 (세트 이름 옆)
+   - 발동(4/4) = 등급별 색 + 글로우 / 미발동 = 회색 톤다운
+   - 라벨 / 진행도 / 두 스탯 수치 모두 같이 색 분기 (currentColor 흐름)
+   - 일반/고급 = 영역 자체 X (JS 가 element 생성 안 함)
+   ============================================ */
+
+.bag-context__set {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.8rem 0.95rem;
+  margin: 0.2rem 0 0.9rem;
+  border: 1px solid rgba(200, 212, 240, 0.1);
+  border-radius: 0.55rem;
+  background: rgba(10, 16, 36, 0.45);
+  /* 색은 currentColor 흐름 — 활성/비활성에서 분기 */
+  transition: color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.bag-context__set-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+}
+
+.bag-context__set-name {
+  font-family: var(--font-base);
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: currentColor;
+}
+
+.bag-context__set-progress {
+  font-family: var(--font-impact);
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: currentColor;
+  opacity: 0.85;
+}
+
+.bag-context__set-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.bag-context__set-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-family: var(--font-base);
+}
+
+.bag-context__set-row-name {
+  font-size: 1.05rem;
+  color: currentColor;
+  opacity: 0.85;
+}
+
+.bag-context__set-row-value {
+  font-family: var(--font-impact);
+  font-size: 1.3rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: currentColor;
+}
+
+/* 미발동 — 회색 (대표 결정) */
+.bag-context__set--inactive {
+  color: rgba(200, 212, 240, 0.38);
+  border-color: rgba(200, 212, 240, 0.07);
+}
+
+/* 발동 — 등급별 색 (currentColor 로 라벨/진행도/수치 모두 같이) */
+.bag-context__set--active.bag-context__set--rare {
+  color: #2563EB;
+  border-color: rgba(37, 99, 235, 0.4);
+  box-shadow: 0 0 1.4rem rgba(37, 99, 235, 0.18);
+  text-shadow: 0 0 6px rgba(37, 99, 235, 0.4);
+}
+.bag-context__set--active.bag-context__set--epic {
+  color: #B080D0;
+  border-color: rgba(176, 128, 208, 0.4);
+  box-shadow: 0 0 1.4rem rgba(176, 128, 208, 0.20);
+  text-shadow: 0 0 6px rgba(176, 128, 208, 0.45);
+}
+.bag-context__set--active.bag-context__set--legendary {
+  color: #FFD96A;
+  border-color: rgba(255, 217, 106, 0.45);
+  box-shadow: 0 0 1.6rem rgba(255, 217, 106, 0.22);
+  text-shadow: 0 0 6px rgba(255, 217, 106, 0.5);
+}
+.bag-context__set--active.bag-context__set--mythic {
+  color: #FF49A6;
+  border-color: rgba(255, 73, 166, 0.5);
+  box-shadow: 0 0 1.8rem rgba(255, 73, 166, 0.26);
+  text-shadow: 0 0 6px rgba(255, 73, 166, 0.55);
+}
+
+
+/* ============================================
+   Day 10 — 고유 꾸미기 효과 라벨 (C-3)
+   ============================================
+   결정 (대표):
+   - cosmeticColor 보유 장비에만 표시
+   - 위치: 세트 영역 아래, 옵션 위쪽
+   - "고유 꾸미기 효과" 텍스트 — 등급 색으로 (옵션 황금색과 다른 톤)
+   ============================================ */
+
+.bag-context__cosmetic-label {
+  font-family: var(--font-base);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 0.45rem 0.6rem;
+  margin: 0 0 0.6rem;
+  border: 1px dashed currentColor;
+  border-radius: 0.4rem;
+  /* 색 자체는 등급 클래스에서 — currentColor 가 border + text 모두 적용 */
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.bag-context__cosmetic-label--rare {
+  color: #2563EB;
+  text-shadow: 0 0 4px rgba(37, 99, 235, 0.45);
+}
+.bag-context__cosmetic-label--epic {
+  color: #B080D0;
+  text-shadow: 0 0 4px rgba(176, 128, 208, 0.5);
+}
+.bag-context__cosmetic-label--legendary {
+  color: #FFD96A;
+  text-shadow: 0 0 5px rgba(255, 217, 106, 0.55);
+}
+.bag-context__cosmetic-label--mythic {
+  color: #FF49A6;
+  text-shadow: 0 0 5px rgba(255, 73, 166, 0.6);
+}
+
+
+/* ============================================
+   Day 10 — 가방 셀 등급 글로우 (C-2)
+   Day 16 후속: cosmetic 한정 → 모든 장비 셀로 확장 (대표 결정)
+   ============================================
+   결정 (Day 10 + Day 16):
+   - 가방 안 모든 장비 셀 = 가운데서 퍼지는 등급별 색 글로우
+   - 단순하지만 예쁘게 + 렉 X (radial-gradient 1개 + ::after pseudo)
+   - 등급 색은 등급 베이스 색과 동일
+   - 6등급 모두 적용 (common ~ mythic)
+   - cosmetic 옵션 여부와 무관하게 모든 장비 셀에 동일 효과
+   ============================================ */
+
+.bag-cell--equipment {
+  /* 가운데서 퍼지는 부드러운 글로우 — 단순 radial gradient 한 겹 */
+  position: relative;
+}
+
+.bag-cell--equipment::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at 50% 50%,
+    var(--cosmetic-glow, rgba(255, 255, 255, 0.22)) 0%,
+    transparent 65%
+  );
+  /* 부드럽게 호흡하는 펄스 — 렉 안 일으키도록 단일 transform 없는 opacity 만 */
+  animation: bag-cell-cosmetic-pulse 2.4s ease-in-out infinite;
+  z-index: 1;
+}
+
+/* 등급별 글로우 색 (6등급 모두) */
+.bag-cell--common.bag-cell--equipment      { --cosmetic-glow: rgba(255, 255, 255, 0.32); }
+.bag-cell--uncommon.bag-cell--equipment    { --cosmetic-glow: rgba(157, 227, 107, 0.38); }
+.bag-cell--rare.bag-cell--equipment        { --cosmetic-glow: rgba(37, 99, 235, 0.42); }
+.bag-cell--epic.bag-cell--equipment        { --cosmetic-glow: rgba(176, 128, 208, 0.45); }
+.bag-cell--legendary.bag-cell--equipment   { --cosmetic-glow: rgba(255, 217, 106, 0.48); }
+.bag-cell--mythic.bag-cell--equipment      { --cosmetic-glow: rgba(255, 73, 166, 0.50); }
+
+/* Day 16 후속 (대표 결정) — 꾸미기 옵션 있는 셀에 단색 등급 배경색 추가.
+   글로우(::after radial-gradient) 와 별개의 단일 색 배경 — 등급별 강한 색톤.
+   결과: 꾸미기 보유 셀은 "셀 전체가 등급 색으로 뚜렷이 보이고 + 가운데 더 진한 글로우" 가 함께.
+   대표 추가 요청 (Day 16 후속2): "누가봐도 티 날 정도로 엄청 진하게" — alpha 0.55 적용.
+   ★ background shorthand 로 셀 본체 linear-gradient 통째로 덮음 (background-color 단독으론 못 덮음). */
+.bag-cell--rare.bag-cell--has-cosmetic      { background: rgba(37, 99, 235, 0.55) !important; }
+.bag-cell--epic.bag-cell--has-cosmetic      { background: rgba(176, 128, 208, 0.55) !important; }
+.bag-cell--legendary.bag-cell--has-cosmetic { background: rgba(255, 217, 106, 0.50) !important; }
+.bag-cell--mythic.bag-cell--has-cosmetic    { background: rgba(255, 73, 166, 0.55) !important; }
+
+@keyframes bag-cell-cosmetic-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1.0; }
+}
+
+/* 글로우 위에 아이콘/뱃지가 깔리지 않도록 z-index 보강.
+   ★ Day 10 후속 버그 수정 (Day 16 — 모든 장비로 적용 범위 확장):
+     아이콘/level 표시가 글로우(z:1) 아래로 깔리지 않도록 z-index 2 보장.
+     .bag-cell__equipped (E 배지) / .bag-cell__lock (자물쇠) 는 원본에서
+     position: absolute + z-index: 2 이미 적용되어 영향 X. */
+.bag-cell--equipment .bag-cell__icon {
+  position: relative;
+  z-index: 2;
+}
+.bag-cell--equipment .bag-cell__level {
+  /* 원본 absolute + top/left 보존, z-index 만 글로우(z:1) 위로 */
+  z-index: 2;
+}
+/* ============================================
+   Day 16 후속 — 새 장비 빨간점 (가방 셀 우하단 = 잠금 자리)
+   ============================================
+   drop 으로 새 장비가 가방에 들어왔을 때 표시.
+   가방 셀 터치 또는 가방 닫기 시 모두 clear (storage 측에서 처리).
+   ============================================ */
+
+.bag-cell__new-dot {
+  position: absolute;
+  bottom: 0.2rem;
+  right: 0.3rem;
+  width: 1.0rem;
+  height: 1.0rem;
+  border-radius: 50%;
+  background: #FF4040;
+  box-shadow:
+    0 0 6px rgba(255, 64, 64, 0.85),
+    0 0 12px rgba(255, 64, 64, 0.40);
+  pointer-events: none;
+  z-index: 3;   /* 글로우(z:1) / 아이콘(z:2) 보다 위 */
+  /* 등장 애니메이션 — 단정한 pop */
+  animation: bag-cell-new-dot-pop 360ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes bag-cell-new-dot-pop {
+  0%   { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}

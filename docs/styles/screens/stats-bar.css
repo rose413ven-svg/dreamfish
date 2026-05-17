@@ -1,0 +1,97 @@
+/* ===========================================
+   stats-bar.css — 슬롯 위 등장확률 stat UI
+   ============================================
+   - 부모 = slot-fx-area (height 3.8rem, flex center)
+   - 4개 item 가로 정렬, 가운데 (★ Day 21: twinkle 추가로 3개 → 4개)
+   - 심볼은 항상 글로우 (수치 0%여도)
+   - 수치는 0%면 흐림, 보너스 있으면 심볼 색 강조
+   ============================================ */
+
+.slot-stats-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.4rem;
+  height: 100%;
+  pointer-events: none;
+}
+
+.slot-stats-bar__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-impact);
+  font-size: 1.4rem;
+  letter-spacing: 0.04em;
+}
+
+.slot-stats-bar__symbol {
+  width: 2.2rem;
+  height: 1.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.slot-stats-bar__symbol svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 심볼별 글로우 — 항상 적용 (대표: 검은색 안 보이니까 글로우 항상) */
+.slot-stats-bar__item--fish .slot-stats-bar__symbol svg {
+  filter:
+    drop-shadow(0 0 4px rgba(255, 255, 255, 0.7))
+    drop-shadow(0 0 2px rgba(255, 255, 255, 0.4));
+}
+.slot-stats-bar__item--golden .slot-stats-bar__symbol svg {
+  filter:
+    drop-shadow(0 0 5px rgba(232, 200, 112, 0.9))
+    drop-shadow(0 0 2px rgba(232, 200, 112, 0.6));
+}
+.slot-stats-bar__item--rainbow .slot-stats-bar__symbol svg {
+  filter:
+    drop-shadow(0 0 5px rgba(255, 157, 203, 0.9))
+    drop-shadow(0 0 2px rgba(255, 157, 203, 0.6));
+}
+/* ★ Day 21 — 하얀물고기(twinkle) 글로우 — 옅은 하늘색 톤 (slot-cell.js 트윙클 색 #F0F8FF 와 동일) */
+.slot-stats-bar__item--twinkle .slot-stats-bar__symbol svg {
+  filter:
+    drop-shadow(0 0 5px rgba(215, 239, 255, 0.95))
+    drop-shadow(0 0 2px rgba(215, 239, 255, 0.65));
+}
+
+/* 수치 — 기본 (0%일 때) = 흐림 */
+.slot-stats-bar__value {
+  color: rgba(255, 255, 255, 0.4);
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.85);
+  transition: color 200ms ease-out, text-shadow 200ms ease-out;
+}
+
+/* 보너스 있을 때 — 심볼 색에 맞춤 + 글로우 */
+.slot-stats-bar__item--fish.has-bonus .slot-stats-bar__value {
+  color: #ffffff;
+  text-shadow:
+    0 0 6px rgba(255, 255, 255, 0.7),
+    0 0 4px rgba(0, 0, 0, 0.95);
+}
+.slot-stats-bar__item--golden.has-bonus .slot-stats-bar__value {
+  color: #ffd96a;
+  text-shadow:
+    0 0 6px rgba(255, 217, 106, 0.85),
+    0 0 4px rgba(0, 0, 0, 0.95);
+}
+.slot-stats-bar__item--rainbow.has-bonus .slot-stats-bar__value {
+  color: #ff9dcb;
+  text-shadow:
+    0 0 6px rgba(255, 157, 203, 0.85),
+    0 0 4px rgba(0, 0, 0, 0.95);
+}
+/* ★ Day 21 — 하얀물고기(twinkle) 보너스 시 색 — 흰빛 (Alice Blue 톤) */
+.slot-stats-bar__item--twinkle.has-bonus .slot-stats-bar__value {
+  color: #f0f8ff;
+  text-shadow:
+    0 0 6px rgba(215, 239, 255, 0.95),
+    0 0 4px rgba(0, 0, 0, 0.95);
+}

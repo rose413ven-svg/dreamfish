@@ -1,0 +1,26 @@
+{
+  "name": "낭만꿈낚시",
+  "short_name": "꿈낚시",
+  "description": "코지 슬롯 낚시 게임 — Dreamreel",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050813",
+  "theme_color": "#050813",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,221 @@
+/* ===========================================
+   twinkle-reward-popup.css — 트윙클 보상 팝업 (Day 20 신규)
+   ============================================
+   level-up-popup.css 의 톤 변경판.
+   톤: 밝은 흰색 + 연한 푸른빛 글로우 (트윙클 정체성).
+   구조: 헤더(별빛 + TWINKLE!) + 큰 꿈조각 아이콘 + "꿈조각 +N 개" + 확인 버튼
+   ============================================ */
+
+/* ── 1. 루트 + 오버레이 ──────────────────────── */
+
+.twinkle-reward-root {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s var(--fade-easing);
+}
+
+.twinkle-reward-root--open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.twinkle-reward-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  transition: background 0.3s var(--fade-easing);
+}
+
+.twinkle-reward-root--open .twinkle-reward-overlay {
+  background: rgba(5, 8, 19, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+
+/* ── 2. 패널 — 흰색·연푸른빛 글로우 ────────────── */
+
+.twinkle-reward-panel {
+  position: relative;
+  width: 100%;
+  max-width: 22rem;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(215, 239, 255, 0.18), transparent 60%),
+    linear-gradient(180deg, #0c1228 0%, #060914 100%);
+  border: 1px solid rgba(215, 239, 255, 0.28);
+  border-radius: var(--radius-sharp, 0);
+  box-shadow:
+    0 0 40px rgba(215, 239, 255, 0.20),
+    0 8px 30px rgba(0, 0, 0, 0.55);
+  padding: 1.8rem 1.4rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  /* 진입 애니메이션 */
+  transform: translateY(12px) scale(0.96);
+  opacity: 0;
+  transition:
+    transform 320ms cubic-bezier(0.22, 0.9, 0.32, 1),
+    opacity 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.twinkle-reward-root--open .twinkle-reward-panel {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+
+/* ── 3. 헤더 — "TWINKLE!" + 별빛 입자 ────────── */
+
+.twinkle-reward-header {
+  position: relative;
+  height: 3.2rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.twinkle-reward-stars {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.twinkle-reward-star {
+  fill: rgba(215, 239, 255, 0.0);
+  animation: twinkle-reward-star-twinkle 1.8s ease-in-out infinite;
+}
+.twinkle-reward-star--0 { animation-delay: 0s;    }
+.twinkle-reward-star--1 { animation-delay: 0.3s;  }
+.twinkle-reward-star--2 { animation-delay: 0.6s;  }
+.twinkle-reward-star--3 { animation-delay: 0.9s;  }
+.twinkle-reward-star--4 { animation-delay: 1.2s;  }
+.twinkle-reward-star--5 { animation-delay: 1.5s;  }
+
+@keyframes twinkle-reward-star-twinkle {
+  0%, 100% {
+    fill: rgba(215, 239, 255, 0.15);
+    transform: scale(0.85);
+  }
+  50% {
+    fill: rgba(255, 255, 255, 0.95);
+    transform: scale(1.2);
+  }
+}
+
+.twinkle-reward-header__text {
+  position: relative;
+  font-family: var(--font-impact, 'Bebas Neue', sans-serif);
+  font-size: 2.4rem;
+  letter-spacing: 0.12em;
+  color: #FFFFFF;
+  text-shadow:
+    0 0 14px rgba(215, 239, 255, 0.85),
+    0 0 24px rgba(181, 220, 255, 0.55),
+    0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+
+/* ── 4. 큰 꿈조각 아이콘 ──────────────────────── */
+
+.twinkle-reward-icon {
+  width: 8rem;
+  height: 5.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 20px rgba(215, 239, 255, 0.95))
+          drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+  animation: twinkle-reward-icon-glow 1.6s ease-in-out infinite;
+}
+
+.twinkle-reward-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes twinkle-reward-icon-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 20px rgba(215, 239, 255, 0.95))
+            drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 32px rgba(255, 255, 255, 1))
+            drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+  }
+}
+
+
+/* ── 5. 보상 메시지 — "꿈조각 +N 개" ──────────── */
+
+.twinkle-reward-message {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.6rem 0;
+  border-top: 1px solid rgba(215, 239, 255, 0.12);
+  border-bottom: 1px solid rgba(215, 239, 255, 0.12);
+  width: 100%;
+  justify-content: center;
+}
+
+.twinkle-reward-message__label {
+  font-family: var(--font-base, sans-serif);
+  font-size: 1.3rem;
+  color: rgba(215, 239, 255, 0.85);
+  letter-spacing: 0.02em;
+}
+
+.twinkle-reward-message__value {
+  font-family: var(--font-impact, 'Bebas Neue', sans-serif);
+  font-size: 2.4rem;
+  letter-spacing: 0.04em;
+  color: #FFFFFF;
+  text-shadow:
+    0 0 10px rgba(215, 239, 255, 0.85),
+    0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.twinkle-reward-message__unit {
+  font-family: var(--font-base, sans-serif);
+  font-size: 1.2rem;
+  color: rgba(215, 239, 255, 0.85);
+}
+
+
+/* ── 6. 확인 버튼 ───────────────────────────── */
+
+.twinkle-reward-ok {
+  margin-top: 0.4rem;
+  padding: 0.9rem 3.2rem;
+  background: rgba(10, 16, 36, 0.5);
+  border: 1px solid #FFFFFF;
+  color: #FFFFFF;
+  font-family: var(--font-impact, 'Bebas Neue', sans-serif);
+  font-size: 1.4rem;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  animation: twinkle-reward-btn-pulse 1.2s ease-in-out infinite;
+  transition: background 0.2s var(--fade-easing),
+              color 0.2s var(--fade-easing);
+}
+
+@keyframes twinkle-reward-btn-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(215, 239, 255, 0.6); }
+  50%      { box-shadow: 0 0 24px 3px rgba(215, 239, 255, 0.4); }
+}
+
+.twinkle-reward-ok:hover {
+  background: #FFFFFF;
+  color: var(--bg-deepest, #050813);
+}

@@ -1,0 +1,1213 @@
+/* ===========================================
+   codex.css — 도감 화면 (Day 16 — Phase B)
+   ============================================
+   결정로그 Day 16 SSOT.
+   - 헤더: 좌측 타이틀+진척도 / 우측 X 버튼
+   - 탭 바: 물고기 / 장비 — 텍스트 탭, 활성=배경+글로우
+   - 리스트 컨테이너: 한 행 1셀 (Phase C/D에서 셀 추가)
+   - 빨간점: .codex-dot — 메뉴/햄버거/탭/셀 우상단 알림용 공통
+
+   디자인 톤: enhance.css 패턴 따라 — 어두운 청남 그라데이션 + 황금 타이틀
+              + 양옆 fade 선 (단정한 미니멀리즘)
+   ============================================ */
+
+/* ============================================
+   1. 루트 + 레이아웃
+   ============================================ */
+
+.codex-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 1.6rem 2.4rem;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(95, 144, 200, 0.10) 0%, transparent 70%),
+    linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-deepest) 100%);
+  color: var(--line-primary);
+  overflow: hidden;
+}
+
+/* ============================================
+   2. 헤더 — 타이틀 + 진척도 + X 버튼
+   ============================================ */
+
+.codex-screen__header {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 4.6rem;
+  margin-top: 0.8rem;
+  margin-bottom: 0.4rem;
+}
+
+.codex-screen__title {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-family: var(--font-base);
+  font-size: 1.7rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: #ffe9a8;
+  text-shadow:
+    0 0 8px rgba(255, 217, 160, 0.45),
+    0 0 16px rgba(255, 217, 160, 0.18);
+}
+.codex-screen__title::before,
+.codex-screen__title::after {
+  content: '';
+  display: inline-block;
+  width: 1.8rem;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 217, 160, 0.65) 50%,
+    transparent);
+  flex-shrink: 0;
+}
+
+/* X 닫기 버튼 — 우측 */
+.codex-close-btn {
+  position: absolute;
+  right: -0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4rem;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--line-primary);
+  cursor: pointer;
+  transition: opacity 160ms, transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.codex-close-btn:hover { opacity: 0.75; }
+.codex-close-btn:active { transform: translateY(-50%) scale(0.9); }
+.codex-close-btn svg {
+  width: 2.2rem;
+  height: 2.2rem;
+}
+
+/* ============================================
+   3. 진척도 — 헤더 아래 한 줄
+   ============================================ */
+
+.codex-progress {
+  flex-shrink: 0;
+  text-align: center;
+  font-family: var(--font-base);
+  font-size: 1.25rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  color: var(--line-soft);
+  margin-bottom: 1.6rem;
+  transition: color 200ms ease;
+}
+.codex-progress__current {
+  color: var(--accent-bright);
+  font-weight: 600;
+  margin: 0 0.2rem;
+}
+.codex-progress__sep {
+  margin: 0 0.2rem;
+  opacity: 0.55;
+}
+
+/* ============================================
+   4. 탭 바 — 물고기 / 장비
+   ============================================ */
+
+.codex-tabs {
+  flex-shrink: 0;
+  display: flex;
+  gap: 0.6rem;
+  padding: 0 0.4rem;
+  margin-bottom: 1.4rem;
+}
+
+.codex-tab {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 3.6rem;
+  background: transparent;
+  border: 1px solid rgba(200, 212, 240, 0.10);
+  border-radius: 6px;
+  color: var(--line-soft);
+  font-family: var(--font-base);
+  font-size: 1.4rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  cursor: pointer;
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.codex-tab:hover {
+  color: var(--line-primary);
+  border-color: rgba(200, 212, 240, 0.20);
+}
+
+.codex-tab--active {
+  background: rgba(95, 144, 200, 0.16);
+  border-color: rgba(200, 212, 240, 0.35);
+  color: var(--accent-bright);
+  box-shadow:
+    inset 0 0 12px rgba(95, 144, 200, 0.10),
+    0 0 14px rgba(95, 144, 200, 0.12);
+}
+
+/* ============================================
+   ★ Day 27 — 물고기 서브 탭 (9개 등급 탭)
+   ============================================
+   기본 hide — 활성 탭이 '물고기' 일 때만 .codex-sub-tabs--visible 부여 (codex.js activateTab).
+   ★ Day 27 후속 (대표 결정) — 두 줄 5+4 배치:
+     첫째 줄: 치어/소형/중형/월척/대물 (5개, 각 20%)
+     둘째 줄: 보스/전설/신화/특수 (4개, 각 25% 균일 분배 — flex-grow)
+   flex-wrap + flex-basis 20% → 둘째 줄 4개가 자동 25%씩 펴짐.
+*/
+.codex-sub-tabs {
+  display: none;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0 0.4rem 0.2rem;
+  margin-bottom: 0.8rem;
+}
+
+.codex-sub-tabs--visible {
+  display: flex;
+}
+
+.codex-sub-tab {
+  flex: 1 1 calc(20% - 0.4rem);   /* 5개 첫 줄 / 4개 둘째 줄 균일 분배 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.6rem;
+  padding: 0 0.5rem;
+  background: transparent;
+  border: 1px solid rgba(200, 212, 240, 0.08);
+  border-radius: 4px;
+  color: var(--line-soft);
+  font-family: var(--font-base);
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.codex-sub-tab:hover {
+  color: var(--line-primary);
+  border-color: rgba(200, 212, 240, 0.18);
+}
+
+.codex-sub-tab--active {
+  background: rgba(95, 144, 200, 0.12);
+  border-color: rgba(200, 212, 240, 0.30);
+  color: var(--accent-bright);
+  box-shadow:
+    inset 0 0 8px rgba(95, 144, 200, 0.08);
+}
+
+/* ============================================
+   ★ Day 27 — 변종 헤더 (기본 / + / ++ / +++ / ++++ / +++++)
+   ============================================
+   각 등급 탭 내 변종 그룹 시각 구분. 작고 깔끔하게.
+*/
+.codex-tier-header {
+  grid-column: 1 / -1;   /* 그리드 한 줄 전체 차지 */
+  display: flex;
+  align-items: center;
+  height: 2.2rem;
+  padding: 0 0.6rem;
+  margin-top: 0.4rem;
+  color: var(--line-soft);
+  font-family: var(--font-base);
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  opacity: 0.7;
+  border-left: 2px solid rgba(200, 212, 240, 0.20);
+}
+
+.codex-tier-header[data-tier="p5"] {
+  color: var(--accent-bright);
+  border-left-color: rgba(255, 224, 144, 0.40);  /* 황금톤 — 11지역 +++++ 변종 */
+  opacity: 0.9;
+}
+
+/* ============================================
+   5. 리스트 컨테이너 — 한 행 1셀 (Phase C/D 셀 추가)
+   ============================================ */
+
+.codex-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1.0rem;
+  padding: 0.2rem 0.2rem 1.6rem;
+  /* iOS 부드러운 스크롤 */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─── Day 16 후속: 물고기 탭만 2열 그리드 (대표 결정) ─── */
+/* ─── Day 17 후속: 장비 탭도 2열 그리드 (대표 결정) ─── */
+.codex-list[data-active-tab="fish"],
+.codex-list[data-active-tab="equipment"] {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem 0.7rem;
+  align-content: start;
+}
+/* 등급 헤더는 행 전체 차지 (full-width) */
+.codex-list[data-active-tab="fish"] > .codex-grade-header,
+.codex-list[data-active-tab="equipment"] > .codex-grade-header {
+  grid-column: 1 / -1;
+}
+/* Day 17 후속 — 장비 탭 보상 합계 헤더도 행 전체 차지 */
+.codex-list[data-active-tab="equipment"] > .codex-reward-summary {
+  grid-column: 1 / -1;
+}
+
+/* 스크롤바 단정하게 */
+.codex-list::-webkit-scrollbar {
+  width: 3px;
+}
+.codex-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.codex-list::-webkit-scrollbar-thumb {
+  background: rgba(200, 212, 240, 0.16);
+  border-radius: 3px;
+}
+
+/* 빈 상태 (Phase B 단계 — 셀 없음 안내) */
+.codex-list__empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.0rem;
+  padding: 3.2rem 1.6rem;
+  text-align: center;
+}
+.codex-list__empty-icon {
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(95, 144, 200, 0.06);
+  border: 1px solid rgba(200, 212, 240, 0.10);
+  color: var(--line-soft);
+  font-size: 2.8rem;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+}
+.codex-list__empty-text {
+  font-family: var(--font-base);
+  font-size: 1.3rem;
+  letter-spacing: 0.16em;
+  color: var(--line-soft);
+  opacity: 0.7;
+}
+.codex-list__empty-sub {
+  font-family: var(--font-base);
+  font-size: 1.05rem;
+  letter-spacing: 0.1em;
+  color: var(--line-soft);
+  opacity: 0.45;
+  margin-top: 0.2rem;
+}
+
+/* ============================================
+   6. 빨간점 — 공통 알림 표시 (메뉴/햄버거/탭/셀 우상단)
+   ============================================
+   사용처:
+   - 슬롯 햄버거 버튼 우상단        (.menu-button .codex-dot)
+   - 메뉴 패널 '도감' 항목 우측      (.menu-panel__item .codex-dot)
+   - 가방 셀 컨텍스트 메뉴 '도감' 버튼 (.bag-context__btn .codex-dot)
+   - 도감 화면 탭 우상단              (.codex-tab .codex-dot)
+   - 셀 우상단                        (Phase C/D 적용)
+   ============================================ */
+
+.codex-dot {
+  position: absolute;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: #FF6F6F;
+  box-shadow:
+    0 0 6px rgba(255, 111, 111, 0.70),
+    0 0 12px rgba(255, 111, 111, 0.25);
+  pointer-events: none;
+  /* 등장 애니메이션 (단정) */
+  animation: codex-dot-pop 360ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* 위치: 부착되는 부모는 position: relative 여야 함 (각 부모 CSS에서 보장) */
+.codex-dot--top-right {
+  top: 0.4rem;
+  right: 0.4rem;
+}
+
+@keyframes codex-dot-pop {
+  0%   { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* 햄버거 버튼 우상단 (라인 3줄 박스 — top/right 더 안쪽) */
+.menu-button .codex-dot {
+  top: 0.6rem;
+  right: 0.6rem;
+}
+
+/* 메뉴 패널 항목 우측 가운데 */
+.menu-panel__item {
+  position: relative;
+}
+.menu-panel__item .codex-dot {
+  top: 50%;
+  right: 1.2rem;
+  transform: translateY(-50%);
+  animation: codex-dot-pop-flat 360ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes codex-dot-pop-flat {
+  0%   { transform: translateY(-50%) scale(0); opacity: 0; }
+  100% { transform: translateY(-50%) scale(1); opacity: 1; }
+}
+
+/* 컨텍스트 메뉴 도감 버튼 우상단 */
+.bag-context__btn .codex-dot {
+  top: 0.3rem;
+  right: 0.3rem;
+}
+
+/* 도감 화면 탭 우상단 */
+.codex-tab .codex-dot {
+  top: 0.5rem;
+  right: 0.7rem;
+}
+
+/* ============================================
+   7. 등급 헤더 (리스트 내 구간 구분)
+   ============================================ */
+
+.codex-grade-header {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 0.4rem 0.4rem;
+  margin-top: 0.4rem;
+  font-family: var(--font-base);
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--line-soft);
+  opacity: 0.85;
+}
+.codex-grade-header__name {
+  flex-shrink: 0;
+}
+.codex-grade-header__count {
+  flex-shrink: 0;
+  font-size: 1.0rem;
+  opacity: 0.6;
+}
+.codex-grade-header__bar {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgba(200, 212, 240, 0.20),
+    transparent);
+}
+/* 첫 등급 헤더는 위 여백 줄이기 */
+.codex-list > .codex-grade-header:first-child {
+  margin-top: 0;
+  padding-top: 0.2rem;
+}
+
+/* ============================================
+   8. 물고기 도감 셀 — 한 행 1개
+   ============================================ */
+
+.codex-fish-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1.0rem;
+  padding: 0.9rem 1.0rem;
+  background: rgba(12, 26, 58, 0.40);
+  border: 1px solid rgba(200, 212, 240, 0.06);
+  border-radius: 8px;
+  min-height: 6rem;
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 미등록 — 흐릿 + 회색 톤 */
+.codex-fish-cell--locked {
+  opacity: 0.55;
+}
+.codex-fish-cell--locked .codex-fish-cell__sym {
+  background: rgba(60, 76, 110, 0.18);
+  border-color: rgba(200, 212, 240, 0.08);
+  box-shadow: none;
+}
+
+/* 등록됨 — 등급 색 글로우 외곽 */
+.codex-fish-cell--registered {
+  background: rgba(20, 36, 78, 0.55);
+}
+.codex-fish-cell--registered:hover {
+  background: rgba(28, 46, 92, 0.60);
+}
+
+/* 심볼 박스 (좌측 정사각형) */
+.codex-fish-cell__sym {
+  flex-shrink: 0;
+  width: 4.6rem;
+  height: 4.6rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(12, 26, 58, 0.55);
+  border: 1px solid rgba(200, 212, 240, 0.16);
+  /* 등급별 글로우는 인라인 style 로 주입 (createFishCodexCell) */
+  transition: box-shadow 200ms ease, border-color 200ms ease;
+}
+.codex-fish-cell__sym svg {
+  width: 75%;
+  height: auto;
+}
+
+/* 우측 텍스트 영역 */
+.codex-fish-cell__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.2rem;
+  min-width: 0;          /* flex truncate */
+}
+
+.codex-fish-cell__grade {
+  font-family: var(--font-base);
+  font-size: 1.0rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  color: var(--line-soft);
+  opacity: 0.85;
+}
+
+.codex-fish-cell__name {
+  font-family: var(--font-base);
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--line-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.codex-fish-cell--locked .codex-fish-cell__name {
+  color: var(--line-soft);
+  opacity: 0.6;
+  letter-spacing: 0.1em;
+}
+
+.codex-fish-cell__weight {
+  font-family: var(--font-base);
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  color: var(--line-soft);
+}
+.codex-fish-cell__weight-num {
+  color: #ffe9a8;
+  font-weight: 500;
+}
+
+/* NEW 배지 — 셀 우상단 */
+.codex-fish-cell__new-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.6rem;
+  padding: 0.18rem 0.5rem;
+  font-family: var(--font-impact);
+  font-size: 0.95rem;
+  letter-spacing: 0.16em;
+  color: #fff;
+  background: linear-gradient(135deg, #FF6FB5, #FF8E5B);
+  border-radius: 3px;
+  box-shadow:
+    0 0 8px rgba(255, 111, 181, 0.45),
+    0 0 14px rgba(255, 142, 91, 0.20);
+  animation: codex-new-pop 360ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes codex-new-pop {
+  0%   { transform: scale(0) rotate(-8deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* ============================================
+   9. 수족관 영역 — 화면 하단 20% (Day 16 + 후속 개선)
+   ============================================
+   대표 결정 후속:
+   - 배경: 밝은 바다 톤 (어두컴컴 → 청록 계열 + 수면 빛)
+   - orb 안 검은 물고기 심볼 (잡기게임 동일)
+   - 진짜 물고기처럼 좌우 헤엄 + 방향 전환 (속도 변화)
+   - AQUARIUM 라벨 밑 작은 설명 항상 표시
+   ============================================ */
+
+.codex-aquarium {
+  position: relative;
+  flex-shrink: 0;
+  height: 20%;
+  min-height: 12rem;
+  margin: 1.2rem -1.6rem 0;   /* 화면 양 끝까지 */
+  padding: 1.5rem 1.6rem 0.6rem;
+}
+
+.codex-aquarium__label {
+  position: absolute;
+  top: 0.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-base);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  color: var(--line-soft);
+  opacity: 0.6;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Day 16 후속 — 메인 라벨 밑 작은 설명 (항상 표시). 텍스트 색 흰색 */
+.codex-aquarium__sub-label {
+  position: absolute;
+  top: 1.55rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-base);
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.10em;
+  color: #FFFFFF;
+  opacity: 0.85;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.40);
+  z-index: 2;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* 어항 본체 — 밝은 바다 톤 (수면 빛 + 청록 깊이) */
+.codex-aquarium__tank {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(140, 200, 230, 0.40);
+  background:
+    /* 수면 빛 (위쪽 밝은 광택) */
+    radial-gradient(ellipse 100% 60% at 50% 0%,
+      rgba(220, 245, 255, 0.30) 0%,
+      rgba(180, 230, 250, 0.08) 35%,
+      transparent 65%),
+    /* 수중 약한 반사 */
+    radial-gradient(ellipse 50% 80% at 30% 70%,
+      rgba(140, 220, 245, 0.10) 0%,
+      transparent 60%),
+    /* 청록 바다 그라데이션 (위 밝음 → 아래 깊은 청) */
+    linear-gradient(180deg,
+      #4a9cc0 0%,
+      #3a82b0 35%,
+      #2d6a96 70%,
+      #1f5078 100%);
+  /* 안쪽 부드러운 글로우 + 수면 빛 */
+  box-shadow:
+    inset 0 0 30px rgba(180, 230, 250, 0.18),
+    inset 0 2px 14px rgba(220, 245, 255, 0.22),
+    inset 0 -6px 18px rgba(15, 35, 60, 0.30);
+  overflow: hidden;
+}
+
+/* 잔잔한 물결 줄무늬 (subtle) — 위쪽 살짝 빛 띠 */
+.codex-aquarium__tank::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30%;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    transparent 100%);
+  pointer-events: none;
+}
+
+/* fish orb — 둥근 글로우 (그 안에 검은 물고기 심볼) */
+.codex-aquarium__orb {
+  position: absolute;
+  top: var(--orb-y, 50%);
+  left: 8%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  /* 좌우 헤엄 애니메이션 (각 orb 마다 --swim-duration 다름, delay 다름) */
+  animation: codex-orb-swim var(--swim-duration, 11s) ease-in-out infinite;
+}
+
+/* orb 안 검은 물고기 심볼 (잡기게임과 동일 path) */
+.codex-aquarium__orb-fish {
+  width: 75%;
+  height: 75%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 미세 상하 흔들림 (orb 본체 헤엄과 별개) — 자연스러운 호흡 */
+  animation: codex-orb-bob 2.4s ease-in-out infinite;
+}
+.codex-aquarium__orb-fish svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+
+/* ─── 좌우 헤엄 keyframes (ease-in-out 으로 가운데서 빠르고 끝에서 느림) ─── */
+/* 한 사이클: 좌(8%) → 우(92%) → 잠시 멈춤 + 방향전환 → 좌(8%) → 잠시 멈춤 + 방향전환 → 시작 */
+/* 0%/100% 가 같아야 무한 loop 점프 X */
+/* Day 17 후속 v2 — 머리 방향으로 헤엄 픽스:
+   SVG 원본은 머리 왼쪽 / 꼬리 오른쪽. 좌→우 헤엄 시 scaleX(-1) 로 좌우 반전해서 머리가 진행 방향을 향해야 함.
+   기존 keyframes 의 scaleX 값이 정반대로 적용되어 있어 꼬리부터 가는 모양 → scaleX 값 1↔-1 전부 반전. */
+@keyframes codex-orb-swim {
+  0% {
+    left: 8%;
+    transform: translate(-50%, -50%) scaleX(-1);
+  }
+  44% {
+    left: 92%;
+    transform: translate(-50%, -50%) scaleX(-1);
+  }
+  /* 우측 끝 도달 — 잠시 멈춤 (느려진 끝) + 방향 전환 */
+  48% {
+    left: 92%;
+    transform: translate(-50%, -50%) scaleX(1);
+  }
+  /* 좌측으로 헤엄 */
+  92% {
+    left: 8%;
+    transform: translate(-50%, -50%) scaleX(1);
+  }
+  /* 좌측 끝 — 방향 전환 후 다음 사이클 시작 */
+  96% {
+    left: 8%;
+    transform: translate(-50%, -50%) scaleX(-1);
+  }
+  100% {
+    left: 8%;
+    transform: translate(-50%, -50%) scaleX(-1);
+  }
+}
+
+/* 미세 상하 흔들림 (호흡) */
+@keyframes codex-orb-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+
+/* ============================================
+   10. 장비 도감 셀 — Phase D
+   ============================================ */
+
+.codex-eq-cell {
+  position: relative;
+  display: flex;
+  align-items: center;       /* Day 17 후속: 세로 가운데 정렬 (3구역 가로 배치) */
+  gap: 0.4rem;               /* Day 17 후속 v2: 0.6rem → 0.4rem (등록버튼 잘림 픽스) */
+  padding: 0.45rem 0.5rem;   /* Day 17 후속 v2: 0.6/0.7 → 0.45/0.5 (셀 가로 공간 확보) */
+  background: rgba(12, 26, 58, 0.40);
+  border: 1px solid rgba(200, 212, 240, 0.06);
+  border-radius: 8px;
+  min-height: 5.0rem;        /* Day 17 후속 v2: 5.8rem → 5.0rem (셀 세로 축소) */
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    opacity 200ms ease,
+    box-shadow 200ms ease;
+}
+
+/* 그룹별 시각 분기 */
+.codex-eq-cell[data-group="locked"] {
+  opacity: 0.50;
+}
+.codex-eq-cell[data-group="registerable"] {
+  background: rgba(20, 36, 78, 0.55);
+  border-color: rgba(200, 212, 240, 0.18);
+}
+.codex-eq-cell[data-group="done"] {
+  background: rgba(12, 26, 58, 0.30);
+  opacity: 0.78;
+}
+
+/* 좌측 이미지 박스 */
+.codex-eq-cell__img {
+  position: relative;
+  flex-shrink: 0;
+  width: 3.6rem;             /* Day 17 후속 v2: 4.4rem → 3.6rem (셀 가로 공간 확보) */
+  height: 3.6rem;
+  border-radius: 7px;
+  background: rgba(12, 26, 58, 0.65);
+  border: 1px solid rgba(200, 212, 240, 0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: box-shadow 200ms ease, border-color 200ms ease;
+  align-self: center;
+}
+
+.codex-eq-cell__img-png {
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* PNG 로드 실패 fallback */
+.codex-eq-cell__img-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-impact);
+  font-size: 2.4rem;
+  color: var(--line-soft);
+  opacity: 0.4;
+}
+
+/* 강화 배지 (+N) — 이미지 좌상단 */
+.codex-eq-cell__enh-badge {
+  position: absolute;
+  top: 0.1rem;
+  left: 0.1rem;
+  min-width: 1.2rem;         /* Day 17 후속 v2: 1.4rem → 1.2rem */
+  height: 1.05rem;
+  padding: 0 0.22rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-impact);
+  font-size: 0.72rem;        /* Day 17 후속 v2: 0.85rem → 0.72rem */
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: linear-gradient(135deg, rgba(255, 217, 106, 0.95), rgba(255, 169, 77, 0.95));
+  border-radius: 3px;
+  box-shadow:
+    0 0 4px rgba(255, 217, 106, 0.50),
+    0 0 8px rgba(255, 169, 77, 0.25);
+  pointer-events: none;
+}
+
+/* 코스메틱 ★ 마크 — 이미지 우상단 */
+.codex-eq-cell__cos-mark {
+  position: absolute;
+  top: 0.1rem;
+  right: 0.2rem;
+  font-size: 0.95rem;        /* Day 17 후속 v2: 1.15rem → 0.95rem */
+  line-height: 1;
+  /* color 는 등급 색 인라인 */
+  text-shadow: 0 0 6px currentColor, 0 0 10px rgba(0,0,0,0.5);
+  pointer-events: none;
+  animation: codex-cos-twinkle 2.4s ease-in-out infinite;
+}
+@keyframes codex-cos-twinkle {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50%      { opacity: 1.0; transform: scale(1.08); }
+}
+
+/* 가운데 정보 영역 (Day 17 후속: 2줄 — title + reward, action 은 우측 별도 컬럼) */
+.codex-eq-cell__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.2rem;               /* Day 17 후속: 0.35rem → 0.2rem (좁아져서) */
+  min-width: 0;              /* ellipsis 작동 위해 필수 */
+}
+
+.codex-eq-cell__title {
+  font-family: var(--font-base);
+  font-size: 0.95rem;        /* Day 17 후속 v2: 1.05rem → 0.95rem */
+  font-weight: 600;
+  letter-spacing: 0.01em;    /* Day 17 후속 v2: 0.02 → 0.01 */
+  /* color 는 등급 색 인라인 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.codex-eq-cell__reward {
+  font-family: var(--font-base);
+  font-size: 0.72rem;        /* Day 17 후속 v2: 0.82rem → 0.72rem (대표 결정 — 더 작게) */
+  font-weight: 500;
+  letter-spacing: 0.02em;    /* Day 17 후속 v2: 0.04 → 0.02 */
+  color: #ffe9a8;
+  text-shadow: 0 0 6px rgba(255, 217, 160, 0.18);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.codex-eq-cell[data-group="locked"] .codex-eq-cell__reward,
+.codex-eq-cell[data-group="done"]   .codex-eq-cell__reward {
+  color: var(--line-soft);
+  text-shadow: none;
+  opacity: 0.72;
+}
+
+/* 우측 액션 영역 (Day 17 후속 — info 밖 별도 컬럼, 셀 우측 끝) */
+.codex-eq-cell__action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.6rem;         /* Day 17 후속 v2: 3.2rem → 2.6rem (등록버튼 잘림 픽스) */
+  margin-top: 0;             /* Day 17 후속: info 안 0.18rem 마진 제거 (별도 컬럼이므로) */
+}
+
+/* 등록 버튼 (Day 17 후속: 셀 우측 끝, 작게) */
+.codex-eq-cell__btn {
+  padding: 0.3rem 0.55rem;   /* Day 17 후속 v2: 0.36/0.7 → 0.3/0.55 */
+  font-family: var(--font-base);
+  font-size: 0.85rem;        /* Day 17 후속 v2: 0.95rem → 0.85rem */
+  font-weight: 600;
+  letter-spacing: 0.04em;    /* Day 17 후속 v2: 0.08 → 0.04 (더 좁게) */
+  color: #0a1024;
+  background: linear-gradient(135deg, #ffe9a8, #ffd96a);
+  border: none;
+  border-radius: 4px;
+  box-shadow:
+    0 0 8px rgba(255, 233, 168, 0.40),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 160ms ease;
+  white-space: nowrap;
+}
+.codex-eq-cell__btn:hover {
+  box-shadow:
+    0 0 12px rgba(255, 233, 168, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.codex-eq-cell__btn:active {
+  transform: scale(0.94);
+}
+.codex-eq-cell__btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
+}
+
+/* 등록됨 라벨 (Day 17 후속 v2: '✓' 한글자, 폰트 살짝 축소) */
+.codex-eq-cell__done {
+  font-family: var(--font-base);
+  font-size: 1.2rem;          /* Day 17 후속 v2: 1.4rem → 1.2rem */
+  font-weight: 600;
+  color: #c8e664;
+  text-shadow: 0 0 8px rgba(200, 230, 100, 0.50);
+}
+
+/* 보유 없음 라벨 */
+.codex-eq-cell__locked-tag {
+  font-family: var(--font-base);
+  font-size: 0.7rem;         /* Day 17 후속 v2: 0.78rem → 0.7rem */
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  color: var(--line-soft);
+  opacity: 0.65;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ============================================
+   11. 보상 합계 헤더 (장비 탭 헤더 아래 한 줄)
+   ============================================ */
+
+.codex-reward-summary {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem 0.7rem;        /* Day 17 후속 v2: 0.6/1.2 → 0.4/0.7 */
+  flex-wrap: wrap;
+  padding: 0.4rem 0.4rem 0.8rem;
+  font-family: var(--font-base);
+  font-size: 0.72rem;        /* Day 17 후속 v2: 1.0rem → 0.72rem (한 줄 확보) */
+  letter-spacing: 0.04em;    /* Day 17 후속 v2: 0.10em → 0.04em */
+  color: var(--line-soft);
+}
+.codex-reward-summary__item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+.codex-reward-summary__item-label {
+  opacity: 0.7;
+}
+.codex-reward-summary__item-value {
+  color: #ffe9a8;
+  font-weight: 500;
+}
+
+/* ============================================
+   12. 물고기 탭 2열 모드 — 셀 가로 압축 (세로 유지)
+   ============================================
+   대표 결정 (Day 16 후속):
+   - 한 행 2개 셀 = 가로 폭 반
+   - 세로 크기는 그대로 (min-height 6rem)
+   - 안의 폰트/심볼 박스를 좁은 폭에 맞춰 압축
+   ============================================ */
+
+.codex-list[data-active-tab="fish"] .codex-fish-cell {
+  padding: 0.7rem 0.7rem;
+  gap: 0.7rem;
+}
+
+/* 좌측 심볼 박스 작게 (4.6rem → 3.8rem) */
+.codex-list[data-active-tab="fish"] .codex-fish-cell__sym {
+  width: 3.8rem;
+  height: 3.8rem;
+}
+.codex-list[data-active-tab="fish"] .codex-fish-cell__sym svg {
+  width: 78%;
+}
+
+/* 우측 텍스트 폰트 약간 작게 */
+.codex-list[data-active-tab="fish"] .codex-fish-cell__grade {
+  font-size: 0.9rem;
+  letter-spacing: 0.10em;
+}
+.codex-list[data-active-tab="fish"] .codex-fish-cell__name {
+  font-size: 1.15rem;
+  letter-spacing: 0;
+}
+.codex-list[data-active-tab="fish"] .codex-fish-cell__weight {
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+}
+
+/* NEW 배지 — 좁은 셀 안쪽 우상단 */
+.codex-list[data-active-tab="fish"] .codex-fish-cell__new-badge {
+  top: 0.35rem;
+  right: 0.4rem;
+  padding: 0.14rem 0.4rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+}
+
+/* ============================================
+   Day 17 후속 — 등록 완료 글로우 펄스 (C-2 연출)
+   ============================================
+   대표 결정: 등록 직후 셀에 황금빛 1.2초 펄스 (등장 → 사라짐).
+   .codex-eq-cell--just-registered 클래스 부착 시 1회 발동.
+   ============================================ */
+
+@keyframes codex-cell-register-pulse {
+  0% {
+    box-shadow: 0 0 0 rgba(255, 217, 106, 0);
+    border-color: rgba(255, 217, 106, 0);
+  }
+  20% {
+    box-shadow:
+      0 0 16px rgba(255, 217, 106, 0.75),
+      0 0 32px rgba(255, 217, 106, 0.45),
+      inset 0 0 12px rgba(255, 233, 168, 0.30);
+    border-color: rgba(255, 217, 106, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(255, 217, 106, 0);
+    border-color: rgba(200, 212, 240, 0.06);
+  }
+}
+
+.codex-eq-cell--just-registered {
+  animation: codex-cell-register-pulse 1.2s ease-out;
+}
+
+
+/* ============================================
+   Day 17 후속 — 등록 확인 팝업 (codex-register-confirm.js SSOT)
+   ============================================
+   대표 결정: 등록 버튼 → "장비를 도감에 등록할까요?" 모달 → [취소] [확인].
+   ============================================ */
+
+.codex-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.codex-confirm--open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.codex-confirm__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 19, 0.62);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.codex-confirm__panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.92);
+  width: min(80vw, 22rem);
+  background: linear-gradient(180deg, rgba(20, 36, 78, 0.96), rgba(12, 26, 58, 0.96));
+  border: 1px solid rgba(255, 217, 106, 0.32);
+  border-radius: 12px;
+  padding: 1.4rem 1.2rem 1.2rem;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 16px rgba(255, 217, 106, 0.18);
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.codex-confirm--open .codex-confirm__panel {
+  transform: translate(-50%, -50%) scale(1);
+}
+.codex-confirm__message {
+  font-family: var(--font-base);
+  font-size: 1.15rem;
+  text-align: center;
+  color: rgba(220, 230, 245, 0.95);
+  margin-bottom: 1.2rem;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+}
+.codex-confirm__actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.7rem;
+}
+.codex-confirm__btn {
+  flex: 1;
+  max-width: 7rem;
+  padding: 0.55rem 1.2rem;
+  font-family: var(--font-base);
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+.codex-confirm__btn--cancel {
+  background: rgba(200, 212, 240, 0.10);
+  color: rgba(200, 212, 240, 0.85);
+  border: 1px solid rgba(200, 212, 240, 0.18);
+}
+.codex-confirm__btn--cancel:hover {
+  background: rgba(200, 212, 240, 0.16);
+}
+.codex-confirm__btn--ok {
+  background: linear-gradient(135deg, #ffe9a8, #ffd96a);
+  color: #0a1024;
+  box-shadow:
+    0 0 8px rgba(255, 233, 168, 0.40),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  font-weight: 600;
+}
+.codex-confirm__btn--ok:hover {
+  box-shadow:
+    0 0 14px rgba(255, 233, 168, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.codex-confirm__btn:active {
+  transform: scale(0.96);
+}
+
+
+/* ============================================
+   Day 17 후속 — 등록 완료 보상 토스트 (C-2 연출)
+   ============================================
+   대표 결정 a 안:
+     - 위 큰 글자: +1.875% (수치 강조, 황금)
+     - 아래 작은 글자: 물고기 kg (라벨)
+     - 위치: 화면 가운데
+     - 0.8 페이드인 → 0.4 유지 → 0.6 페이드아웃 (총 1.8s)
+   ============================================ */
+
+.codex-register-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -60%) scale(0.85);
+  z-index: 1200;             /* 확인 팝업(1100)보다 위 — 닫힌 후에도 잔영 가능 */
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 800ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 800ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.codex-register-toast--show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+.codex-register-toast--out {
+  opacity: 0;
+  transform: translate(-50%, -40%) scale(1.05);
+  transition:
+    opacity 600ms ease,
+    transform 600ms ease;
+}
+.codex-register-toast__value {
+  font-family: var(--font-impact);
+  font-size: 3.0rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #ffe9a8;
+  text-shadow:
+    0 0 14px rgba(255, 217, 106, 0.55),
+    0 0 28px rgba(255, 169, 77, 0.32),
+    0 2px 6px rgba(0, 0, 0, 0.6);
+  line-height: 1;
+  margin-bottom: 0.4rem;
+}
+.codex-register-toast__label {
+  font-family: var(--font-base);
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.20em;
+  color: rgba(255, 233, 168, 0.88);
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.55);
+}

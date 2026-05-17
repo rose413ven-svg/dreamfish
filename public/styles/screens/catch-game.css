@@ -1,0 +1,1620 @@
+/* ===========================================
+   catch-game.css — 잡기 게임 v2 스타일
+   ============================================
+   섹션:
+   1. 컨테이너
+   2. 물속 배경 (그라디언트 + 빛줄기 + 거품)
+   3. 상단 — 물고기 슬롯들 (그림자 + 글로우)
+   4. 체력바 (두껍게, 클러스터 색)
+   5. 떨어지는 원 (50px, 다층 글로우, 고급)
+   6. 당기다 버튼 (정중앙, 고급, 메탈릭)
+   7. 안내 텍스트 (버튼 아래)
+   8. 시간바 (화면 가장 하단)
+   ============================================ */
+
+
+/* ============================================
+   1. 컨테이너
+   ============================================ */
+
+.catch-game {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #050d1f;
+  overflow: hidden;
+}
+
+
+/* ============================================
+   2. 물속 배경 (잔잔 코지)
+   ============================================ */
+
+.catch-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.catch-bg__gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    #0d2548 0%,
+    #0e2a52 25%,
+    #0a1d3a 60%,
+    #050d1f 100%);
+}
+
+/* 위에서 내려오는 흐릿한 빛줄기 3개 */
+.catch-bg__rays {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.catch-bg__ray {
+  position: absolute;
+  top: -10%;
+  width: 10rem;
+  height: 130%;
+  background: linear-gradient(180deg,
+    rgba(165, 210, 240, 0.18) 0%,
+    rgba(120, 180, 220, 0.10) 40%,
+    rgba(80, 140, 200, 0.04) 70%,
+    transparent 100%);
+  transform-origin: top center;
+  filter: blur(10px);
+  /* ★ Day 21 (대표 결정 C안) — catch-ray-drift 무한 펄스 끄기 (배경 GPU 부담 ↓).
+   * 시각: 빛줄기는 그대로 떠있되 깜빡임만 사라짐. */
+}
+
+.catch-bg__ray--1 { left: 14%; transform: rotate(-10deg); }
+.catch-bg__ray--2 { left: 48%; transform: rotate(-3deg);  width: 14rem; }
+.catch-bg__ray--3 { left: 78%; transform: rotate(8deg);   }
+
+/* @keyframes catch-ray-drift 제거 — Day 21 C안 (참조 X) */
+
+/* 거품 */
+.catch-bg__bubbles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* ============================================
+   2-b. 원근감 헤엄치는 물고기 원 (배경 — 멀리서)
+   - 3단계 원근감 (far / mid / near)
+   - 좌우 양방향
+   - 게임 원과 시각 구분: 강한 블러, 작은 물고기 실루엣 올림
+   ============================================ */
+
+.catch-bg__swimmers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.catch-bg__swimmer {
+  position: absolute;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%,
+      rgba(255, 255, 255, 0.42) 0%,
+      var(--swimmer-color, rgba(120, 170, 200, 0.5)) 55%,
+      color-mix(in srgb, var(--swimmer-color, rgba(40, 70, 110, 0.6)) 100%, black 30%) 100%);
+  /* 안에 작은 검은 물고기 실루엣 — 잡기 게임 원과 시각 구분 */
+  background-image:
+    /* 작은 물고기 실루엣 (둥근 몸 + 꼬리) */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60'><path d='M 8,30 C 8,16 22,8 38,8 C 58,8 72,16 78,30 C 72,44 58,52 38,52 C 22,52 8,44 8,30 Z M 78,30 L 95,14 L 92,30 L 95,46 L 78,30 Z' fill='rgba(0,0,0,0.65)'/><circle cx='28' cy='26' r='2.5' fill='rgba(255,255,255,0.7)'/></svg>"),
+    radial-gradient(circle at 32% 28%,
+      rgba(255, 255, 255, 0.38) 0%,
+      var(--swimmer-color, rgba(120, 170, 200, 0.5)) 55%,
+      color-mix(in srgb, var(--swimmer-color, rgba(40, 70, 110, 0.6)) 100%, black 30%) 100%);
+  background-repeat: no-repeat;
+  background-position: center, center;
+  background-size: 64% 64%, 100% 100%;
+}
+
+/* 거리 단계: far(가장 멀리) — 작고 매우 흐림 */
+.catch-bg__swimmer--far-1,
+.catch-bg__swimmer--far-2 {
+  width: 1.8rem;
+  height: 1.8rem;
+  filter: blur(3.5px);
+  opacity: 0.45;
+}
+
+/* 거리 단계: mid (중간) */
+.catch-bg__swimmer--mid-1,
+.catch-bg__swimmer--mid-2 {
+  width: 2.6rem;
+  height: 2.6rem;
+  filter: blur(2px);
+  opacity: 0.62;
+}
+
+/* 거리 단계: near (가장 가까움) — 더 큼, 약한 블러 */
+.catch-bg__swimmer--near-1,
+.catch-bg__swimmer--near-2 {
+  width: 3.6rem;
+  height: 3.6rem;
+  filter: blur(1.2px);
+  opacity: 0.78;
+  box-shadow: 0 0 8px rgba(120, 180, 220, 0.18);
+}
+
+/* 개별 물고기 색 + 위치 + 방향 + 타이밍 */
+
+/* ★ Day 21 (대표 결정 C안) — 배경 어로 6마리 → 2마리 축소.
+ *   유지: mid-1 (위쪽 중간), near-1 (가운데 가까이)
+ *   제거: far-1, far-2, mid-2, near-2 (display: none — DOM 은 둔다, 렌더링 X)
+ *   효과: blur 필터 적용 어로 4마리 분 GPU 부담 ↓, 시각적으론 원근감 어로 2마리는 유지. */
+
+/* far-1: 좌→우, 위쪽 25%, 어두운 푸른 실루엣 — Day 21 C안 비활성 */
+.catch-bg__swimmer--far-1 {
+  display: none;
+  --swimmer-color: rgba(60, 110, 160, 0.65);
+  top: 22%;
+  animation: catch-swim-rtl 18s linear infinite,
+             catch-swim-bob 4.2s ease-in-out infinite;
+  animation-delay: -2s, 0s;
+}
+
+/* far-2: 우→좌, 아래쪽 65%, 보라/푸른 실루엣 — Day 21 C안 비활성 */
+.catch-bg__swimmer--far-2 {
+  display: none;
+  --swimmer-color: rgba(95, 100, 160, 0.6);
+  top: 65%;
+  animation: catch-swim-ltr 19s linear infinite,
+             catch-swim-bob 4.6s ease-in-out infinite;
+  animation-delay: -8s, -1.5s;
+}
+
+/* mid-1: 우→좌, 위쪽 38%, 약간 청록 살아있음 — 유지 (대표 결정 C안) */
+.catch-bg__swimmer--mid-1 {
+  --swimmer-color: rgba(110, 175, 195, 0.58);
+  top: 40%;
+  animation: catch-swim-ltr 16s linear infinite,
+             catch-swim-bob 3.8s ease-in-out infinite;
+  animation-delay: -4s, -0.5s;
+}
+
+/* mid-2: 좌→우, 아래쪽 78% — Day 21 C안 비활성 */
+.catch-bg__swimmer--mid-2 {
+  display: none;
+  --swimmer-color: rgba(140, 165, 200, 0.55);
+  top: 78%;
+  animation: catch-swim-rtl 17s linear infinite,
+             catch-swim-bob 4s ease-in-out infinite;
+  animation-delay: -11s, -2.5s;
+}
+
+/* near-1: 좌→우, 중간 50%, 색깔 살짝 살아있음 (흐릿한 흰빛) — 유지 (대표 결정 C안) */
+.catch-bg__swimmer--near-1 {
+  --swimmer-color: rgba(180, 210, 230, 0.55);
+  top: 52%;
+  animation: catch-swim-rtl 15s linear infinite,
+             catch-swim-bob 3.4s ease-in-out infinite;
+  animation-delay: -6s, -1s;
+}
+
+/* near-2 — Day 21 C안 비활성 */
+.catch-bg__swimmer--near-2 {
+  display: none;
+  --swimmer-color: rgba(160, 200, 220, 0.6);
+  top: 12%;
+  animation: catch-swim-ltr 16s linear infinite,
+             catch-swim-bob 3.6s ease-in-out infinite;
+  animation-delay: -9s, 0s;
+}
+
+/* Day 17 후속 v2 — 머리 방향으로 헤엄 픽스:
+   swimmer 의 fish SVG 원본은 머리 왼쪽 / 꼬리 오른쪽.
+   좌→우 (rtl) 진행 시 scaleX(-1) 로 머리가 오른쪽 보여야 정상.
+   우→좌 (ltr) 진행 시 scaleX(1) 로 머리가 왼쪽 보여야 정상.
+   기존엔 rtl 무 scaleX(=머리 왼쪽, 우로 가니까 꼬리부터) + ltr scaleX(-1)(=머리 오른쪽, 좌로 가니까 꼬리부터) 양쪽 다 거꾸로. */
+
+/* 좌→우 (15~20초 천천히, 화면 밖에서 시작 → 화면 밖으로) */
+@keyframes catch-swim-rtl {
+  0%   { transform: translateX(-15vw) scaleX(-1); }
+  100% { transform: translateX(115vw) scaleX(-1); }
+}
+
+/* 우→좌 (반대 방향) — 원본 방향(머리 왼쪽) 유지 = scaleX(1) 명시 */
+@keyframes catch-swim-ltr {
+  0%   { transform: translateX(115vw) scaleX(1); }
+  100% { transform: translateX(-15vw) scaleX(1); }
+}
+
+/* 살짝 위아래 흔들림 — 헤엄치는 자연스러움 */
+@keyframes catch-swim-bob {
+  0%, 100% { margin-top: 0; }
+  50%      { margin-top: -0.6rem; }
+}
+
+.catch-bg__bubble {
+  position: absolute;
+  bottom: -2rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(180, 220, 255, 0.20) 70%,
+    transparent 100%);
+  box-shadow: 0 0 5px rgba(180, 220, 255, 0.45);
+  opacity: 0;
+  animation: catch-bubble-rise 13s linear infinite;
+}
+
+.catch-bg__bubble--1 { left: 14%; animation-delay: 0s;  }
+.catch-bg__bubble--2 { left: 32%; animation-delay: 4s;  }
+.catch-bg__bubble--3 { left: 56%; animation-delay: 7s;  }
+.catch-bg__bubble--4 { left: 72%; animation-delay: 2s;  }
+.catch-bg__bubble--5 { left: 88%; animation-delay: 9s;  }
+
+@keyframes catch-bubble-rise {
+  0%   { transform: translateY(0)    scale(0.6); opacity: 0; }
+  10%  { opacity: 0.7; }
+  60%  { transform: translateY(-50vh) scale(1);   opacity: 0.85; }
+  100% { transform: translateY(-110vh) scale(1.1); opacity: 0; }
+}
+
+
+/* ============================================
+   3. 상단 — 물고기 슬롯들 (가로 배치)
+   ============================================ */
+
+.catch-results {
+  position: absolute;
+  top: 4.4rem;            /* Day 4: 36 → 44 (상단 시간바 18px와 여유 확보) */
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2.2rem;
+  z-index: 4;
+  pointer-events: none;
+  padding: 0 1.4rem;
+  box-sizing: border-box;
+}
+
+/* 매칭 1마리만 일 땐 큼지막하게 가운데 */
+.catch-results[data-count="1"] {
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 다중 매칭 — 한 줄에 나란히 (작게) */
+.catch-results--multi {
+  gap: 1rem;
+  top: 3.2rem;            /* Day 4: 24 → 32 (상단 시간바 18px와 여유 확보) */
+}
+
+.catch-results--multi .catch-fish-item {
+  transform: scale(0.78);
+  transform-origin: top center;
+  gap: 0.6rem;
+}
+
+.catch-results--multi .catch-fish-item__hp {
+  max-width: 18rem;
+  gap: 3px;
+}
+
+.catch-results--multi .catch-fish-item__hp-cell {
+  width: 1.6rem;
+  height: 1.1rem;
+}
+
+/* Day 7: 3마리 이상 매칭 시 추가 축소 — 양쪽 잘림 방지 */
+.catch-results[data-count="3"] {
+  gap: 0.4rem;             /* 1rem → 0.4rem (간격 축소) */
+  padding: 0 0.6rem;       /* 좌우 여유 축소 */
+}
+.catch-results[data-count="3"] .catch-fish-item {
+  transform: scale(0.6);   /* 0.78 → 0.6 (3마리 — 안 짤림) */
+}
+.catch-results[data-count="3"] .catch-fish-item__hp {
+  max-width: 14rem;
+}
+.catch-results[data-count="3"] .catch-fish-item__hp-cell {
+  width: 1.3rem;
+  height: 0.9rem;
+}
+
+/* ★ Day 10 v4 (대표 결정): 4마리부터 2줄 grid 레이아웃 — 양쪽 잘림 완전 방지.
+   한 줄 가로 여유 ↑ 덕분에 scale 도 더 크게 (0.5~0.6) — 시각 보임 ↑.
+     count 4 → 2x2  (2열)
+     count 5 → 3+2  (3열, 5번째는 둘째 줄 가운데)
+     count 6 → 3x2  (3열) */
+.catch-results[data-count="4"],
+.catch-results[data-count="5"],
+.catch-results[data-count="6"] {
+  display: grid;
+  grid-auto-rows: auto;
+  align-items: start;
+  justify-items: center;
+  row-gap: 0.4rem;
+  column-gap: 0.4rem;
+  padding: 0 0.6rem;
+  /* 2줄 layout 이라 top 살짝 위로 (시간바와 충돌 X) */
+  top: 2.6rem;
+}
+
+/* 4마리 — 2열 2줄 */
+.catch-results[data-count="4"] {
+  grid-template-columns: repeat(2, 1fr);
+}
+.catch-results[data-count="4"] .catch-fish-item {
+  transform: scale(0.6);
+}
+.catch-results[data-count="4"] .catch-fish-item__hp {
+  max-width: 14rem;
+}
+.catch-results[data-count="4"] .catch-fish-item__hp-cell {
+  width: 1.3rem;
+  height: 0.9rem;
+}
+.catch-results[data-count="4"] .catch-fish-item__grade-label {
+  font-size: 1.4rem;
+}
+
+/* 5마리 — 3열 (첫 줄 3 + 둘째 줄 2 자연 정렬) */
+.catch-results[data-count="5"] {
+  grid-template-columns: repeat(3, 1fr);
+}
+.catch-results[data-count="5"] .catch-fish-item {
+  transform: scale(0.5);
+}
+.catch-results[data-count="5"] .catch-fish-item__hp {
+  max-width: 11rem;
+}
+.catch-results[data-count="5"] .catch-fish-item__hp-cell {
+  width: 1.05rem;
+  height: 0.75rem;
+}
+.catch-results[data-count="5"] .catch-fish-item__grade-label {
+  font-size: 1.2rem;
+}
+
+/* 6마리 — 3열 2줄 */
+.catch-results[data-count="6"] {
+  grid-template-columns: repeat(3, 1fr);
+}
+.catch-results[data-count="6"] .catch-fish-item {
+  transform: scale(0.5);
+}
+.catch-results[data-count="6"] .catch-fish-item__hp {
+  max-width: 11rem;
+}
+.catch-results[data-count="6"] .catch-fish-item__hp-cell {
+  width: 1.05rem;
+  height: 0.75rem;
+}
+.catch-results[data-count="6"] .catch-fish-item__grade-label {
+  font-size: 1.2rem;
+}
+
+.catch-fish-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  transition: opacity 0.4s var(--fade-easing),
+              filter 0.4s var(--fade-easing);
+}
+
+.catch-fish-item--cleared {
+  opacity: 0.32;
+  filter: grayscale(0.5);
+}
+
+/* 등급 라벨 (검은 물고기 위에, 등급 색) */
+.catch-fish-item__grade-label {
+  font-family: var(--font-impact);
+  font-size: 1.5rem;
+  letter-spacing: 0.22em;
+  text-transform: lowercase;
+  /* 등급-물고기 간격 추가 좁힘 (컨테이너 gap 0.2rem 에서 반으로 효과) */
+  margin-bottom: -0.1rem;
+  pointer-events: none;
+  white-space: nowrap;
+  /* color, text-shadow는 JS가 등급 색으로 세팅 */
+}
+
+/* 다중 매칭일 때 라벨 살짝 작게 */
+.catch-results--multi .catch-fish-item__grade-label {
+  font-size: 1.3rem;
+  letter-spacing: 0.18em;
+}
+
+/* 다중 매칭 — 선택 가능 상태 (탭 가능) */
+.catch-fish-item--selectable {
+  cursor: pointer;
+  transition: transform 0.3s var(--fade-easing),
+              filter 0.3s var(--fade-easing);
+}
+
+.catch-fish-item--selectable:hover,
+.catch-fish-item--selectable:active {
+  transform: scale(1.06);
+  filter: brightness(1.18);
+}
+
+/* 선택 후 활성 — FLIP transform과 충돌하지 않게 brightness/glow만 */
+.catch-fish-item--selected .catch-fish-item__fish {
+  animation: catch-fish-selected-glow 0.6s var(--fade-easing) forwards;
+}
+
+@keyframes catch-fish-selected-glow {
+  0%   { filter:
+           drop-shadow(0 0 12px var(--fish-glow, rgba(255,255,255,0.5)))
+           drop-shadow(0 0 22px var(--fish-glow, rgba(255,255,255,0.3)))
+           drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+  }
+  100% { filter:
+           drop-shadow(0 0 18px var(--fish-glow, rgba(255,255,255,0.7)))
+           drop-shadow(0 0 32px var(--fish-glow, rgba(255,255,255,0.45)))
+           drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+  }
+}
+
+/* 선택 안 된 마리 — 페이드아웃 */
+/* Day 10 v4 (대표 결정): catch-fish-item--inactive / catch-fish-fadeout 키프레임 제거.
+   비활성 마리는 selectFish() 에서 즉시 DOM remove() 처리 — CSS 페이드 불필요. */
+
+
+/* ============================================
+   다중 매칭 안내 메시지 ("잡을 물고기를 터치하여 고르세요")
+   ============================================ */
+
+.catch-game__select-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-body);
+  font-size: 1.8rem;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow:
+    0 0 14px rgba(180, 220, 255, 0.7),
+    0 0 28px rgba(180, 220, 255, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+  z-index: 12;
+  white-space: nowrap;
+  animation: catch-select-message-pulse 2.4s ease-in-out infinite,
+             catch-select-message-in 0.4s var(--fade-easing);
+}
+
+@keyframes catch-select-message-pulse {
+  0%, 100% {
+    opacity: 0.78;
+    text-shadow:
+      0 0 14px rgba(180, 220, 255, 0.7),
+      0 0 28px rgba(180, 220, 255, 0.4),
+      0 2px 6px rgba(0, 0, 0, 0.65);
+  }
+  50% {
+    opacity: 1;
+    text-shadow:
+      0 0 22px rgba(220, 240, 255, 0.95),
+      0 0 40px rgba(180, 220, 255, 0.7),
+      0 2px 6px rgba(0, 0, 0, 0.65);
+  }
+}
+
+@keyframes catch-select-message-in {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1);    }
+}
+
+.catch-game__select-message--hide {
+  animation: catch-select-message-out 0.4s var(--fade-easing) forwards;
+}
+
+@keyframes catch-select-message-out {
+  0%   { opacity: 1; transform: translate(-50%, -50%) scale(1);    }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); }
+}
+
+/* 선택 모드일 때 잡기존 / 안내텍스트 / 시간바 가림 */
+.catch-game--selecting .catch-game__button-wrap,
+.catch-game--selecting .catch-game__hint {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--fade-easing);
+}
+
+.catch-game--selecting .catch-game__time-bar {
+  opacity: 0.3;
+}
+
+/* 검은 물고기 + 클러스터 색 글로우 (잘 보이게)
+ * ★ Day 21 (대표 결정 B안 — 잡기게임 렉 최적화) ★:
+ *   - drop-shadow 3겹 → 1겹 (12px 메인 글로우만 유지)
+ *   - catch-fish-float 무한 헤엄 애니메이션 제거 (정적)
+ *   - 효과: 마리당 GPU 합성 비용 큰 폭 ↓ (특히 마리 수 많을 때)
+ *   - 시각: 글로우 살짝 약해짐 + 위아래 흔들림 사라짐
+ */
+.catch-fish-item__fish {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 12px var(--fish-glow, rgba(255, 255, 255, 0.5)));
+  /* animation 제거 — Day 21 B안 (catch-fish-float 정적화) */
+}
+
+.catch-fish-item__fish svg {
+  display: block;
+}
+
+/* @keyframes catch-fish-float 제거 — Day 21 B안 (참조 X, fish 본체 정적화) */
+
+
+/* ============================================
+   4. 체력바 — Day 4: 칸 수 대폭 증가 (10/14/20/30/39)
+                hpRows로 줄별 렌더링, 등급별 셀 크기 자동 축소
+   ============================================ */
+
+.catch-fish-item__hp {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  max-width: 32rem;
+}
+
+/* 줄 단위 — 한 줄에 가로로 나란히 */
+.catch-fish-item__hp-row {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  justify-content: center;
+}
+
+/* 체력 닳을 때 짧은 흔들림 — 200ms */
+.catch-fish-item__hp--shake {
+  animation: catch-hp-shake 0.22s ease-out;
+  will-change: transform;  /* Day 17 후속 v2 폰 최적화 — hp 감소 흔들림 GPU 가속 */
+}
+
+@keyframes catch-hp-shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-3px); }
+  40%      { transform: translateX(3px); }
+  60%      { transform: translateX(-2px); }
+  80%      { transform: translateX(2px); }
+}
+
+.catch-fish-item__hp-cell {
+  width: 2.2rem;
+  height: 1.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 2px;
+  transition: background 0.3s var(--fade-easing),
+              box-shadow 0.3s var(--fade-easing),
+              opacity 0.3s var(--fade-easing);
+}
+
+/* Day 4: 등급별 셀 크기 — 칸 수 많을수록 작게 (전체 폭 비슷하게 유지) */
+.catch-fish-item__hp[data-grade="소형"]    .catch-fish-item__hp-cell {
+  width: 2.2rem; height: 1.4rem;
+}
+.catch-fish-item__hp[data-grade="중형"]    .catch-fish-item__hp-cell {
+  width: 1.8rem; height: 1.3rem;
+}
+.catch-fish-item__hp[data-grade="월척"]    .catch-fish-item__hp-cell {
+  width: 1.4rem; height: 1.1rem;
+}
+/* Day 17 후속 v2 (대표 결정 A안): 대물 24 HP (12+12) — 한 줄 12칸 화면 폭 맞춤 */
+.catch-fish-item__hp[data-grade="대물"]    .catch-fish-item__hp-cell {
+  width: 1.25rem; height: 1.0rem;
+}
+.catch-fish-item__hp[data-grade="보스"]    .catch-fish-item__hp-cell {
+  width: 1.4rem; height: 1.1rem;
+}
+.catch-fish-item__hp[data-grade="전설보스"] .catch-fish-item__hp-cell {
+  width: 1.1rem; height: 1rem;
+  gap: 3px;
+}
+/* Day 16 — 신화보스 (3줄 15칸 = 45 HP, 가장 작은 cell) */
+.catch-fish-item__hp[data-grade="신화보스"] .catch-fish-item__hp-cell {
+  width: 1.0rem; height: 0.9rem;
+  gap: 2px;
+}
+/* 줄 사이 간격도 등급별로 살짝 조정 */
+.catch-fish-item__hp[data-rows="3"] {
+  gap: 3px;
+}
+.catch-fish-item__hp[data-rows="3"] .catch-fish-item__hp-row {
+  gap: 3px;
+}
+
+.catch-fish-item__hp-cell[data-filled="true"] {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--hp-color, #fff) 100%, white 25%) 0%,
+    var(--hp-color, #fff) 100%);
+  box-shadow:
+    0 0 10px var(--hp-glow, rgba(255, 255, 255, 0.6)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border-color: var(--hp-color, #fff);
+}
+
+/* ★ Day 28 (대표 결정 A-가) — 골든힛 시 체력바 테두리(border) 만 등급 무관 #FFD96A 부드러운 황금으로 통일.
+   채움 그라데이션(background) 과 글로우(box-shadow) 는 등급별 색 그대로 유지 — 등급 식별성 보존.
+   매칭 개수별 4가지 등급 색 (앰버/크림슨/골드/마젠타) 의 테두리 차이만 제거되어
+   골든힛 황금 톤(orb / fish 색 #FFD96A) 과 시각 통일감 ↑. */
+.catch-fish-item__hp[data-golden-hit="true"] .catch-fish-item__hp-cell[data-filled="true"] {
+  border-color: #FFD96A;
+}
+
+.catch-fish-item__hp-cell[data-filled="false"] {
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: none;
+  opacity: 0.32;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+
+/* ============================================
+   5. 떨어지는 원 (50px, 다층 글로우, 고급)
+   ============================================ */
+
+.catch-game__orb-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 5;
+}
+
+/* wrapper — 위치(translate) 담당. 절대 transform이 다른 곳에서 덮이지 않음 */
+.catch-orb-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5rem;
+  height: 5rem;
+  will-change: transform;
+}
+
+/* 원 본체 — 시각 효과만 담당 (scale/opacity 등) */
+.catch-orb {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  will-change: transform, opacity;  /* Day 17 후속 v2 폰 최적화 — orb 매 프레임 이동 시 GPU 합성 비용 ↓ */
+
+  /* 배경 = 클러스터 색 (다층 그라디언트) */
+  background:
+    radial-gradient(circle at 32% 28%,
+      rgba(255, 255, 255, 0.92) 0%,
+      color-mix(in srgb, var(--orb-color, #5FC9F7) 100%, white 35%) 25%,
+      var(--orb-color, #5FC9F7) 60%,
+      color-mix(in srgb, var(--orb-color, #5FC9F7) 100%, black 30%) 95%);
+
+  /* 외곽 = 등급 색 림 */
+  border: 1.5px solid var(--orb-grade-color, #7DD8C8);
+
+  /* Day 17 후속 v2 폰 최적화 (D안): box-shadow 4겹 → 2겹 단순화.
+     기존: 외곽 글로우 16px + 30px + inset 광택 2개 = 4겹
+     변경: 외곽 글로우 16px + inset 깊이 1개 = 2겹
+     시각: 외곽 30px 글로우 사라짐 (살짝 좁아짐). 안쪽 위쪽 광택도 제거.
+     효과: orb 이동 시 layer 합성 비용 감소. */
+  box-shadow:
+    /* 외곽 글로우 (등급 색) */
+    0 0 16px var(--orb-grade-glow, rgba(125, 216, 200, 0.85)),
+    /* 안쪽 깊이 */
+    inset 0 -2px 8px color-mix(in srgb, var(--orb-color, #5FC9F7) 100%, black 45%);
+}
+
+/* 코어 광원 (좌상단) */
+.catch-orb__core {
+  position: absolute;
+  top: 16%;
+  left: 20%;
+  width: 30%;
+  height: 22%;
+  background: radial-gradient(ellipse at center,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%);
+  border-radius: 50%;
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+/* 외곽 미세 빛(쉬머)
+ * ★ Day 21 (대표 결정 C안) — catch-orb-shine 무한 회전 끄기.
+ * orb 자체가 매 프레임 transform(translate) 이동 중인데 shine 까지 회전 = GPU 부담.
+ * 시각: 광택이 한쪽에 고정 (회전 사라짐), 자세히 보지 않으면 차이 거의 없음. */
+.catch-orb__shine {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.0) 35%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(255, 255, 255, 0.0) 65%);
+  pointer-events: none;
+  /* animation 제거 — Day 21 C안 (catch-orb-shine 정적화) */
+}
+
+/* 원 안 검은 물고기 심볼 — 등급별 크기 차이 */
+.catch-orb__symbol {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  will-change: transform;  /* Day 17 후속 v2 폰 최적화 — bob 애니메이션 GPU 가속 */
+  filter:
+    drop-shadow(0 0 3px rgba(255, 255, 255, 0.45))
+    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+  /* 위쪽 물고기 떠다니는 느낌 (잔잔) */
+  animation: catch-orb-symbol-bob 2.4s ease-in-out infinite;
+}
+
+@keyframes catch-orb-symbol-bob {
+  0%, 100% { transform: translate(-50%, calc(-50% - 0.5px)) rotate(-1deg); }
+  50%      { transform: translate(-50%, calc(-50% + 0.5px)) rotate(1deg); }
+}
+
+/* @keyframes catch-orb-shine 제거 — Day 21 C안 (참조 X) */
+
+/* 잡혔을 때 — 그 자리에서 scale 페이드 (translate은 wrapper가 유지) */
+.catch-orb--caught {
+  animation: catch-orb-caught 0.28s ease-out forwards;
+}
+
+@keyframes catch-orb-caught {
+  0%   { transform: scale(1);    opacity: 1; }
+  45%  {
+    transform: scale(1.45);
+    opacity: 1;
+    box-shadow:
+      0 0 32px rgba(255, 255, 255, 1),
+      0 0 56px var(--orb-grade-glow, rgba(255, 255, 255, 0.95));
+  }
+  100% { transform: scale(0.4);  opacity: 0; }
+}
+
+/* MISS 시 그 자리에 멈춤 + 페이드아웃 (Day 3 추가)
+   "원이 잡으려 한 위치에 멈췄다 사라지는" 느낌 — 시각 피드백 */
+.catch-orb--miss-fade {
+  animation: catch-orb-miss-fade 0.3s ease-out forwards;
+}
+
+@keyframes catch-orb-miss-fade {
+  0%   { transform: scale(1);    opacity: 1; }
+  20%  { transform: scale(1.05); opacity: 0.95; }
+  100% { transform: scale(0.85); opacity: 0; filter: blur(2px); }
+}
+
+
+/* ============================================
+   5-2. 꽝 원 (Day 4) — 코지한 검은 원 + 흰 X
+   ============================================ */
+
+/* 검은 그라디언트 — 일반 원 색 변수 무시하고 덮어씀 */
+.catch-orb--rock {
+  background: radial-gradient(circle at 32% 28%,
+    rgba(110, 110, 130, 0.95) 0%,
+    rgba(58, 58, 76, 1) 35%,
+    rgba(20, 20, 30, 1) 95%);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 0 14px rgba(0, 0, 0, 0.7),
+    0 0 22px rgba(0, 0, 0, 0.45),
+    inset 0 -3px 7px rgba(0, 0, 0, 0.6),
+    inset 0 1.5px 2.5px rgba(255, 255, 255, 0.18);
+}
+
+/* 코어 광원 — 꽝 원에서는 더 옅게 */
+.catch-orb__core--rock {
+  opacity: 0.55;
+}
+
+/* 흰 X — 코지하게 (라운드 라인캡 + 또렷한 흰빛, 어떤 배경에도 잘 보이게) */
+.catch-orb__rock-x {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  /* 어두운 외곽으로 흰색 X 대비 강화 */
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.85))
+          drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
+}
+
+.catch-orb__rock-x-line {
+  position: absolute;
+  width: 64%;          /* Day 4-2: 50% → 64% (더 크게) */
+  height: 0.6rem;         /* Day 4-2: 4px → 6px (더 굵게) */
+  background: #FFFFFF;
+  border-radius: 4px;
+  box-shadow:
+    0 0 8px  rgba(255, 255, 255, 0.85),
+    0 0 14px rgba(255, 255, 255, 0.55),
+    0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.catch-orb__rock-x-line--1 { transform: rotate(45deg);  }
+.catch-orb__rock-x-line--2 { transform: rotate(-45deg); }
+
+
+/* ============================================
+   6. 잡기존 (정중앙, 90px 네모, 그물 디자인, 연한 파랑)
+   - 외곽 네모 = 잡힘 영역 경계 (NICE 영역 끝)
+   - 안쪽 격자 = 그물 패턴
+   - 가운데 작은 영역 = PERFECT 영역 (40×40)
+   ============================================ */
+
+.catch-game__button-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  pointer-events: none; /* 화면 전체 클릭이 컨테이너에 가닿게 */
+  transition: opacity 0.4s var(--fade-easing);
+}
+
+.catch-game__button {
+  position: relative;
+  width: 9rem;            /* 80 → 90 (네모) */
+  height: 9rem;
+  border-radius: 6px;     /* 살짝 둥근 네모 */
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  pointer-events: auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: transform 0.1s var(--fade-easing);
+  animation: catch-zone-pulse 2.4s ease-in-out infinite;
+}
+
+/* 외곽 사각 + 그물 격자 — 단일 ring 요소가 모든 시각 책임 */
+.catch-game__button-ring--metal {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  pointer-events: none;
+
+  /* 외곽 사각 라인 (연한 파랑) */
+  border: 2px solid rgba(168, 200, 232, 0.92);
+
+  /* 안쪽 = 그물 격자 (3×3 등분 라인) */
+  background-image:
+    /* 세로 라인 2개 (1/3, 2/3 위치) */
+    linear-gradient(to right,
+      transparent calc(33.33% - 0.6px),
+      rgba(168, 200, 232, 0.55) calc(33.33% - 0.6px),
+      rgba(168, 200, 232, 0.55) calc(33.33% + 0.6px),
+      transparent calc(33.33% + 0.6px),
+      transparent calc(66.66% - 0.6px),
+      rgba(168, 200, 232, 0.55) calc(66.66% - 0.6px),
+      rgba(168, 200, 232, 0.55) calc(66.66% + 0.6px),
+      transparent calc(66.66% + 0.6px)),
+    /* 가로 라인 2개 */
+    linear-gradient(to bottom,
+      transparent calc(33.33% - 0.6px),
+      rgba(168, 200, 232, 0.55) calc(33.33% - 0.6px),
+      rgba(168, 200, 232, 0.55) calc(33.33% + 0.6px),
+      transparent calc(33.33% + 0.6px),
+      transparent calc(66.66% - 0.6px),
+      rgba(168, 200, 232, 0.55) calc(66.66% - 0.6px),
+      rgba(168, 200, 232, 0.55) calc(66.66% + 0.6px),
+      transparent calc(66.66% + 0.6px)),
+    /* 살짝 어두운 안쪽 배경 */
+    radial-gradient(circle at 50% 50%,
+      rgba(20, 35, 65, 0.18) 0%,
+      rgba(10, 25, 50, 0.34) 100%);
+
+  box-shadow:
+    /* 외곽 글로우 (연한 파란빛) */
+    0 0 14px rgba(168, 200, 232, 0.55),
+    0 0 28px rgba(168, 200, 232, 0.28),
+    /* 안쪽 깊이감 */
+    inset 0 0 14px rgba(0, 0, 0, 0.4);
+}
+
+/* 그립과 표적 십자는 더이상 필요 없으니 비활성 */
+.catch-game__button-grip,
+.catch-game__button-crosshair {
+  display: none;
+}
+
+@keyframes catch-zone-pulse {
+  0%, 100% {
+    filter: brightness(1) drop-shadow(0 0 6px rgba(168, 200, 232, 0.45));
+  }
+  50% {
+    filter: brightness(1.15) drop-shadow(0 0 14px rgba(168, 200, 232, 0.75));
+  }
+}
+
+.catch-game__button:active {
+  transform: scale(0.94);
+}
+
+/* PERFECT — 강한 빛 폭발 (등급 글로우 색) */
+.catch-game__button--perfect {
+  animation: catch-zone-perfect 0.5s ease-out !important;
+}
+
+@keyframes catch-zone-perfect {
+  0% {
+    transform: scale(0.92);
+    filter: brightness(1.8) drop-shadow(0 0 26px var(--hit-glow, rgba(255, 230, 100, 1)));
+  }
+  60% {
+    transform: scale(1.18);
+    filter: brightness(1.4) drop-shadow(0 0 38px var(--hit-glow, rgba(255, 230, 100, 1)));
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1) drop-shadow(0 0 6px rgba(168, 200, 232, 0.45));
+  }
+}
+
+/* NICE — 가벼운 빛 펄스 */
+.catch-game__button--nice {
+  animation: catch-zone-nice 0.4s ease-out !important;
+}
+
+@keyframes catch-zone-nice {
+  0% {
+    transform: scale(0.95);
+    filter: brightness(1.5) drop-shadow(0 0 18px var(--hit-glow, rgba(255, 157, 203, 0.95)));
+  }
+  60% {
+    transform: scale(1.08);
+    filter: brightness(1.2) drop-shadow(0 0 24px var(--hit-glow, rgba(255, 157, 203, 0.85)));
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1) drop-shadow(0 0 6px rgba(168, 200, 232, 0.45));
+  }
+}
+
+/* MISS — 짧은 진동 + 빨간 빛 */
+.catch-game__button--miss {
+  animation: catch-zone-miss 0.32s ease-out !important;
+}
+
+@keyframes catch-zone-miss {
+  0%, 100% { transform: translateX(0);  filter: brightness(1) drop-shadow(0 0 6px rgba(168, 200, 232, 0.45)); }
+  25%      { transform: translateX(-5px); filter: brightness(1.2) drop-shadow(0 0 14px rgba(255, 80, 80, 0.85)); }
+  75%      { transform: translateX(5px);  filter: brightness(1.1) drop-shadow(0 0 10px rgba(255, 80, 80, 0.7)); }
+}
+
+/* Day 4: BAD — 강한 진동 + 진한 빨간 빛 (꽝 원 터치 시) */
+.catch-game__button--bad {
+  animation: catch-zone-bad 0.45s ease-out !important;
+}
+
+@keyframes catch-zone-bad {
+  0%, 100% { transform: translateX(0);   filter: brightness(1) drop-shadow(0 0 6px rgba(168, 200, 232, 0.45)); }
+  15%      { transform: translateX(-7px); filter: brightness(1.3) drop-shadow(0 0 18px rgba(255, 50, 50, 0.95)); }
+  35%      { transform: translateX(7px);  filter: brightness(1.25) drop-shadow(0 0 16px rgba(255, 50, 50, 0.9)); }
+  55%      { transform: translateX(-5px); filter: brightness(1.2) drop-shadow(0 0 14px rgba(255, 70, 70, 0.85)); }
+  80%      { transform: translateX(4px);  filter: brightness(1.1) drop-shadow(0 0 10px rgba(255, 80, 80, 0.7)); }
+}
+
+
+/* ============================================
+   판정 텍스트 — PERFECT / NICE / MISS
+   잡기존 위에 잠깐 떠올랐다 사라짐
+   ============================================ */
+
+.catch-judge {
+  position: absolute;
+  /* ★ Day 28 (대표 결정) — top 50% → 45% (약간 위로 이동, 잡기존 위쪽 영역 가독성 ↑).
+     keyframes catch-judge-pop 의 떠오르는 패턴(-32px → -56px → -80px)은 유지. */
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 11;
+  font-family: var(--font-impact);
+  letter-spacing: 0.18em;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: catch-judge-pop 0.7s var(--fade-easing) forwards;
+}
+
+@keyframes catch-judge-pop {
+  0%   { opacity: 0; transform: translate(-50%, -50%)            scale(0.6); }
+  20%  { opacity: 1; transform: translate(-50%, calc(-50% - 32px)) scale(1.15); }
+  60%  { opacity: 1; transform: translate(-50%, calc(-50% - 56px)) scale(1);    }
+  100% { opacity: 0; transform: translate(-50%, calc(-50% - 80px)) scale(0.95); }
+}
+
+/* PERFECT — 노란색 가장 크게 */
+.catch-judge--perfect {
+  font-size: 6.4rem;
+  color: #FFD93D;
+  text-shadow:
+    0 0 22px rgba(255, 217, 61, 1),
+    0 0 44px rgba(255, 217, 61, 0.8),
+    0 0 70px rgba(255, 200, 60, 0.55),
+    0 3px 6px rgba(0, 0, 0, 0.7);
+}
+
+/* NICE — 분홍색 중간 크기 */
+.catch-judge--nice {
+  font-size: 4.6rem;
+  color: #FF9DCB;
+  text-shadow:
+    0 0 18px rgba(255, 157, 203, 1),
+    0 0 36px rgba(255, 157, 203, 0.75),
+    0 3px 6px rgba(0, 0, 0, 0.7);
+}
+
+/* MISS — 빨간색 */
+.catch-judge--miss {
+  font-size: 3.8rem;
+  color: #FF4646;
+  text-shadow:
+    0 0 16px rgba(255, 70, 70, 0.95),
+    0 0 30px rgba(255, 70, 70, 0.6),
+    0 3px 6px rgba(0, 0, 0, 0.7);
+}
+
+/* Day 4: BAD — 검정색 텍스트, 빨간 글로우로 가독성 확보.
+   ★ Day 25 (대표 결정): 흰색 테두리 + 흰색 글로우 삭제 (가독성 X — 흐릿하게 보임 픽스). */
+.catch-judge--bad {
+  font-size: 5.6rem;
+  color: #1a1a1a;
+  text-shadow:
+    0 0 14px rgba(255, 70, 70, 0.85),
+    0 0 28px rgba(255, 70, 70, 0.55),
+    0 3px 6px rgba(0, 0, 0, 0.7);
+}
+
+/* Day 4: 판정 부수 텍스트 — 효과 수치 (예: -3초)
+   ★ Day 22 Phase 5 후속 (대표 결정) — perfect/nice/miss sub 폐기, BAD -3초 만 표시 (빨간색)
+   ★ Day 25 (대표 결정) — 잘 안 보임 픽스: 크기 0.42 → 0.65em 으로 키움. */
+.catch-judge__sub {
+  display: inline-block;
+  margin-left: 0.5em;
+  font-family: var(--font-impact);
+  font-size: 0.65em;             /* ★ Day 25 — 0.42 → 0.65em (가독성) */
+  letter-spacing: 0.16em;
+  vertical-align: middle;
+  color: rgba(255, 255, 255, 0.94);
+  text-shadow:
+    0 0 8px rgba(0, 0, 0, 0.85),
+    0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* ★ Day 22 Phase 5 후속: BAD '-3초' 만 빨간색 + 빨간 글로우.
+   ★ Day 25 (대표 결정) — 흰색 테두리 분 제거 (글로우는 빨강만 유지). */
+.catch-judge--bad .catch-judge__sub {
+  color: #FF4D4D;
+  text-shadow:
+    0 0 10px rgba(255, 77, 77, 0.95),
+    0 0 18px rgba(255, 77, 77, 0.7),
+    0 2px 3px rgba(0, 0, 0, 0.9);
+}
+
+
+/* ============================================
+   7. 안내 텍스트 (화면 하단, 흰색 작게)
+   ============================================ */
+
+.catch-game__hint {
+  position: absolute;
+  bottom: 10rem;       /* 화면 바닥에서 100px (시간바 두께 고려) */
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 1.2rem;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  z-index: 8;
+  animation: catch-hint-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes catch-hint-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 0.92; }
+}
+
+/* ★ Day 25 (대표 결정) — HIDDEN 모드 보조 안내: "ZONE이 사라집니다"
+   hint 바로 아래, 작게, 약한 분홍 톤 (히든 모드 톤과 일관) */
+.catch-game__hint-sub {
+  position: absolute;
+  bottom: 8.2rem;       /* hint(10rem) 바로 아래 (간격 ~1.8rem) */
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  letter-spacing: 0.16em;
+  color: rgba(255, 184, 216, 0.7);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+  z-index: 8;
+  animation: catch-hint-pulse 2.4s ease-in-out infinite;
+  animation-delay: 0.4s;       /* hint 와 살짝 어긋난 페이즈 */
+}
+
+
+/* ============================================
+   8. 시간바 (Day 4: 화면 가장 하단 → 상단으로 이동, 더 두껍게)
+   ============================================ */
+
+.catch-game__time-bar {
+  position: absolute;
+  top: 0;              /* Day 4: bottom: 0 → top: 0 */
+  left: 0;
+  right: 0;
+  height: 1.8rem;        /* Day 4: 12px → 18px (더 잘 보이게) */
+  background: rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  z-index: 8;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.catch-game__time-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(to right,
+    rgba(165, 210, 240, 0.85),
+    rgba(220, 240, 255, 0.95));
+  box-shadow:
+    0 0 12px rgba(165, 210, 240, 0.7),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.4);
+  transition: width 0.05s linear, background 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Day 4: 시간 20% 이하 — 빨간색 + 번쩍번쩍 */
+.catch-game__time-fill--low {
+  background: linear-gradient(to right,
+    rgba(255, 70, 70, 0.92),
+    rgba(255, 130, 130, 1));
+  box-shadow:
+    0 0 16px rgba(255, 70, 70, 0.85),
+    0 0 28px rgba(255, 70, 70, 0.55),
+    inset 0 -1px 0 rgba(255, 200, 200, 0.5);
+  animation: catch-time-low-blink 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes catch-time-low-blink {
+  0%   { opacity: 0.85; filter: brightness(0.95); }
+  100% { opacity: 1;    filter: brightness(1.25); }
+}
+
+
+/* ============================================
+   9. 화면 전체 붉은 번쩍 (Day 4) — BAD 발생 시
+   ============================================ */
+
+.catch-game__bad-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(255, 0, 0, 0);
+  z-index: 12;          /* 판정 텍스트(11)보다 위, 그러나 alpha 0.45로 텍스트 가독성 유지 */
+  animation: catch-bad-flash 0.5s ease-out forwards;
+}
+
+@keyframes catch-bad-flash {
+  0%   { background: rgba(255, 0,  0,  0);    box-shadow: inset 0 0 0px rgba(255, 0, 0, 0); }
+  18%  { background: rgba(255, 50, 50, 0.45); box-shadow: inset 0 0 80px rgba(255, 30, 30, 0.65); }
+  55%  { background: rgba(255, 50, 50, 0.22); box-shadow: inset 0 0 60px rgba(255, 30, 30, 0.4); }
+  100% { background: rgba(255, 0,  0,  0);    box-shadow: inset 0 0 0px rgba(255, 0, 0, 0); }
+}
+
+/* ============================================
+   Day 15 — 골든힛 타임 잡기게임 황금빛 (Phase 2C)
+   ============================================
+   1) 화면 전체 외곽 황금빛 글로우 (대표 추가 요청)
+   2) HP 셀 황금색
+   3) 등급 라벨 황금색
+   - orb 안 fish 심볼은 catch-game.js 가 isGoldenHit 시 fill='#FFD96A' 로 직접 그림
+     (rock 은 검은색 그대로 유지 — 대표 명시)
+   - 위쪽 fish 실루엣도 catch-game.js 가 색 분기 (fillColor='#FFD96A')
+   ============================================ */
+
+/* (1) 화면 전체 외곽 황금빛 글로우 (안쪽으로 inset shadow + filter) */
+/* ★ Day 21 (대표 결정 A안 — 잡기게임 렉 최적화) ★:
+ *   기존: 무한 펄스 (catch-game-golden-pulse 2초 무한, box-shadow 매 프레임 재계산)
+ *   변경: 정적 (단일 inset box-shadow만, 펄스 X)
+ *   효과: 골든힛 잡기게임 진입 즉시 화면 전체 GPU 부담 큰 폭 ↓ (모바일 핵심 부담원).
+ *   시각: 화면 안쪽 황금빛 광채는 그대로, 깜빡임만 사라짐.
+ */
+.catch-game[data-golden-hit="true"] {
+  /* 화면 안쪽 사방으로 황금빛 광채 (inset 큰 글로우, 정적) */
+  box-shadow:
+    inset 0 0 3rem rgba(255, 217, 106, 0.55),
+    inset 0 0 6rem rgba(255, 217, 106, 0.30),
+    inset 0 0 10rem rgba(255, 217, 106, 0.15);
+  /* animation 제거 — Day 21 A안 (모바일 GPU 부담 ↓) */
+}
+
+/* @keyframes catch-game-golden-pulse 제거 — Day 21 A안 (참조 X) */
+
+/* (2) HP 셀 황금색 (등급별 색 오버라이드) */
+.catch-game[data-golden-hit="true"] .catch-fish-item__hp-cell[data-filled="true"] {
+  background: #FFD96A;
+  box-shadow:
+    0 0 0.5rem rgba(255, 217, 106, 0.85),
+    inset 0 0 0.3rem rgba(255, 255, 255, 0.5);
+}
+/* HP 셀 비어있을 때 (잡기 진행 후) 어두운 황금 톤 */
+.catch-game[data-golden-hit="true"] .catch-fish-item__hp-cell[data-filled="false"] {
+  background: rgba(120, 90, 30, 0.35);
+  box-shadow: inset 0 0 0.2rem rgba(0, 0, 0, 0.4);
+}
+
+/* (3) 등급 라벨 황금색 — inline style 우선순위 위해 !important */
+.catch-game[data-golden-hit="true"] .catch-fish-item__grade-label {
+  color: #FFD96A !important;
+  text-shadow:
+    0 0 0.6rem rgba(255, 217, 106, 0.9),
+    0 1px 3px rgba(0, 0, 0, 0.85) !important;
+}
+
+
+/* ============================================
+   Day 15 추가 — 골든힛 잡기게임 위쪽 fish sparkle 5개 (대표 요청)
+   강화 성공 sparkle 패턴과 동일 (4-pointed star + 펄스).
+   눈/테두리 X SVG 위에 오버레이.
+   ============================================ */
+
+.catch-fish-item__fish--golden-hit {
+  position: relative;
+}
+.catch-fish-item__sparkles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+.catch-fish-item__sparkle {
+  position: absolute;
+  /* ★ Day 21 A안 — drop-shadow 2겹 filter 제거 (모바일 GPU 부담 ↓).
+   * sparkle SVG 자체가 흰색 단색이라 글로우 없어도 가시성 충분.
+   * 기존: filter: drop-shadow(0 0 0.5rem rgba(255,255,255,0.95))
+   *               drop-shadow(0 0 0.9rem rgba(255,217,106,0.7)); */
+  animation: catch-fish-sparkle-pulse 1.0s ease-in-out infinite;
+}
+.catch-fish-item__sparkle svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 위치 — 5개를 fish 위에 골고루 분산 (head/back/tail/belly/center) */
+.catch-fish-item__sparkle--1 { /* head 위쪽 */
+  top: 22%; left: 18%;
+  width: 1.4rem; height: 1.4rem;
+  animation-delay: 0s;
+}
+.catch-fish-item__sparkle--2 { /* back 위 */
+  top: 12%; left: 48%;
+  width: 1.2rem; height: 1.2rem;
+  animation-delay: 0.2s;
+}
+.catch-fish-item__sparkle--3 { /* tail */
+  top: 35%; right: 8%;
+  width: 1.6rem; height: 1.6rem;
+  animation-delay: 0.4s;
+}
+.catch-fish-item__sparkle--4 { /* belly */
+  top: 64%; left: 36%;
+  width: 1.0rem; height: 1.0rem;
+  animation-delay: 0.6s;
+}
+.catch-fish-item__sparkle--5 { /* center body */
+  top: 42%; left: 28%;
+  width: 1.3rem; height: 1.3rem;
+  animation-delay: 0.8s;
+}
+
+@keyframes catch-fish-sparkle-pulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.8) rotate(0deg);
+  }
+  50% {
+    opacity: 1.0;
+    transform: scale(1.15) rotate(180deg);
+  }
+}
+
+/* ============================================
+   ★ Day 22: HIDDEN HIT(분홍) 잡기 게임 모드
+   ============================================
+   data-hidden-mode="true" 부착 시:
+   - 배경 그라데이션: 푸른 → 옅은 분홍 톤 (대표 명세)
+   - 배경 헤엄치는 물고기(swimmers): 완전 hide (대표 명세 "다 삭제")
+   - 빛줄기(rays) / 거품(bubbles): 유지 (분위기 유지)
+   - 정중앙 잡기존 버튼 / 시간바: Phase 4A 임시 hide (Phase 4C 에서 시간바 복원)
+
+   Phase 4B: 보스 그림자 + 체력바 20 추가
+   Phase 4C: 카운트다운 + 30초 타이머 + 물고기원(흰색+분홍심볼) 등장
+   Phase 4D: 종료 조건 + 임시 보상 처리
+   ============================================ */
+
+/* (1) 배경 그라데이션 — 옅은 분홍 톤 (위 → 아래: 연한 핑크 → 진한 핑크 → 어두운 분홍) */
+.catch-game[data-hidden-mode="true"] .catch-bg__gradient {
+  background: linear-gradient(180deg,
+    #4a2a3e 0%,
+    #5c2e44 25%,
+    #421d33 60%,
+    #1e0e1a 100%);
+}
+
+/* (2) 빛줄기 — 분홍 톤으로 변경 (현재 푸른빛 → 옅은 핑크) */
+.catch-game[data-hidden-mode="true"] .catch-bg__ray {
+  background: linear-gradient(180deg,
+    rgba(255, 184, 216, 0.18) 0%,
+    rgba(255, 157, 203, 0.10) 40%,
+    rgba(230, 130, 180, 0.04) 70%,
+    transparent 100%);
+}
+
+/* (3) 배경 헤엄치는 물고기 — 완전 hide (대표 명세) */
+.catch-game[data-hidden-mode="true"] .catch-bg__swimmers {
+  display: none !important;
+}
+
+/* (4) ★ Day 22 Phase 5 후속 (대표 결정) — 잡기존 버튼은 시각 표시 (사용자가 노릴 곳 보이게).
+       클릭은 handlePullClick 의 hiddenMode 분기에서 doHiddenPull 호출로 일관 처리.
+   ★ Phase 7 후속: 게임 시작 후 (catch-game--hidden-playing) 잡기존 페이드 아웃 — HIDDEN 컨셉.
+       카운트다운 3·2·1 동안엔 보이고, GO! 후 1초 ease-out 으로 페이드. */
+.catch-game[data-hidden-mode="true"] .catch-game__button-wrap {
+  transition: opacity 1s ease-out;
+}
+.catch-game[data-hidden-mode="true"].catch-game--hidden-playing .catch-game__button-wrap {
+  opacity: 0;
+  /* 클릭 자체는 anywhere click 으로 동작 — pointer-events 그대로 유지 (안 보여도 button 영역 클릭은 OK) */
+}
+
+
+/* (5) 안내 텍스트 — Phase 4A 임시 톤 (연한 핑크) */
+.catch-game[data-hidden-mode="true"] .catch-game__hint {
+  color: rgba(255, 224, 238, 0.85);
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+}
+
+
+/* ============================================
+   ★ Day 22 Phase 4B: HIDDEN BOSS 그림자 + 체력바 (분홍 톤)
+   ============================================
+   buildHiddenBossItem 빌드 요소:
+   - .catch-fish-item--hidden          : 컨테이너 (부유 애니메이션)
+   - .catch-fish-item__fish--hidden    : 분홍 글로우 + 환영 페이드 (opacity 펄스)
+   - .catch-fish-item__sparkles--hidden: sparkle 분홍 톤 (회전)
+   - .catch-fish-item__hp--hidden      : 흰-분홍 체력바 (CSS 변수 --hp-color/--hp-glow 가 이미 분홍이라
+                                         색은 자동 적용. 추가 톤 세부조정만 여기서)
+
+   Q7 d 혼합: 환영(opacity 페이드) + 글로우 + sparkle + 부유(transform Y)
+   대표 요청 "렉유발 없는 수준" — opacity / transform 만 사용 (GPU 친화)
+   ============================================ */
+
+/* 컨테이너 부유 — 천천히 위아래 (3초 주기) */
+.catch-fish-item--hidden {
+  animation: catch-hidden-float 3s ease-in-out infinite;
+}
+
+@keyframes catch-hidden-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+/* 그림자 — 환영 페이드 (opacity 펄스 + 분홍 글로우 강약) */
+.catch-fish-item__fish--hidden {
+  animation: catch-hidden-phantom 2.4s ease-in-out infinite;
+}
+
+@keyframes catch-hidden-phantom {
+  0%, 100% {
+    opacity: 0.75;
+    filter: drop-shadow(0 0 14px rgba(255, 184, 216, 0.65))
+            drop-shadow(0 0 6px rgba(255, 224, 238, 0.45));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 28px rgba(255, 184, 216, 0.95))
+            drop-shadow(0 0 12px rgba(255, 224, 238, 0.75));
+  }
+}
+
+/* sparkle 분홍 톤 회전 펄스 (기존 골든힛 sparkle 와 동일 패턴, 색만 분홍) */
+.catch-fish-item__sparkles--hidden .catch-fish-item__sparkle {
+  filter: drop-shadow(0 0 6px rgba(255, 224, 238, 0.95))
+          drop-shadow(0 0 14px rgba(255, 157, 203, 0.6));
+}
+
+/* (HIDDEN 체력바는 .catch-fish-item__hp 의 --hp-color/--hp-glow 변수만으로
+   자동 흰-분홍 톤 적용 — 별도 셀렉터 불필요. Phase 4C 에서 PERFECT 차감 동작
+   검증 후 미세조정 필요 시 여기에 .catch-fish-item__hp--hidden 셀렉터 추가) */
+
+/* 라벨 — HIDDEN BOSS 텍스트도 분홍 글로우 부유 동기화 */
+.catch-fish-item--hidden .catch-fish-item__grade-label {
+  letter-spacing: 0.12em;
+}
+
+
+/* ============================================
+   ★ Day 22 Phase 4C: HIDDEN HIT 게임 흐름 — 카운트다운 + PERFECT 피드백 + orb 분홍
+   ============================================ */
+
+/* (1) 카운트다운 3·2·1·GO! — ★ Day 26 (대표 결정 — 추가 조정).
+       이전: 잡기존 위 5rem (50% - 5rem)
+       변경: 상단 물고기 그림자 안에서 나타나게 (catch-results top 4.4rem + 물고기 중심 근처).
+       물고기 단일(data-count="1") 큰 크기 기준, 그림자 중심 ≈ 9rem 위치.
+       분홍 빛 + 흰 후광 유지 (대표 아이디어 1) */
+.catch-hidden-countdown {
+  position: absolute;
+  left: 50%;
+  top: 20rem;                /* ★ Day 26 — 잡기존 위쪽 물고기체력바와 잡기존 사이 위치 */
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  font-family: var(--font-impact);
+  font-size: 3.6rem;        /* 작게 (잡기존 위 GO! 보다 작음) */
+  letter-spacing: 0.08em;
+  color: #FFE0EE;
+  text-align: center;
+  pointer-events: none;
+  text-shadow:
+    0 0 18px rgba(255, 224, 238, 1),
+    0 0 10px rgba(255, 184, 216, 0.85),
+    0 0 6px rgba(255, 255, 255, 0.95),
+    0 2px 4px rgba(0, 0, 0, 0.85);
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.catch-hidden-countdown--pulse {
+  animation: catch-hidden-countdown-pulse 1s cubic-bezier(0.18, 0.89, 0.32, 1.18) forwards;
+}
+
+@keyframes catch-hidden-countdown-pulse {
+  0%   { opacity: 0;   transform: translate(-50%, -50%) scale(0.4); }
+  20%  { opacity: 1;   transform: translate(-50%, -50%) scale(1.3); }
+  60%  { opacity: 1;   transform: translate(-50%, -50%) scale(1);   }
+  100% { opacity: 0.4; transform: translate(-50%, -50%) scale(0.85); }
+}
+
+.catch-hidden-countdown--go {
+  font-size: 5.2rem;        /* GO! 는 약간 더 크게 */
+  color: #FFFFFF;
+  text-shadow:
+    0 0 28px rgba(255, 255, 255, 1),
+    0 0 18px rgba(255, 184, 216, 0.95),
+    0 0 8px rgba(255, 224, 238, 1),
+    0 2px 6px rgba(0, 0, 0, 0.85);
+  animation: catch-hidden-countdown-go 0.7s cubic-bezier(0.18, 0.89, 0.32, 1.18) forwards;
+}
+
+@keyframes catch-hidden-countdown-go {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  30%  { opacity: 1; transform: translate(-50%, -50%) scale(1.4); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.catch-hidden-countdown--hide {
+  display: none;
+}
+
+/* (2) HIDDEN orb — 흰 원 + 분홍 심볼 (대표 결정 Q1 a)
+       기존 catch-orb 의 색만 변경 (--orb-color, --orb-grade-color 가 흰/분홍).
+       내부 fish 심볼은 검은 SVG 인데 — HIDDEN 만 분홍 톤 오버레이 적용. */
+.catch-orb--hidden .catch-orb__symbol--hidden path {
+  fill: #FF9DCB !important;       /* 검은 심볼 → 분홍 */
+}
+.catch-orb--hidden .catch-orb__symbol--hidden {
+  filter: drop-shadow(0 0 4px rgba(255, 157, 203, 0.7));
+}
+
+/* (3) PERFECT 분홍 빛 잔상 — 잡기존 중앙 분홍 폭발 (대표 아이디어 2) */
+.catch-hidden-perfect-flash {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 12rem;
+  height: 12rem;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(255, 224, 238, 0.85) 0%,
+    rgba(255, 184, 216, 0.5) 35%,
+    rgba(255, 157, 203, 0.2) 60%,
+    rgba(255, 157, 203, 0) 75%);
+  pointer-events: none;
+  z-index: 40;
+  animation: catch-hidden-perfect-flash 0.4s ease-out forwards;
+}
+
+@keyframes catch-hidden-perfect-flash {
+  0%   { opacity: 0;    transform: translate(-50%, -50%) scale(0.3); }
+  30%  { opacity: 1;    transform: translate(-50%, -50%) scale(1);   }
+  100% { opacity: 0;    transform: translate(-50%, -50%) scale(1.6); }
+}
+
+/* (4) 보스 그림자 살짝 흔들림 — PERFECT 시 (대표 아이디어 2) */
+.catch-fish-item--hidden-perfect {
+  animation: catch-hidden-boss-shake 0.25s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes catch-hidden-boss-shake {
+  0%, 100% { transform: translateY(-3px); }
+  20%      { transform: translate(-4px, -2px); }
+  40%      { transform: translate(3px,  -4px); }
+  60%      { transform: translate(-3px, -5px); }
+  80%      { transform: translate(2px,  -3px); }
+}
+
+/* ============================================
+   ★ Day 28 (대표 결정) — 일반 모드 / 골든힛 PERFECT 폭발 + 그림자 흔들림
+   ──────────────────────────────────────────────
+   HIDDEN 모드의 catch-hidden-perfect-flash (분홍 고정) 시각 톤을 일반/골든힛에도 확장.
+   - 일반 모드 PERFECT: 폭발 색 = 등급 색 (앰버/크림슨/골드/마젠타 등) → JS 에서 --flash-color 주입
+   - 골든힛 PERFECT  : 폭발 색 = #FFD96A 부드러운 황금 (orb/fish 톤과 통일)
+   - HIDDEN 은 별도 클래스(catch-hidden-perfect-flash) 그대로 유지 — 영향 없음.
+   ============================================ */
+.catch-perfect-flash {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 12rem;
+  height: 12rem;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    color-mix(in srgb, var(--flash-color, #FFFFFF) 85%, white 25%) 0%,
+    color-mix(in srgb, var(--flash-color, #FFFFFF) 55%, transparent) 35%,
+    color-mix(in srgb, var(--flash-color, #FFFFFF) 25%, transparent) 60%,
+    transparent 75%);
+  pointer-events: none;
+  z-index: 40;
+  animation: catch-perfect-flash 0.4s ease-out forwards;
+}
+
+@keyframes catch-perfect-flash {
+  0%   { opacity: 0;    transform: translate(-50%, -50%) scale(0.3); }
+  30%  { opacity: 1;    transform: translate(-50%, -50%) scale(1);   }
+  100% { opacity: 0;    transform: translate(-50%, -50%) scale(1.6); }
+}
+
+/* 상단 물고기 그림자 흔들림 (PERFECT 시 — 일반 모드 / 골든힛)
+   HIDDEN 의 catch-hidden-boss-shake 는 translateY(-3px) 기본 위치 기반이라
+   일반 fish 와 위치가 달라 별도 keyframes 사용. 자연스러운 좌우/상하 흔들림. */
+.catch-fish-item--catch-perfect {
+  animation: catch-fish-perfect-shake 0.25s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes catch-fish-perfect-shake {
+  0%, 100% { transform: translate(0, 0); }
+  20%      { transform: translate(-3px, -1px); }
+  40%      { transform: translate(3px,  -2px); }
+  60%      { transform: translate(-3px, -2px); }
+  80%      { transform: translate(2px,  -1px); }
+}

@@ -1,0 +1,263 @@
+/* ===========================================
+   level-up-popup.css — 레벨업 팝업 (Day 18 신규)
+   ============================================
+   톤: profile.css / bag.css 모달 패턴 베이스 + 따뜻한 호박색 글로우.
+   정체성 5:
+   - 콤보 타격감: 큰 헤더 글로우 + 별빛 입자 깜빡
+   - 잔잔한 분위기: 폭발 X, 부드러운 페이드/스케일
+   - 단정한 미니멀리즘: 한 카드, 행 8개 정렬
+   ============================================ */
+
+
+/* ============================================
+   1. 루트 + 오버레이 (profile 패턴)
+   ============================================ */
+
+.levelup-root {
+  position: fixed;
+  inset: 0;
+  z-index: 120;                /* profile/bag(100) 보다 위 */
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.6rem 1rem;
+  box-sizing: border-box;
+}
+
+.levelup-root--open {
+  pointer-events: auto;
+}
+
+.levelup-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 19, 0);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  transition:
+    background 320ms cubic-bezier(0.4, 0, 0.2, 1),
+    backdrop-filter 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.levelup-root--open .levelup-overlay {
+  background: rgba(5, 8, 19, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+
+/* ============================================
+   2. 패널 — 따뜻한 호박색 글로우 (콤보 타격감)
+   ============================================ */
+
+.levelup-panel {
+  position: relative;
+  width: 100%;
+  max-width: 22rem;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(255, 217, 160, 0.16), transparent 60%),
+    linear-gradient(180deg, #0c1228 0%, #060914 100%);
+  border: 1px solid rgba(255, 217, 160, 0.22);
+  border-radius: var(--radius-sharp, 0);
+  box-shadow:
+    0 0 40px rgba(255, 217, 160, 0.18),
+    0 8px 30px rgba(0, 0, 0, 0.55);
+  padding: 1.6rem 1.4rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.0rem;
+  /* 진입 애니메이션 */
+  transform: translateY(12px) scale(0.96);
+  opacity: 0;
+  transition:
+    transform 320ms cubic-bezier(0.22, 0.9, 0.32, 1),
+    opacity 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.levelup-root--open .levelup-panel {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+
+/* ============================================
+   3. 헤더 — "LEVEL UP!" + 별빛 입자
+   ============================================ */
+
+.levelup-header {
+  position: relative;
+  height: 3.2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 별빛 입자 SVG (헤더 배경 전체에 깔림) */
+.levelup-stars {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.levelup-star {
+  fill: rgba(255, 217, 160, 0.0);
+  /* CSS animation 으로 깜빡 — 각자 시차 */
+  animation: levelup-star-twinkle 1.8s ease-in-out infinite;
+}
+.levelup-star--0 { animation-delay: 0s;    }
+.levelup-star--1 { animation-delay: 0.3s;  }
+.levelup-star--2 { animation-delay: 0.6s;  }
+.levelup-star--3 { animation-delay: 0.9s;  }
+.levelup-star--4 { animation-delay: 1.2s;  }
+.levelup-star--5 { animation-delay: 1.5s;  }
+
+@keyframes levelup-star-twinkle {
+  0%, 100% {
+    fill: rgba(255, 217, 160, 0.15);
+    transform: scale(0.85);
+  }
+  50% {
+    fill: rgba(255, 240, 200, 0.95);
+    transform: scale(1.2);
+  }
+}
+
+.levelup-header__text {
+  position: relative;          /* 별 위에 떠있도록 */
+  font-family: var(--font-impact, 'Bebas Neue', sans-serif);
+  font-size: 2.2rem;
+  letter-spacing: 0.12em;
+  color: #fff5dc;
+  text-shadow:
+    0 0 14px rgba(255, 217, 160, 0.85),
+    0 0 24px rgba(255, 217, 160, 0.55),
+    0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+
+/* ============================================
+   4. 레벨 표시 — "Lv. N → Lv. M"
+   ============================================ */
+
+.levelup-display {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0.7rem;
+  padding: 0.3rem 0;
+}
+
+.levelup-display__from {
+  font-family: var(--font-impact, 'Bebas Neue', sans-serif);
+  font-size: 1.3rem;
+  letter-spacing: 0.06em;
+  color: rgba(200, 212, 240, 0.6);
+}
+
+.levelup-display__arrow {
+  font-size: 1.2rem;
+  color: rgba(255, 217, 160, 0.7);
+}
+
+.levelup-display__to {
+  font-family: var(--font-impact, 'Bebas Neue', sans-serif);
+  font-size: 1.8rem;
+  letter-spacing: 0.06em;
+  color: #ffd9a0;
+  text-shadow:
+    0 0 10px rgba(255, 217, 160, 0.7),
+    0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+
+/* ============================================
+   5. 보상 섹션 (8행)
+   ============================================ */
+
+.levelup-rewards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid rgba(200, 212, 240, 0.10);
+  border-bottom: 1px solid rgba(200, 212, 240, 0.10);
+}
+
+.levelup-rewards__label {
+  font-family: var(--font-impact, 'Bebas Neue', sans-serif);
+  font-size: 0.85rem;
+  letter-spacing: 0.18em;
+  color: rgba(200, 212, 240, 0.55);
+  text-align: center;
+}
+
+.levelup-rewards__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.levelup-reward-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.22rem 0.4rem;
+  font-size: 0.82rem;
+}
+
+.levelup-reward-row__name {
+  color: rgba(200, 212, 240, 0.75);
+  letter-spacing: 0.01em;
+}
+
+.levelup-reward-row__value {
+  font-family: var(--font-impact, 'Bebas Neue', sans-serif);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+}
+
+/* 양수 = 호박빛 */
+.levelup-reward-row__value--pos {
+  color: #ffd9a0;
+}
+
+/* 음수 = 차분한 청록 (rock_rate / orb_speed = 감소 효과) */
+.levelup-reward-row__value--neg {
+  color: #94c8e8;
+}
+
+
+/* ============================================
+   6. 확인 버튼
+   ============================================ */
+
+.levelup-ok {
+  align-self: center;
+  min-width: 7rem;
+  padding: 0.6rem 1.6rem;
+  margin-top: 0.4rem;
+  font-family: var(--font-impact, 'Bebas Neue', sans-serif);
+  font-size: 1.05rem;
+  letter-spacing: 0.14em;
+  color: #fff5dc;
+  background: linear-gradient(180deg, rgba(255, 217, 160, 0.22), rgba(255, 217, 160, 0.08));
+  border: 1px solid rgba(255, 217, 160, 0.55);
+  border-radius: var(--radius-sharp, 0);
+  cursor: pointer;
+  transition:
+    background 200ms ease,
+    box-shadow 200ms ease,
+    transform 120ms ease;
+}
+.levelup-ok:hover {
+  background: linear-gradient(180deg, rgba(255, 217, 160, 0.32), rgba(255, 217, 160, 0.14));
+  box-shadow: 0 0 16px rgba(255, 217, 160, 0.35);
+}
+.levelup-ok:active {
+  transform: translateY(1px);
+}
+.levelup-ok:focus-visible {
+  outline: 2px solid rgba(255, 217, 160, 0.75);
+  outline-offset: 2px;
+}

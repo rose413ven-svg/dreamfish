@@ -1,0 +1,124 @@
+/* ===========================================
+   tokens.css — 디자인 토큰 (1번 별빛 연못 기준)
+   ============================================
+   SSOT:
+   - 부트스트랩 [디자인 토큰] 섹션
+   - docs/01_슬롯화면_디자인.md [디자인 토큰 추가/업데이트]
+   낚시터별 토큰 오버라이드는 추후 별도 클래스로 추가.
+   =========================================== */
+
+:root {
+  /* ===========================================
+     ★ 반응형 단위 안내 (B 방식)
+     ============================================
+     기준 가로 = 390px (iPhone 14).
+     1rem = 10px @ 기준 화면.
+     px값을 10으로 나누면 rem값.
+
+       22px  →  2.2rem
+       14px  →  1.4rem
+       112px → 11.2rem
+
+     화면 사이즈에 따라 src/core/responsive.js 가
+     <html> 의 font-size 를 동적 조정하므로,
+     모든 rem 단위가 자동으로 화면 비율을 따라감.
+
+     CSS 작성 시 px 대신 그냥 rem 으로 쓰면 끝:
+
+       padding: 2.2rem;        # 화면 비례
+       font-size: 1.4rem;      # 화면 비례
+
+     '비례 X' (보더/얇은 라인 등) 는 px 그대로:
+
+       border: 1.4px solid ;   # 모든 폰에서 동일 두께
+     =========================================== */
+  --max-w: 540px;         /* 태블릿 등 큰 화면에서 컨테이너 최대 가로 (responsive.js 와 동기) */
+
+  /* ── 배경 (깊은 밤하늘 톤) ── */
+  --bg-deepest:  #050813;
+  --bg-deep:     #0a1024;
+  --bg-base:     #131a36;
+  --bg-elevated: #1a2244;
+
+  /* ── 선 (단정한 미니멀리즘 1.4px) ── */
+  --line-primary:   #c8d4f0;
+  --line-secondary: #6890c8;
+  --line-soft:      #8a9cc0;
+  --line-thin:      1.4px;     /* 선 두께는 화면 사이즈와 무관하게 일정 (단정함) */
+
+  /* ── 액센트 ── */
+  --accent-bright: #f0f4ff;
+  --accent-warm:   #ffd9a0;
+  --accent-magic:  #FF9DCB;
+
+  /* ── 슬롯 심볼 ── */
+  --golden-fish: #E8C870;
+  --shadow-fish: #000000;
+
+  /* ── Lucky 등급 (슬롯 매칭) ── */
+  --grade-heroic: #6890C8;
+  --grade-legend: #B080D0;
+  --grade-mythic: #E8C870;
+
+  /* ── 폰트 ── */
+  --font-base:   'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-impact: 'Bebas Neue', 'Pretendard', sans-serif;
+  /* Day 26 — 까비까비 라벨 전용 (대표 결정 시안 ② — Gowun Dodum, 둥근 잔잔)
+     SIL OFL 1.1 라이선스 — 상용/모바일 앱 임베드 자유.
+     출시 시 라이선스 표기 + 폰트 파일 번들 권장 (결정로그 Day 26 후속 참조). */
+  --font-kabikabi: 'Gowun Dodum', 'Pretendard', sans-serif;
+
+  /* ── 모서리 ── */
+  --radius-sharp: 0;
+  --radius-soft:  4px;
+
+  /* ── 전환 ── */
+  --fade-duration: 1000ms;
+  --fade-easing:   cubic-bezier(0.4, 0, 0.2, 1);
+
+
+  /* ===========================================
+     Phase 2 — 슬롯 화면 디자인 토큰
+     (docs/01_슬롯화면_디자인.md)
+     =========================================== */
+
+  /* ── 슬롯 그리드 ── */
+  --slot-bg:           #102046;
+  --slot-cell:         #0c1a3a;
+  --slot-cell-border:  rgba(200, 212, 240, 0.06);
+  --slot-frame-border: #6890c8;
+  --slot-frame-radius: 6px;
+
+  /* ── 심볼 글로우 ── */
+  --glow-fish-shadow:  rgba(200, 212, 240, 0.30);
+  --glow-fish-golden:  rgba(255, 233, 160, 0.55);
+  --glow-fish-rainbow: rgba(255, 255, 255, 0.50);
+
+  /* ── 무지개 5색 (와일드카드 심볼) ── */
+  --rainbow-1: #FF6FB5;  /* 분홍 */
+  --rainbow-2: #FFB347;  /* 주황 */
+  --rainbow-3: #9DE36B;  /* 연두 */
+  --rainbow-4: #5FC9F7;  /* 하늘 */
+  --rainbow-5: #C68FF0;  /* 보라 */
+
+  /* ── 장비 등급 6단계 ──
+     Lucky 등급(--grade-*) 과 도메인 분리하기 위해 --gear-* prefix 사용.
+     Day 16 후속: common 흰색 (가독성), mythic 진한 분홍 (신화보스 색과 통일). */
+  --gear-common:    #FFFFFF;  /* 일반   흰색 */
+  --gear-uncommon:  #9DE36B;  /* 고급   초록 */
+  --gear-rare:      #2563EB;  /* 희귀   진한 파랑 (Day 19 변경) */
+  --gear-epic:      #B080D0;  /* 영웅   보라 */
+  --gear-legendary: #FFD96A;  /* 전설   노랑 */
+  --gear-mythic:    #FF49A6;  /* 신화   진한 분홍 */
+
+  /* ── 던지다 / 당기다 버튼 (B: rem 단위) ── */
+  --cast-cast-color:  #c8d4f0;  /* "던지다" 상태 (잔잔) */
+  --cast-pull-color:  #ffd9a0;  /* "당기다" 상태 (액션) */
+  --cast-button-size: 11.2rem;  /* 112px @ 기준 화면 */
+  --cast-text-size:   1.9rem;   /* 19px  @ 기준 화면 */
+  --cast-ripple-time: 0.3s;
+
+  /* ── 장비 칸 (B: rem 단위) ── */
+  --gear-slot-size: 7.2rem;     /* 72px @ 기준 화면 */
+  --gear-icon-size: 3.6rem;     /* 36px @ 기준 화면 */
+}

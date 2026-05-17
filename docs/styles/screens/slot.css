@@ -1,0 +1,4083 @@
+/* ===========================================
+   slot.css — 슬롯 화면 전용 스타일 (정리본 v10)
+   ============================================
+   docs/01_슬롯화면_디자인.md SSOT.
+   변수는 tokens.css 의존.
+
+   섹션:
+   1. 화면 컨테이너
+   2. 배경 (starfield)
+   3. HUD (헤더 + KG 게이지)
+   4. 메뉴 버튼 + 패널
+   5. 슬롯 영역 (wrap / grid / cell)
+   6. 셀 심볼 + 글로우 + 헤엄 모션
+   7. 회전 / 멈춤
+   8. 매칭 강조
+   9. 낚시 찌
+   10. HIT 알림
+   11. 황금 라인 연출
+   12. 당기다 버튼 펄스 + 누르는 느낌
+   13. TURN 카운터
+   14. 장비 칸
+   15. 결과 팝업
+   16. 미니게임 인트로
+   17. 미니게임 / 리듬게임 overlay
+   ============================================ */
+
+
+/* ============================================
+   토큰 (이 파일에서만 쓰는 보조 변수)
+   ============================================ */
+
+:root {
+  --water-1: #0a1024;
+  --water-2: #131a36;
+  --water-3: #1a2a4a;
+  --water-shimmer: rgba(200, 212, 240, 0.08);
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+
+/* ============================================
+   1. 화면 컨테이너
+   ============================================ */
+
+.slot-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-deepest);
+}
+
+.slot-screen__content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 2.2rem 1.8rem 2.4rem;
+  gap: 0.8rem;
+  box-sizing: border-box;
+}
+
+
+/* ============================================
+   2. 배경 (starfield)
+   ============================================ */
+
+.starfield {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    #050813 0%,
+    #0a1024 50%,
+    #131a36 100%
+  );
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.starfield__point {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.starfield__cross {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.starfield__moon {
+  position: absolute;
+  top: 5.5%;
+  right: 26%;
+  width: 2.4rem;
+  height: 2.4rem;
+  background: #f8f1d8;
+  border-radius: 50%;
+  box-shadow:
+    0 0 18px 8px rgba(255, 247, 224, 0.42),
+    0 0 46px 24px rgba(255, 217, 160, 0.20);
+}
+
+.starfield__crater {
+  position: absolute;
+  background: #e8dcb8;
+  border-radius: 50%;
+}
+.starfield__crater--1 { top:  0.5rem; left:  0.6rem; width: 2px;   height: 2px;   }
+.starfield__crater--2 { top: 1.1rem; left: 1.4rem; width: 1.4px; height: 1.4px; }
+.starfield__crater--3 { top: 1.6rem; left:  0.7rem; width: 1.2px; height: 1.2px; }
+
+
+/* ============================================
+   3. HUD (헤더 + KG 게이지)
+   ============================================ */
+
+.hud {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.hud__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.hud__title {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.hud__title-upper {
+  font-family: var(--font-impact);
+  font-size: 0.9rem;
+  letter-spacing: 0.25em;
+  color: var(--line-soft);
+  text-transform: uppercase;
+}
+
+.hud__title-name {
+  font-size: 1.7rem;
+  font-weight: 500;
+  color: var(--accent-bright);
+  letter-spacing: 0.04em;
+}
+
+/* KG 게이지 (두께 8px) */
+.hud__gauge {
+  display: flex;
+  flex-direction: column;
+  /* Day 18 후속 (대표 결정) — 이전 간격 복원: 라벨 폰트 키우면서 row 영역 커진 만큼 gap 줄임 */
+  gap: 0.25rem;
+  position: relative;   /* Day 4: 획득 수치(.hud__gauge-gain) absolute anchoring */
+}
+
+.hud__gauge-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.hud__gauge-label {
+  font-family: var(--font-impact);
+  /* Day 18 (대표 결정) — Lv. N 라벨 = 크고 흰색 + 흰색 살짝 글로우 */
+  font-size: 1.55rem;
+  letter-spacing: 0.14em;
+  line-height: 1;       /* row 높이 컴팩트 — gap 시각 간격 보장 */
+  color: #FFFFFF;
+  text-shadow:
+    0 0 6px rgba(255, 255, 255, 0.55),
+    0 0 12px rgba(255, 255, 255, 0.25);
+}
+/* Day 18 후속 (대표 결정) — "Lv. N" 의 숫자만 더 크게 (임팩트 — 스탯 있어 보임) */
+.hud__gauge-label-num {
+  font-size: 2.8rem;
+  /* 색/글로우는 부모 .hud__gauge-label 그대로 상속 (흰색 + 흰색 글로우) */
+}
+
+.hud__gauge-value {
+  /* Day 18 (대표 결정) — 진행 값 = 작게 */
+  font-size: 0.72rem;
+  line-height: 1;
+  color: var(--accent-bright);
+  letter-spacing: 0.04em;
+}
+
+/* ★ Day 25 Phase 3 — 좌측 그룹 (Lv. N + 상상력 박스 묶음).
+   대표 명세 (Day 25 후속): 박스 위치를 위로 — 레벨 숫자(32) 우상단 corner 와
+   비슷한 높이 (NEW 배지 같은 톤). flex-start 정렬로 박스 top 을 leftGroup top 에 맞춤. */
+.hud__gauge-left-group {
+  display: flex;
+  align-items: flex-start;     /* baseline → flex-start (박스 위쪽으로 정렬) */
+  gap: 0.5rem;
+}
+
+/* ★ Day 25 Phase 3 — 상상력 박스 (Lv. N 우상단, 작은 네모, 황금색 숫자만).
+ *   대표 명세 (Day 25 후속):
+ *   - 각진 네모 박스 (border-radius: 0)
+ *   - 배경: 검은색 (그라데이션 제거)
+ *   - 황금색 텍스트 + 황금 테두리 유지
+ * ★ Day 26 (대표 결정 — 추가 조정) — 위치를 레벨 숫자 좌측 하단 / 게이지바 가까이로 더 내림:
+ *   - align-self flex-start → flex-end (leftGroup 안 박스 bottom 부착)
+ *   - margin-top 음수 제거 / margin-bottom 살짝 음수 (게이지바 쪽으로 가까이)
+ *   - font-size + padding 유지 (Day 26 1차 축소값) */
+.hud__imagination {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-end;          /* ★ Day 26 — leftGroup 안에서 bottom 정렬 (레벨 숫자 좌측 하단) */
+  font-family: var(--font-impact);
+  font-size: 1.20rem;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  /* 황금색 텍스트 (Day 25 명세 유지) */
+  color: #FFD96A;
+  text-shadow:
+    0 0 6px rgba(255, 217, 106, 0.75),
+    0 0 12px rgba(255, 217, 106, 0.35);
+  /* 검은 배경 (그라데이션 X), 각진 네모 (radius 0), 얇은 황금 테두리 */
+  background: #000000;
+  border: 0.2rem solid rgba(255, 217, 106, 0.6);
+  border-radius: 0;
+  padding: 0.10rem 0.40rem;
+  margin-top: 0;                  /* ★ Day 26 — 위쪽 여백 제거 */
+  margin-bottom: 0.5rem;               /* ★ Day 26 (추가 조정) — 음수 제거: 레벨 숫자와 게이지바 사이 간격(0.25rem)과 동일하게 */
+  /* 외곽 글로우만 (inset 글로우 제거 — 그라데이션 제거 명세) */
+  box-shadow: 0 0 6px rgba(255, 217, 106, 0.3);
+}
+
+.hud__gauge-bar {
+  width: 100%;
+  height: 0.8rem;
+  background: rgba(200, 212, 240, 0.08);
+  border-radius: var(--radius-sharp);
+  /* Day 4: 글로우 transition (반짝 효과를 위한 베이스) */
+  transition: box-shadow 0.3s var(--fade-easing);
+}
+
+.hud__gauge-fill {
+  height: 100%;
+  background: var(--line-primary);
+  width: 0;
+  /* Day 4: 400ms → 1000ms (채워지는 모습이 보이도록 코지하게) */
+  transition: width 1000ms cubic-bezier(0.22, 0.9, 0.32, 1);
+}
+
+/* Day 4: KG 획득 시 게이지 바 반짝 (1초간 글로우 펄스) */
+.hud__gauge-bar--gain-flash {
+  animation: hud-gauge-flash 1.0s ease-out;
+}
+
+@keyframes hud-gauge-flash {
+  0% {
+    box-shadow: 0 0 0 rgba(200, 212, 240, 0);
+    background: rgba(200, 212, 240, 0.08);
+  }
+  20% {
+    box-shadow:
+      0 0 16px rgba(255, 217, 160, 0.85),
+      0 0 28px rgba(255, 217, 160, 0.45);
+    background: rgba(255, 217, 160, 0.18);
+  }
+  60% {
+    box-shadow:
+      0 0 12px rgba(200, 212, 240, 0.7),
+      0 0 20px rgba(200, 212, 240, 0.35);
+    background: rgba(200, 212, 240, 0.14);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(200, 212, 240, 0);
+    background: rgba(200, 212, 240, 0.08);
+  }
+}
+
+/* Day 4: 획득 수치 — 게이지 위로 잠깐 떠올랐다가 페이드아웃
+   Day 4-2: 우측 끝 → 가운데 정렬 (게이지 바 가운데에서 떠오르도록)
+   Day 7: 컨테이너만 위치 잡음. 색/크기는 자식 (__main, __combo) 에서 지정.
+   Day 7-2: 더 오래 보였다가 천천히 페이드아웃 — 1.4s → 3.0s */
+.hud__gauge-gain {
+  position: absolute;
+  bottom: 100%;          /* gauge 위쪽 */
+  left: 50%;             /* 가운데 anchor */
+  margin-bottom: 4px;
+  font-family: var(--font-impact);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  animation: hud-gauge-gain-rise 3.0s ease-out forwards;
+}
+
+/* Day 7-2: 메인 텍스트 — 흰색 (이전 황금 → 흰색으로 변경, 콤보 옆 () 제거 후 단순화) */
+.hud__gauge-gain__main {
+  font-size: 1.8rem;
+  color: #ffffff;
+  text-shadow:
+    0 0 12px rgba(255, 255, 255, 0.7),
+    0 0 18px rgba(255, 255, 255, 0.35),
+    0 1px 3px rgba(0, 0, 0, 0.95);
+}
+
+/* Day 7-2: 콤보 보너스 옆 () 표시 제거 — 결과 팝업에서 분해 표시로 이전.
+   이전 .hud__gauge-gain__combo[data-level="1~10"] 셀렉터들은 모두 삭제됨. */
+
+@keyframes hud-gauge-gain-rise {
+  0%   { transform: translate(-50%, 8px);   opacity: 0; }
+  10%  { transform: translate(-50%, -2px);  opacity: 1; }
+  70%  { transform: translate(-50%, -18px); opacity: 1; }
+  100% { transform: translate(-50%, -36px); opacity: 0; }
+}
+
+
+/* ============================================
+   4. 메뉴 버튼 + 패널
+   ============================================ */
+
+.menu-button {
+  position: relative;             /* Day 16 — 빨간점 .codex-dot 절대위치 부모 */
+  width: 4.4rem;
+  height: 4.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.menu-button__line {
+  width: 2.2rem;
+  height: var(--line-thin);
+  background: var(--line-primary);
+  display: block;
+  transition: background 0.2s var(--fade-easing);
+}
+
+.menu-button[aria-expanded="true"] .menu-button__line {
+  background: var(--accent-warm);
+}
+
+/* 메뉴 루트 (오버레이 + 패널 묶음) */
+.menu-root {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+}
+
+/* 메뉴 오버레이 (어두운 배경) */
+.menu-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 19, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--fade-easing);
+  z-index: 1;
+}
+
+.menu-overlay--open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 메뉴 패널 본체 */
+.menu-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 24rem;
+  height: 100%;
+  background: rgba(5, 8, 19, 0.92);
+  border-left: var(--line-thin) solid var(--line-secondary);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transform: translateX(100%);
+  transition: transform 0.3s var(--fade-easing);
+  z-index: 2;
+  padding: 8rem 0 2.4rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+  pointer-events: auto;
+}
+
+.menu-panel--open {
+  transform: translateX(0);
+}
+
+/* 메뉴 패널 닫기 버튼 (X) */
+.menu-panel__close {
+  position: absolute;
+  top: 1.8rem;
+  right: 1.8rem;
+  width: 3.6rem;
+  height: 3.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--line-primary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.menu-panel__close svg {
+  width: 2.2rem;
+  height: 2.2rem;
+}
+
+.menu-panel__label {
+  font-family: var(--font-impact);
+  font-size: 1.1rem;
+  letter-spacing: 0.3em;
+  color: var(--line-soft);
+  padding: 0 2.4rem 1.6rem;
+}
+
+.menu-panel__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menu-panel__item {
+  display: block;
+  width: 100%;
+  padding: 1.8rem 2.4rem;
+  background: transparent;
+  border: none;
+  border-bottom: var(--line-thin) solid rgba(200, 212, 240, 0.10);
+  text-align: left;
+  color: var(--line-primary);
+  font-size: 1.6rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  font-family: var(--font-base);
+  transition: color 0.2s var(--fade-easing),
+              background 0.2s var(--fade-easing);
+}
+
+.menu-panel__list-item:first-child .menu-panel__item {
+  border-top: var(--line-thin) solid rgba(200, 212, 240, 0.10);
+}
+
+.menu-panel__item:active {
+  background: rgba(200, 212, 240, 0.05);
+  color: var(--accent-warm);
+}
+
+
+/* ============================================
+   5. 슬롯 영역 (wrap / grid / cell)
+   ============================================ */
+
+.slot-wrap {
+  position: relative;
+  width: 100%;
+  margin-top: 0;  /* Day 4 후속: ② 자리는 slot-fx-area로 이동 */
+}
+
+/* ─── slot-fx-area — KG바 ↔ 슬롯 사이 연출 영역 (Day 4 후속) ───
+   슬롯 결과와 연계된 텍스트/이펙트가 떠올랐다 사라지는 자리.
+   빈 영역일 때는 보이지 않음 (자리만 차지).
+   추후 텍스트/연출 추가 시 이 div의 자식으로 들어감.
+   삭제 시: 이 규칙 + slot.js의 fx-area 추가 코드 1줄 제거 → 끝 */
+.slot-fx-area {
+  position: relative;
+  flex-shrink: 0; 
+  height: 2.2rem;            /* ② 영역 높이 — 한 줄 텍스트 + 글로우 정도 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.slot-grid {
+  width: 92%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(var(--slot-cols, 5), 1fr);
+  grid-template-rows:    repeat(var(--slot-rows, 5), 1fr);
+  aspect-ratio: 1 / 1;
+  background: var(--slot-bg);
+  border: none;             /* 외곽 테두리 투명 */
+  border-radius: var(--slot-frame-radius);
+  padding: 0.8rem;
+  gap: 3px;                 /* 셀 사이 간격 */
+  box-sizing: border-box;
+  position: relative;       /* Day 10 v4 — 옷 cosmetic 별 layer (absolute) 기준점 */
+}
+
+.slot-cell {
+  position: relative;
+  background: var(--water-1);
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+  overflow: hidden;
+  transition: border-color 0.3s var(--fade-easing),
+              box-shadow 0.3s var(--fade-easing),
+              filter 0.4s var(--fade-easing);
+}
+
+
+/* ============================================
+   6. 셀 심볼 + 글로우 + 헤엄 모션
+   ============================================ */
+
+.cell-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s var(--fade-easing);
+  z-index: 0;
+}
+
+.reel-strip {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 0.3s var(--fade-easing);
+  z-index: 1;
+}
+
+.reel-symbol {
+  width: 75%;
+  height: 75%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reel-symbol svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* 심볼별 글로우 */
+.slot-cell[data-symbol="fish"] .cell-glow {
+  opacity: 1;
+  background: radial-gradient(circle at center,
+    rgba(200, 212, 240, 0.30) 0%,
+    rgba(200, 212, 240, 0.10) 35%,
+    rgba(200, 212, 240, 0) 65%);
+}
+
+.slot-cell[data-symbol="golden"] .cell-glow {
+  opacity: 1;
+  background: radial-gradient(circle at center,
+    rgba(255, 233, 160, 0.55) 0%,
+    rgba(232, 200, 112, 0.18) 50%,
+    rgba(232, 200, 112, 0) 80%);
+}
+
+.slot-cell[data-symbol="rainbow"] .cell-glow {
+  opacity: 1;
+  background: radial-gradient(circle at center,
+    rgba(255, 157, 203, 0.55) 0%,
+    rgba(255, 157, 203, 0.18) 50%,
+    rgba(255, 157, 203, 0) 80%);
+}
+
+/* Day 20: 꿈조각(트윙클) 글로우 — 옅은 하늘색 #D7EFFF, golden/rainbow 와 동일 크기·패턴 */
+.slot-cell[data-symbol="twinkle"] .cell-glow {
+  opacity: 1;
+  background: radial-gradient(circle at center,
+    rgba(215, 239, 255, 0.55) 0%,
+    rgba(215, 239, 255, 0.18) 50%,
+    rgba(215, 239, 255, 0) 80%);
+}
+
+/* 헤엄 모션 (꼬리 치며) */
+.slot-cell:not(.spinning):not(.stopped) .reel-symbol {
+  animation: fish-swim var(--swim-duration, 1.6s) ease-in-out infinite;
+  animation-delay: var(--swim-delay, 0s);
+  transform-origin: 60% 50%;
+}
+
+/* ★ Day 21 (대표 결정 ②) — 후반 그리드(gridSize ≥ 8)에서 헤엄 모션 OFF.
+ *   slot-grid 에 'slot-grid--large' 클래스 부착 시 적용 (slot.js mount 시점).
+ *   사유: 64~121셀 동시 무한 헤엄 = 모바일 GPU 큰 부담 (Day 17 단순화 후에도 셀 수 폭증).
+ *   시각: 후반 지역에서만 fish가 정지 — 코지 톤 약간 손실 (단정한 미니멀리즘 부합).
+ *   대상: 5,6지역(8×8) / 7,8지역(9×9) / 9,10지역(10×10) / 11지역(11×11).
+ *   영향 X: 1~4지역(5~7×7) — 그대로 헤엄 유지.
+ */
+.slot-grid--large .slot-cell:not(.spinning):not(.stopped) .reel-symbol {
+  animation: none;
+}
+
+.slot-cell.matched .reel-symbol,
+.slot-cell.matched-golden .reel-symbol,
+.slot-cell.matched-twinkle .reel-symbol {
+  animation: none;
+}
+
+/* Day 17 후속 v2 폰 최적화 (E안): fish-swim 키프레임 단순화.
+   기존: translateY + rotate + scaleX 3속성 변경 (4프레임)
+   변경: translateY 만 (2프레임)
+   효과: 144셀(12×12) 동시 헤엄 시 연산량 약 6배 감소.
+   시각: 회전/스케일 미세 변화 사라짐 — 잔잔한 위아래 흔들림만 (단정한 미니멀리즘 정체성에 부합) */
+@keyframes fish-swim {
+  0%, 100% { transform: translateY(0);      }
+  50%      { transform: translateY(-1.5px); }
+}
+
+
+/* ============================================
+   7. 회전 / 멈춤 (Day 3 v3 — 잔잔한 물)
+   ============================================ */
+
+/* ★ Day 21 (대표 결정) — 슬롯 후반 렉 최적화 ① ★:
+ *   회전 중 121셀 동시 무한 애니메이션 부담 큰 폭 축소.
+ *   기존: water-flow background-position 무한 애니메이션 (2초)
+ *   변경: 정적 단일 그라디언트 (animation 제거 + background-size 100%)
+ *   시각: 회전 중 셀 내부 물 흐름 → 정지 (회전이 짧아서 거의 체감 X)
+ *   효과: 121셀 background paint 매 프레임 X — 모바일 GPU 부담 큰 폭 ↓
+ */
+.slot-cell.spinning {
+  background: linear-gradient(180deg,
+    var(--water-1) 0%,
+    var(--water-2) 50%,
+    var(--water-3) 100%);
+  /* background-size 100% (기존 240%) + animation 제거 — Day 21 ① */
+  border-color: rgba(200, 212, 240, 0.15);
+}
+
+/* 회전 중에는 이전 결과의 글로우 잔상 숨김
+   (spinning 빠지면 transition 0.25s로 부드럽게 다시 등장) */
+.slot-cell.spinning .cell-glow {
+  opacity: 0;
+}
+
+/* spinning일 때 reel-strip는 숨김 (회전 중에는 심볼 안 보임) */
+.slot-cell.spinning .reel-strip { opacity: 0; }
+
+/* @keyframes water-flow 제거 — Day 21 ① (참조 X) */
+
+/* ★ Day 21 — 슬롯 후반 렉 최적화 ① — ripple-spin 무한 펄스 제거.
+ *   기존: 121셀 ::before 각각 scale+opacity 무한 펄스 (매 프레임 GPU 재합성)
+ *   변경: ::before 자체 비활성 (content: none)
+ *   시각: 회전 중 셀 외곽 빛 펄스 → 사라짐 (체감 거의 없음)
+ *   효과: 회전 중 GPU 부담 한 단계 더 ↓
+ */
+.slot-cell.spinning::before {
+  content: none;
+}
+
+/* @keyframes ripple-spin 제거 — Day 21 ① (참조 X) */
+
+/* ──────────────────────────────────────────
+   멈춤 — 부드럽고 코지하게 (Day 3 v2 변경)
+   외곽 플래시 제거, 바운스 약하게
+   ────────────────────────────────────────── */
+
+.slot-cell.stopped {
+  animation: cell-stop-soft 0.5s var(--ease-pop);
+}
+
+/* 외곽 흰빛 플래시 제거 — ::after 비활성 */
+.slot-cell.stopped::after {
+  display: none !important;
+  content: none;
+}
+
+.slot-cell.stopped .reel-strip {
+  animation: symbol-emerge-soft 0.45s var(--ease-pop);
+}
+
+/* 부드러운 바운스 — 0.96 / 1.04 / 1 */
+@keyframes cell-stop-soft {
+  0%   { transform: scale(0.96); }
+  45%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+@keyframes symbol-emerge-soft {
+  0%   { opacity: 0; transform: scale(0.7); }
+  60%  { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+
+/* ============================================
+   8. 매칭 강조
+   ============================================ */
+
+.slot-cell.matched {
+  border-color: var(--accent-bright);
+  background: rgba(200, 212, 240, 0.18);
+  box-shadow: 0 0 18px rgba(200, 212, 240, 0.75),
+              inset 0 0 15px rgba(200, 212, 240, 0.38);
+  animation: grade-pulse-unified 1.2s ease-in-out infinite;  /* Day 17 후속 v2 폰 최적화 (C안): matched-pulse 통합 */
+  z-index: 2;
+  will-change: opacity, transform;  /* Day 17 후속 v2 폰 최적화 — 12×12 슬롯 확장 대비 */
+}
+
+/* Day 17 후속 v2 (C안): 구 matched-pulse keyframes 삭제됨 — grade-pulse-unified 로 통합 */
+
+/* ★ Day 21 (대표 결정 ③) — 매칭 펄스 정적화.
+ *   기존: golden-pulse / twinkle-pulse 무한 펄스 (box-shadow 매 프레임 재계산)
+ *   변경: 정적 box-shadow (펄스 X) — 가장 강한 시점 값 유지로 임팩트 보존
+ *   효과: 매칭 클러스터 셀 수만큼의 box-shadow 펄스 부담 0
+ *   시각: 매칭 셀 깜빡임 → 단순 강한 글로우 (잡기게임 A안 화면 글로우와 동일 패턴)
+ */
+.slot-cell.matched-golden {
+  border-color: #E8C870;
+  background: rgba(232, 200, 112, 0.18);
+  box-shadow: 0 0 28px rgba(255, 233, 160, 0.95),
+              inset 0 0 20px rgba(255, 233, 160, 0.5);
+  /* animation 제거 — Day 21 ③ */
+  z-index: 2;
+}
+
+/* @keyframes golden-pulse 제거 — Day 21 ③ (참조 X) */
+
+/* Day 20: 트윙클(꿈조각) 매칭 셀 발광 — matched-golden 과 동일 구조, 옅은 하늘색 톤 */
+.slot-cell.matched-twinkle {
+  border-color: #D7EFFF;
+  background: rgba(215, 239, 255, 0.18);
+  box-shadow: 0 0 28px rgba(255, 255, 255, 0.95),
+              inset 0 0 20px rgba(255, 255, 255, 0.5);
+  /* animation 제거 — Day 21 ③ */
+  z-index: 2;
+}
+
+/* @keyframes twinkle-pulse 제거 — Day 21 ③ (참조 X) */
+
+
+/* ============================================
+   ★ Day 26 — 까비까비 매칭 (Mixed 클러스터) 시각효과
+   ============================================
+   대표 결정 (Day 26):
+   - 테두리 네온색만 변경 (배경/심볼 변경 X — 대표 명세 "테두리 색들만 바뀌게 눈에 띄게만 정도")
+   - 5색 순환 (클러스터 여러 개 동시 발동 시 색 다르게 — 대표 명세)
+     1=사이언, 2=자홍, 3=라임, 4=옐로우, 5=바이올렛
+   - 까비까비 텍스트 + 무게 숫자 오버레이 (kabikabi-text.js)
+   - 글로우 효과 X (잔잔 / 미니멀리즘 정체성 유지)
+   ============================================ */
+
+.slot-cell.matched-kabikabi {
+  /* fallback (data-kabikabi-color 없을 때 — 사이언) */
+  border: 2px solid #00FFE0;  /* ★ Day 26 (대표 결정 — 더 가늘게): 3px → 2px */
+  z-index: 2;
+}
+
+.slot-cell.matched-kabikabi[data-kabikabi-color="1"] { border-color: #00FFE0; }  /* 사이언 */
+.slot-cell.matched-kabikabi[data-kabikabi-color="2"] { border-color: #FF0099; }  /* 자홍 */
+.slot-cell.matched-kabikabi[data-kabikabi-color="3"] { border-color: #B7FF00; }  /* 라임 */
+.slot-cell.matched-kabikabi[data-kabikabi-color="4"] { border-color: #FFD700; }  /* 옐로우 */
+.slot-cell.matched-kabikabi[data-kabikabi-color="5"] { border-color: #9D00FF; }  /* 바이올렛 */
+
+/* ----------------------------------------
+   까비까비 텍스트 오버레이 (kabikabi-text.js 컴포넌트)
+   ----------------------------------------
+   구조: wrapper (position/translate) → inner (animation: scale/opacity)
+     - wrapper 에 translateX(-50%) 좌우 중앙 정렬
+     - inner 에 keyframe scale 적용 — translate 와 scale 충돌 회피
+   레이아웃: 까비까비 라벨 (1.2rem) → 무게 숫자 (1.4rem, kg 표기 없음)
+   모션 (총 2.0초):
+     0%   → 12%  : scale 0.5 → 1.15 (뿅 오버슈트, opacity 0→1) — 0.24초
+     12%  → 20%  : scale 1.15 → 1.0 (안정화) — 0.16초
+     20%  → 85%  : 유지 — 1.3초
+     85%  → 100% : scale 1.0 → 0.9, opacity 1 → 0 (페이드아웃) — 0.3초
+*/
+.kabikabi-text {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+  transform: translateX(-50%);  /* 좌우 중앙 정렬 (left = 셀 중앙) */
+}
+
+.kabikabi-text__inner {
+  text-align: center;
+  font-family: var(--font-base);
+  font-weight: 700;
+  line-height: 1.05;
+  transform-origin: center center;
+  animation: kabikabi-pop 2.0s var(--fade-easing) forwards;
+}
+
+.kabikabi-text__label {
+  /* ★ Day 26 (대표 결정 시안 ③) — 까비까비 라벨만 변경:
+     Noto Serif KR Light(300) 가는 명조 / 1.2rem → 0.95rem 더 작게 / weight 700 → 300 가는 선 */
+  font-family: var(--font-kabikabi);
+  font-weight: 300;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;  /* 가는 명조 호흡감 추가 */
+  margin-bottom: 0.2rem;
+  white-space: nowrap;
+}
+
+.kabikabi-text__weight {
+  /* 무게 숫자는 변경 X (대표 명세) — Pretendard Bold 그대로 */
+  font-size: 1.4rem;
+  white-space: nowrap;
+}
+
+/* 색깔 5종 — 클러스터별 동일 색 (테두리와 일관성) */
+.kabikabi-text[data-kabikabi-color="1"] { color: #00FFE0; }
+.kabikabi-text[data-kabikabi-color="2"] { color: #FF0099; }
+.kabikabi-text[data-kabikabi-color="3"] { color: #B7FF00; }
+.kabikabi-text[data-kabikabi-color="4"] { color: #FFD700; }
+.kabikabi-text[data-kabikabi-color="5"] { color: #9D00FF; }
+
+@keyframes kabikabi-pop {
+  0%   { transform: scale(0.5);  opacity: 0; }
+  12%  { transform: scale(1.15); opacity: 1; }
+  20%  { transform: scale(1.0);  opacity: 1; }
+  85%  { transform: scale(1.0);  opacity: 1; }
+  100% { transform: scale(0.9);  opacity: 0; }
+}
+
+
+/* ============================================
+   ★ Day 26 — 최종무게 버스트 (gain-burst.js)
+   ============================================
+   대표 결정:
+   - 기존 게이지 위 hud__gauge-gain 떠오름 효과 폐기 → 슬롯 그리드 가운데 큰 등장
+   - 시안 B 톤 (큰 글자 + 노랑 강조 + 충격 링 + 글로우) — 시각적 도파민
+   - 글자 크기 = 그리드 폭 기준 동적 (gain-burst.js 가 inline style 로 적용)
+     · 큰 수 (예: +99999.99) 도 짤리지 않게 자동 축소
+   - 자동 dispose (1.8초 후)
+   ============================================ */
+
+.gain-burst {
+  position: absolute;
+  /* ★ Day 26 (대표 결정 — 추가 조정) — top 50% → 70%
+     슬롯 그리드 하단 3칸 영역 (HIT 팝업텍스트보다 아래쪽). */
+  top: 85%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+/* 충격 링 — 텍스트 가운데에서 폭발하듯 확장 페이드 */
+.gain-burst__ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  border: 3px solid rgba(255, 215, 0, 0.7);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: gain-burst-ring 1.0s ease-out forwards;
+}
+
+/* 텍스트 — 큰 글자 + 노랑 + scale pop (오버슈트) */
+.gain-burst__text {
+  position: relative;
+  font-family: var(--font-base);
+  font-weight: 900;
+  color: #FFD700;
+  letter-spacing: 0.02em;
+  text-shadow:
+    0 0 14px rgba(255, 215, 0, 0.65),
+    0 0 28px rgba(255, 180, 0, 0.40),
+    0 2px 4px rgba(0, 0, 0, 0.5);
+  transform-origin: center center;
+  animation: gain-burst-pop 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* 모션: scale 0 → 1.6 (오버슈트) → 1.0 (안정) → 유지 → 페이드아웃 */
+@keyframes gain-burst-pop {
+  0%   { transform: scale(0);    opacity: 0; }
+  12%  { transform: scale(1.6);  opacity: 1; }
+  28%  { transform: scale(1.0);  opacity: 1; }
+  78%  { transform: scale(1.0);  opacity: 1; }
+  100% { transform: scale(0.92); opacity: 0; }
+}
+
+/* 충격 링: 작게 → 폭발 (큰 원 + 페이드아웃) */
+@keyframes gain-burst-ring {
+  0%   { width: 12px;  height: 12px;  opacity: 0; border-width: 3px; }
+  8%   { width: 12px;  height: 12px;  opacity: 0.9; border-width: 3px; }
+  100% { width: 320px; height: 320px; opacity: 0; border-width: 1px; }
+}
+
+
+/* ============================================
+   9. 낚시 찌
+   ============================================ */
+
+.float-bobber {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* ★ Day 25 (대표 결정) — 슬롯 크기에 따라 비례 축소 (낚시터 커지면 멀어지는 시각효과).
+     scale 계산: 1 - (gridSize - 5) * 0.075 → 5렙 1.0 / 11지역 0.55 */
+  --bobber-scale: calc(1 - (var(--grid-size, 5) - 5) * 0.075);
+  width: calc(5.4rem * var(--bobber-scale));
+  height: calc(9rem * var(--bobber-scale));
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.3s var(--fade-easing);
+}
+
+/* 낚시줄 — width 비례 축소 (가는 줄 → 더 가늘게) */
+.float-bobber__line {
+  position: absolute;
+  bottom: 70%;
+  left: 50%;
+  width: calc(4px * var(--bobber-scale, 1));
+  height: calc(25rem * var(--bobber-scale, 1));
+  transform: translateX(-50%);
+  opacity: 0.55;
+  filter: drop-shadow(0 0 2px rgba(200, 212, 240, 0.4));
+  animation: line-sway 2.4s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
+@keyframes line-sway {
+  0%, 100% { transform: translateX(-50%) rotate(-1.2deg); }
+  50%      { transform: translateX(-50%) rotate(1.2deg);  }
+}
+
+.float-bobber__body {
+  position: absolute;
+  inset: 0;
+  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.5));
+  width: 100%;
+  height: 100%;
+}
+
+.float-bobber.bobber-idle {
+  opacity: 1;
+  animation: bobber-float 1.6s ease-in-out infinite;
+}
+
+@keyframes bobber-float {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0)    rotate(-2deg); }
+  50%      { transform: translate(-50%, -50%) translateY(-3px) rotate(2deg); }
+}
+
+.float-bobber.bobber-bite {
+  opacity: 1;
+  animation: bobber-bite 0.15s ease-in-out infinite;
+}
+
+@keyframes bobber-bite {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0);   }
+  50%      { transform: translate(-50%, -50%) translateY(4px); }
+}
+
+.float-bobber.bobber-hidden { opacity: 0; }
+
+
+/* ============================================
+   10. HIT 알림 (개수별 색 + 두 줄)
+   ============================================ */
+
+.bite-alert {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 30;
+  text-align: center;
+  will-change: transform, opacity;  /* Day 17 후속 v2 폰 최적화 — GPU 합성 레이어 사전 승격 */
+}
+
+/* 등급 라벨 (TINY/SMALL/MEDIUM/BIG/HUGE/BOSS/LEGEND/MYTHIC) — HIT 위쪽 작게
+   Day 19 — 대문자 통일 (대표 결정). text-transform 도 같이 uppercase. */
+.bite-alert__grade {
+  font-family: var(--font-body);
+  font-size: 1.4rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.95),
+               0 0 4px rgba(0, 0, 0, 0.95);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+/* Day 19 — 등급별 색 분기 (대표 결정 — 흰색 고정 → fish-result 와 동일 팔레트).
+   bite-alert.js 에서 dataset.topGrade 박아주면 여기서 색이 들어감. */
+.bite-alert[data-top-grade="치어"]    .bite-alert__grade { color: #B0DCFF; }
+.bite-alert[data-top-grade="소형"]    .bite-alert__grade { color: #FFFFFF; }
+.bite-alert[data-top-grade="중형"]    .bite-alert__grade { color: #C8E664; }
+.bite-alert[data-top-grade="월척"]    .bite-alert__grade { color: #7B61FF; }
+.bite-alert[data-top-grade="대물"]    .bite-alert__grade { color: #FFA94D; }
+.bite-alert[data-top-grade="보스"]    .bite-alert__grade { color: #E94560; }
+.bite-alert[data-top-grade="전설보스"] .bite-alert__grade { color: #FFD700; }
+.bite-alert[data-top-grade="신화보스"] .bite-alert__grade { color: #FF49A6; }
+
+.bite-alert__grade:empty {
+  display: none;
+}
+
+.bite-alert__prefix {
+  font-family: var(--font-impact);
+  font-size: 5.6rem;
+  letter-spacing: 0.18em;
+  color: var(--accent-warm);
+  text-shadow: 0 0 20px rgba(255, 217, 160, 0.95),
+               0 0 12px rgba(0, 0, 0, 0.95);
+  line-height: 1;
+}
+
+.bite-alert[data-hit-count="1"] .bite-alert__prefix {
+  display: none;
+}
+
+.bite-alert__main {
+  font-family: var(--font-impact);
+  font-size: 9.6rem;
+  letter-spacing: 0.15em;
+  color: var(--accent-warm);
+  text-shadow: 0 0 24px rgba(255, 217, 160, 0.95),
+               0 0 12px rgba(0, 0, 0, 0.95),
+               0 0 40px rgba(255, 217, 160, 0.5);
+  line-height: 1;
+}
+
+/* Day 19 — 멀티힛 색 황금색 통일 (대표 결정).
+   이전: hit-count 2~6 별로 다른 색 (연두/파랑/보라/분홍/빨강)
+       → 물고기 등급 색 / 장비 등급 색과 혼동.
+   변경: 모든 멀티힛 라벨을 일반 HIT 와 같은 황금색(--accent-warm) 으로 통일.
+        반짝 효과(sparkle-stars)와 함께 시각적 임팩트는 유지. */
+.bite-alert[data-hit-count="2"] .bite-alert__prefix,
+.bite-alert[data-hit-count="2"] .bite-alert__main,
+.bite-alert[data-hit-count="3"] .bite-alert__prefix,
+.bite-alert[data-hit-count="3"] .bite-alert__main,
+.bite-alert[data-hit-count="4"] .bite-alert__prefix,
+.bite-alert[data-hit-count="4"] .bite-alert__main,
+.bite-alert[data-hit-count="5"] .bite-alert__prefix,
+.bite-alert[data-hit-count="5"] .bite-alert__main,
+.bite-alert[data-hit-count="6"] .bite-alert__prefix,
+.bite-alert[data-hit-count="6"] .bite-alert__main {
+  color: var(--accent-warm);
+  text-shadow: 0 0 24px rgba(255, 217, 160, 0.95),
+               0 0 12px rgba(0, 0, 0, 0.95),
+               0 0 40px rgba(255, 217, 160, 0.5);
+}
+
+/* MEGA HIT (6+ 매칭) — 깜빡 효과 유지 (특별한 임팩트) */
+.bite-alert[data-hit-count="6"] .bite-alert__main {
+  animation: mega-hit-flicker 0.6s ease-in-out infinite;
+}
+
+@keyframes mega-hit-flicker {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.4); }
+}
+
+/* ─── BOSS HIT (분홍 매칭 시) — 빨간 큰 텍스트
+   JS는 main.textContent='BOSS HIT' 한 줄로 처리하므로
+   data-boss="true"일 때 main만 빨간 큰 글씨로
+   Day 7-2: 글로우 톤다운 (blur radius / alpha 모두 줄임 — 눈 피로 ↓) ─── */
+.bite-alert[data-boss="true"] .bite-alert__grade {
+  display: none;
+}
+
+.bite-alert[data-boss="true"] .bite-alert__main {
+  color: #FF4646;
+  font-size: 11.6rem;
+  text-shadow:
+    0 0 18px rgba(255, 70, 70, 0.55),
+    0 0 12px rgba(0, 0, 0, 0.95),
+    0 0 32px rgba(255, 70, 70, 0.35);
+  animation: boss-hit-pulse 0.7s ease-in-out infinite;
+}
+
+/* 일반 hit-count 색상은 무시 */
+.bite-alert[data-boss="true"][data-hit-count] .bite-alert__main,
+.bite-alert[data-boss="true"][data-hit-count] .bite-alert__prefix {
+  color: #FF4646 !important;
+  text-shadow:
+    0 0 14px rgba(255, 70, 70, 0.55),
+    0 0 10px rgba(0, 0, 0, 0.95),
+    0 0 24px rgba(255, 70, 70, 0.3) !important;
+}
+
+@keyframes boss-hit-pulse {
+  /* Day 17 후속 v2 폰 최적화 (B안):
+     기존 filter brightness + drop-shadow 매 프레임 변경 → opacity 변경으로 단순화.
+     drop-shadow 변경은 GPU 합성에서 가장 비싼 패턴이라 폰에서 렉의 주범. */
+  0%, 100% { opacity: 1;    }
+  50%      { opacity: 0.82; }
+}
+
+.bite-alert.show {
+  opacity: 1;
+  animation: bite-pop 0.6s var(--ease-pop),
+             bite-pulse 1.4s ease-in-out 0.6s infinite;
+}
+
+.bite-alert.hide {
+  opacity: 0;
+  transition: opacity 0.3s var(--fade-easing);
+}
+
+@keyframes bite-pop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  60%  { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes bite-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1);    }
+  50%      { transform: translate(-50%, -50%) scale(1.05); }
+}
+
+
+/* ============================================
+   11. 황금 라인 연출 (가는 선 + 별 파티클)
+   ============================================ */
+
+/* ============================================
+   골든 매칭 연출 — 황금선 + 별 마커 + 화면 전체 입자
+   ============================================
+   Day 18 후속 (대표 결정) — drawGoldenLine 재활성 + 디자인 개선.
+   골든 매칭 발견 시 발광 → 선 천천히 그려짐 → 황금 입자 흩날림 → 팝업
+   ============================================ */
+
+.golden-line-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 1;
+  transition: opacity 600ms ease-out;
+}
+.golden-line-overlay.fading { opacity: 0; }
+
+.golden-line-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* 선 그려짐 — 2.5초 천천히 */
+.golden-line-overlay.drawing .golden-line-glow,
+.golden-line-overlay.drawing .golden-line-main {
+  transition: stroke-dashoffset 2500ms cubic-bezier(0.4, 0.0, 0.2, 1);
+  stroke-dashoffset: 0 !important;
+}
+.golden-line-overlay.drawing .golden-line-main {
+  transition-delay: 60ms;   /* 글로우 살짝 먼저, 메인 뒤따라 */
+}
+
+/* 끝점 별 마커 — 셀별 시차 pop-in */
+.golden-line-marker {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: golden-marker-pop 600ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: var(--delay, 0s);
+  filter: drop-shadow(0 0 4px rgba(255, 224, 144, 1))
+          drop-shadow(0 0 10px rgba(255, 200, 80, 0.55));
+}
+@keyframes golden-marker-pop {
+  0%   { opacity: 0; transform: scale(0)   rotate(0deg); }
+  60%  { opacity: 1; transform: scale(1.3) rotate(45deg); }
+  100% { opacity: 1; transform: scale(1)   rotate(0deg); }
+}
+
+/* ── 화면 전체 황금빛 입자 흩날림 (별빛연못 카드 입자 톤) ── */
+.golden-particles-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 800ms ease-out;
+}
+.golden-particles-overlay.fading { opacity: 0; }
+
+.golden-particle {
+  position: absolute;
+  width: var(--size, 0.5rem);
+  height: var(--size, 0.5rem);
+  border-radius: 50%;
+  animation: golden-particle-drift 4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.golden-particle--0 {
+  background: radial-gradient(circle, rgba(255, 240, 170, 1) 0%, rgba(255, 200, 80, 0) 70%);
+}
+.golden-particle--1 {
+  background: radial-gradient(circle, rgba(255, 220, 120, 0.95) 0%, rgba(255, 180, 60, 0) 70%);
+}
+.golden-particle--2 {
+  background: radial-gradient(circle, rgba(255, 248, 200, 1) 0%, rgba(255, 220, 120, 0) 70%);
+}
+.golden-particle--3 {
+  background: radial-gradient(circle, rgba(255, 210, 110, 0.9) 0%, rgba(255, 170, 50, 0) 70%);
+}
+
+@keyframes golden-particle-drift {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(calc(var(--drift-x, 0px) * 0.3), calc(var(--drift-y, -10px) * 0.3)) scale(1);
+  }
+  70% {
+    opacity: 0.9;
+    transform: translate(var(--drift-x, 0px), var(--drift-y, -20px)) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--drift-x, 0px) * 1.2), calc(var(--drift-y, -20px) * 1.3)) scale(0.6);
+  }
+}
+
+/* ============================================
+   Day 20: 트윙클(꿈조각) 매칭 연결선 + 입자 흩날림
+   ============================================
+   golden-line CSS 의 톤 변경판 (흰색 + 연한 푸른빛 글로우).
+   구조/타이밍은 동일, 색만 다름.
+   ============================================ */
+
+.twinkle-line-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 1;
+  transition: opacity 600ms ease-out;
+}
+.twinkle-line-overlay.fading { opacity: 0; }
+
+.twinkle-line-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* 선 그려짐 — 2.5초 천천히 */
+.twinkle-line-overlay.drawing .twinkle-line-glow,
+.twinkle-line-overlay.drawing .twinkle-line-main {
+  transition: stroke-dashoffset 2500ms cubic-bezier(0.4, 0.0, 0.2, 1);
+  stroke-dashoffset: 0 !important;
+}
+.twinkle-line-overlay.drawing .twinkle-line-main {
+  transition-delay: 60ms;
+}
+
+/* 끝점 별 마커 — 셀별 시차 pop-in (흰색 + 연푸른빛 글로우) */
+.twinkle-line-marker {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: twinkle-marker-pop 600ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: var(--delay, 0s);
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 1))
+          drop-shadow(0 0 10px rgba(181, 220, 255, 0.65));
+}
+@keyframes twinkle-marker-pop {
+  0%   { opacity: 0; transform: scale(0)   rotate(0deg); }
+  60%  { opacity: 1; transform: scale(1.3) rotate(45deg); }
+  100% { opacity: 1; transform: scale(1)   rotate(0deg); }
+}
+
+/* ── 화면 전체 흰 크리스탈 입자 흩날림 ── */
+.twinkle-particles-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 800ms ease-out;
+}
+.twinkle-particles-overlay.fading { opacity: 0; }
+
+.twinkle-particle {
+  position: absolute;
+  width: var(--size, 0.5rem);
+  height: var(--size, 0.5rem);
+  border-radius: 50%;
+  animation: twinkle-particle-drift 4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.twinkle-particle--0 {
+  background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(181, 220, 255, 0) 70%);
+}
+.twinkle-particle--1 {
+  background: radial-gradient(circle, rgba(215, 239, 255, 0.95) 0%, rgba(165, 210, 255, 0) 70%);
+}
+.twinkle-particle--2 {
+  background: radial-gradient(circle, rgba(240, 248, 255, 1) 0%, rgba(215, 239, 255, 0) 70%);
+}
+.twinkle-particle--3 {
+  background: radial-gradient(circle, rgba(197, 232, 255, 0.9) 0%, rgba(150, 200, 255, 0) 70%);
+}
+
+@keyframes twinkle-particle-drift {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(calc(var(--drift-x, 0px) * 0.3), calc(var(--drift-y, -10px) * 0.3)) scale(1);
+  }
+  70% {
+    opacity: 0.9;
+    transform: translate(var(--drift-x, 0px), var(--drift-y, -20px)) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--drift-x, 0px) * 1.2), calc(var(--drift-y, -20px) * 1.3)) scale(0.6);
+  }
+}
+
+
+
+/* ============================================
+   ★ Day 22: HIDDEN HIT(분홍) 매칭 연결선 + 입자 흩날림
+   ============================================
+   golden-line / twinkle-line CSS 의 톤 변경판 (연한 핑크 ~ 분홍 그라데이션).
+   구조/타이밍은 동일, 색만 다름.
+   ============================================ */
+
+.hidden-line-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 1;
+  transition: opacity 600ms ease-out;
+}
+.hidden-line-overlay.fading { opacity: 0; }
+
+.hidden-line-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* 선 그려짐 — 2.5초 천천히 */
+.hidden-line-overlay.drawing .hidden-line-glow,
+.hidden-line-overlay.drawing .hidden-line-main {
+  transition: stroke-dashoffset 2500ms cubic-bezier(0.4, 0.0, 0.2, 1);
+  stroke-dashoffset: 0 !important;
+}
+.hidden-line-overlay.drawing .hidden-line-main {
+  transition-delay: 60ms;
+}
+
+/* 끝점 별 마커 — 셀별 시차 pop-in (연한 핑크 + 분홍 글로우) */
+.hidden-line-marker {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hidden-marker-pop 600ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: var(--delay, 0s);
+  filter: drop-shadow(0 0 4px rgba(255, 224, 238, 1))
+          drop-shadow(0 0 10px rgba(255, 157, 203, 0.65));
+}
+@keyframes hidden-marker-pop {
+  0%   { opacity: 0; transform: scale(0)   rotate(0deg); }
+  60%  { opacity: 1; transform: scale(1.3) rotate(45deg); }
+  100% { opacity: 1; transform: scale(1)   rotate(0deg); }
+}
+
+/* ── 화면 전체 분홍 입자 흩날림 ── */
+.hidden-particles-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 800ms ease-out;
+}
+.hidden-particles-overlay.fading { opacity: 0; }
+
+.hidden-particle {
+  position: absolute;
+  width: var(--size, 0.5rem);
+  height: var(--size, 0.5rem);
+  border-radius: 50%;
+  animation: hidden-particle-drift 4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.hidden-particle--0 {
+  background: radial-gradient(circle, rgba(255, 224, 238, 1) 0%, rgba(255, 157, 203, 0) 70%);
+}
+.hidden-particle--1 {
+  background: radial-gradient(circle, rgba(255, 184, 216, 0.95) 0%, rgba(255, 157, 203, 0) 70%);
+}
+.hidden-particle--2 {
+  background: radial-gradient(circle, rgba(255, 240, 247, 1) 0%, rgba(255, 200, 224, 0) 70%);
+}
+.hidden-particle--3 {
+  background: radial-gradient(circle, rgba(255, 200, 224, 0.9) 0%, rgba(255, 157, 203, 0) 70%);
+}
+
+@keyframes hidden-particle-drift {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(calc(var(--drift-x, 0px) * 0.3), calc(var(--drift-y, -10px) * 0.3)) scale(1);
+  }
+  70% {
+    opacity: 0.9;
+    transform: translate(var(--drift-x, 0px), var(--drift-y, -20px)) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--drift-x, 0px) * 1.2), calc(var(--drift-y, -20px) * 1.3)) scale(0.6);
+  }
+}
+
+
+
+/* ============================================
+   12. cast 버튼 — 잡기 게임 원 스타일 통일 (Day 4-3 재구성)
+   ============================================
+   컨셉: 잡기 게임 원 디자인 그대로 가져와 게임 내 시각 언어 통일
+   - CAST   = 흰색 원 (소형 물고기원)
+   - PULL   = 황금빛 원 (특별한 시선 끌기)
+   - WAITING = BAD 원 (검정 그라디언트)
+   - busy   = CAST의 어둑한 버전
+   - 누름 반응: "진짜 눌리는" 강조 — translateY + 깊은 inset + 외곽 그림자 사라짐
+   ============================================ */
+
+/* ─── 베이스 = CAST (흰색 원) ─── */
+.cast-btn {
+  position: relative;
+  width: var(--cast-button-size, 8.6rem);
+  height: var(--cast-button-size, 8.6rem);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  /* 흰빛 다층 그라디언트 — 잡기 원과 동일 구조 */
+  background:
+    radial-gradient(circle at 32% 28%,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(248, 252, 255, 0.92) 25%,
+      #FFFFFF 60%,
+      #c8d4e0 95%);
+  box-shadow:
+    /* 외곽 글로우 (떠있는 느낌) */
+    0 0 18px rgba(255, 255, 255, 0.75),
+    0 0 32px rgba(220, 235, 255, 0.4),
+    /* 위쪽 광택 inset */
+    inset 0 2px 5px rgba(255, 255, 255, 0.95),
+    /* 아래쪽 깊이 inset */
+    inset 0 -3px 8px rgba(120, 140, 170, 0.5);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-family: var(--font-base);
+  /* 잔잔한 breathing — 살아있는 느낌 */
+  animation: cast-btn-breath-cast 3.2s ease-in-out infinite;
+  transition:
+    transform 0.18s cubic-bezier(0.22, 0.9, 0.32, 1),
+    border-color 0.4s var(--fade-easing),
+    background 0.4s var(--fade-easing),
+    box-shadow 0.4s var(--fade-easing),
+    filter 0.3s var(--fade-easing);
+  overflow: visible;
+}
+
+/* 코어 광원 (좌상단) — 잡기 원과 동일한 광원 효과 */
+.cast-btn::before {
+  content: '';
+  position: absolute;
+  top: 14%;
+  left: 18%;
+  width: 32%;
+  height: 22%;
+  background: radial-gradient(ellipse at center,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%);
+  border-radius: 50%;
+  filter: blur(1.5px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 외곽 미세 빛(쉬머) — 잡기 원의 catch-orb__shine 동일 효과
+ * ★ Day 21 (대표 결정 ⑤) — cast-btn-shine 무한 회전 끄기.
+ *   버튼이 화면에 상시 떠 있으므로 무한 회전 = 모바일 GPU 상시 부담.
+ *   시각: 광택이 한쪽에 정적 — 자세히 보지 않으면 차이 거의 X.
+ */
+.cast-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.0) 35%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.0) 65%);
+  pointer-events: none;
+  /* animation 제거 — Day 21 ⑤ (cast-btn-shine 정적화) */
+  z-index: 1;
+}
+
+/* @keyframes cast-btn-shine 제거 — Day 21 ⑤ (참조 X) */
+
+@keyframes cast-btn-breath-cast {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 18px rgba(255, 255, 255, 0.75),
+      0 0 32px rgba(220, 235, 255, 0.4),
+      inset 0 2px 5px rgba(255, 255, 255, 0.95),
+      inset 0 -3px 8px rgba(120, 140, 170, 0.5);
+  }
+  50% {
+    transform: scale(1.018);
+    box-shadow:
+      0 0 22px rgba(255, 255, 255, 0.9),
+      0 0 38px rgba(220, 235, 255, 0.55),
+      inset 0 2px 5px rgba(255, 255, 255, 1),
+      inset 0 -3px 8px rgba(120, 140, 170, 0.5);
+  }
+}
+
+/* ─── PULL 상태 (황금빛 원 — 시선 강하게 끌기) ─── */
+.cast-btn[data-state="pull"] {
+  border-color: #ffd075;
+  background:
+    radial-gradient(circle at 32% 28%,
+      rgba(255, 250, 220, 0.98) 0%,
+      rgba(255, 235, 175, 0.92) 25%,
+      #FFD700 60%,
+      #b8801a 95%);
+  box-shadow:
+    /* 황금 외곽 글로우 — 강하게 */
+    0 0 22px rgba(255, 215, 100, 0.85),
+    0 0 38px rgba(255, 200, 80, 0.55),
+    inset 0 2px 5px rgba(255, 245, 215, 0.92),
+    inset 0 -3px 8px rgba(120, 75, 15, 0.55);
+  animation: cast-btn-breath-pull 1.6s ease-in-out infinite;
+}
+
+@keyframes cast-btn-breath-pull {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 22px rgba(255, 215, 100, 0.85),
+      0 0 38px rgba(255, 200, 80, 0.55),
+      0 0 0 0 rgba(255, 215, 100, 0.5),
+      inset 0 2px 5px rgba(255, 245, 215, 0.92),
+      inset 0 -3px 8px rgba(120, 75, 15, 0.55);
+  }
+  50% {
+    transform: scale(1.07);
+    box-shadow:
+      0 0 32px rgba(255, 230, 130, 1),
+      0 0 52px rgba(255, 210, 90, 0.7),
+      0 0 0 10px rgba(255, 215, 100, 0),
+      inset 0 2px 5px rgba(255, 250, 230, 1),
+      inset 0 -3px 8px rgba(120, 75, 15, 0.55);
+  }
+}
+
+/* ─── 누름 반응 — "진짜 눌리는" 강조 ───
+   핵심: translateY로 가라앉는 느낌 + 외곽 그림자 사라짐 + 깊은 inset shadow
+   → 떠있던 게 평면으로 푹 가라앉은 시각 효과 */
+.cast-btn:active {
+  transform: scale(0.85) translateY(2.5px) !important;
+  transition: transform 0.04s ease-out,
+              box-shadow 0.04s ease-out,
+              filter 0.04s ease-out;
+  filter: brightness(0.78);
+  box-shadow:
+    /* 외곽 글로우 거의 사라짐 (가라앉음) */
+    0 1px 3px rgba(0, 0, 0, 0.4),
+    /* 안쪽 위쪽 그림자 강하게 (눌려 들어간 느낌) */
+    inset 0 4px 9px rgba(0, 0, 0, 0.5),
+    inset 0 1.5px 3px rgba(0, 0, 0, 0.35),
+    /* 안쪽 아래쪽 살짝 빛 (반사광) */
+    inset 0 -1px 2px rgba(255, 255, 255, 0.18) !important;
+}
+
+.cast-btn[data-state="cast"]:active {
+  animation: cast-btn-press 0.4s cubic-bezier(0.22, 0.9, 0.32, 1) !important;
+}
+
+.cast-btn[data-state="pull"]:active {
+  animation: pull-btn-press 0.45s cubic-bezier(0.22, 0.9, 0.32, 1) !important;
+}
+
+/* CAST 누름 → spring back (눌렸다가 살짝 튕겨 올라옴) */
+@keyframes cast-btn-press {
+  0% {
+    transform: scale(0.85) translateY(2.5px);
+    filter: brightness(0.78);
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.4),
+      inset 0 4px 9px rgba(0, 0, 0, 0.5),
+      inset 0 1.5px 3px rgba(0, 0, 0, 0.35),
+      inset 0 -1px 2px rgba(255, 255, 255, 0.18);
+  }
+  55% {
+    transform: scale(1.06) translateY(-1.5px);
+    filter: brightness(1.3);
+    box-shadow:
+      0 0 36px rgba(255, 255, 255, 0.95),
+      0 0 60px rgba(220, 235, 255, 0.6),
+      inset 0 2px 5px rgba(255, 255, 255, 1),
+      inset 0 -3px 8px rgba(120, 140, 170, 0.5);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    filter: brightness(1);
+    box-shadow:
+      0 0 18px rgba(255, 255, 255, 0.75),
+      0 0 32px rgba(220, 235, 255, 0.4),
+      inset 0 2px 5px rgba(255, 255, 255, 0.95),
+      inset 0 -3px 8px rgba(120, 140, 170, 0.5);
+  }
+}
+
+/* PULL 누름 → 황금 spring back */
+@keyframes pull-btn-press {
+  0% {
+    transform: scale(0.85) translateY(2.5px);
+    filter: brightness(0.75);
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.45),
+      inset 0 4px 9px rgba(40, 25, 5, 0.6),
+      inset 0 1.5px 3px rgba(20, 12, 2, 0.45),
+      inset 0 -1px 2px rgba(255, 235, 175, 0.2);
+  }
+  55% {
+    transform: scale(1.1) translateY(-2px);
+    filter: brightness(1.4);
+    box-shadow:
+      0 0 48px rgba(255, 240, 180, 1),
+      0 0 80px rgba(255, 215, 100, 0.7),
+      inset 0 2px 5px rgba(255, 250, 230, 1),
+      inset 0 -3px 8px rgba(120, 75, 15, 0.55);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    filter: brightness(1);
+    box-shadow:
+      0 0 22px rgba(255, 215, 100, 0.85),
+      0 0 38px rgba(255, 200, 80, 0.55),
+      inset 0 2px 5px rgba(255, 245, 215, 0.92),
+      inset 0 -3px 8px rgba(120, 75, 15, 0.55);
+  }
+}
+
+/* 자동 모드 — "스스로 눌리는" 모션 (cast-btn-press 재사용) */
+.cast-btn.cast-btn--auto-press {
+  animation: cast-btn-press 0.4s cubic-bezier(0.22, 0.9, 0.32, 1) !important;
+}
+
+/* ─── WAITING 상태 (BAD 원 디자인 — 검정 그라디언트) ─── */
+.cast-btn[data-state="wait"] {
+  pointer-events: none;
+  border-color: rgba(255, 255, 255, 0.22);
+  background: radial-gradient(circle at 32% 28%,
+    rgba(110, 110, 130, 0.95) 0%,
+    rgba(58, 58, 76, 1) 35%,
+    rgba(20, 20, 30, 1) 95%);
+  box-shadow:
+    0 0 14px rgba(0, 0, 0, 0.7),
+    0 0 22px rgba(0, 0, 0, 0.45),
+    inset 0 -3px 7px rgba(0, 0, 0, 0.6),
+    inset 0 1.5px 2.5px rgba(255, 255, 255, 0.2);
+  transform: scale(0.96);
+  animation: cast-btn-waiting-glow 1.8s ease-in-out infinite !important;
+}
+
+/* WAITING 상태에서는 광원/쉬머 옅게 */
+.cast-btn[data-state="wait"]::before {
+  opacity: 0.55;
+}
+
+.cast-btn[data-state="wait"]::after {
+  opacity: 0.25;
+  animation-duration: 5s;
+}
+
+.cast-btn[data-state="wait"] .cast-btn__text {
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow:
+    0 0 8px rgba(255, 255, 255, 0.45),
+    0 1px 2px rgba(0, 0, 0, 0.7);
+  animation: cast-btn-wait-text-blink 2.4s ease-in-out infinite;
+}
+
+@keyframes cast-btn-wait-text-blink {
+  0%, 100% {
+    opacity: 0.5;
+    text-shadow:
+      0 0 6px rgba(255, 255, 255, 0.3),
+      0 1px 2px rgba(0, 0, 0, 0.7);
+  }
+  50% {
+    opacity: 1;
+    text-shadow:
+      0 0 14px rgba(255, 255, 255, 0.85),
+      0 1px 2px rgba(0, 0, 0, 0.7);
+  }
+}
+
+@keyframes cast-btn-waiting-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 12px rgba(0, 0, 0, 0.7),
+      0 0 20px rgba(0, 0, 0, 0.4),
+      inset 0 -3px 7px rgba(0, 0, 0, 0.6),
+      inset 0 1.5px 2.5px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 18px rgba(0, 0, 0, 0.85),
+      0 0 28px rgba(0, 0, 0, 0.55),
+      inset 0 -3px 7px rgba(0, 0, 0, 0.7),
+      inset 0 1.5px 2.5px rgba(255, 255, 255, 0.28);
+  }
+}
+
+/* ─── busy 상태 — CAST의 어둑한 버전 (결과 처리 중 비활성) ─── */
+.cast-btn--busy {
+  pointer-events: none !important;
+  filter: brightness(0.45) saturate(0.5) !important;
+  transform: scale(0.97);
+  animation: none !important;
+  cursor: default;
+  opacity: 0.85;
+}
+.cast-btn--busy::before,
+.cast-btn--busy::after {
+  opacity: 0.3 !important;
+  animation: none !important;
+}
+.cast-btn--busy .cast-btn__text {
+  color: rgba(80, 90, 110, 0.85);
+  text-shadow: none;
+  animation: none !important;
+}
+.cast-btn--busy .cast-btn__ring--outer,
+.cast-btn--busy .cast-btn__ring--inner {
+  opacity: 0.18;
+}
+
+/* ─── 외곽 링 — 잡기 원에는 없지만 cast 버튼 정체성 위해 미세하게 유지 ─── */
+.cast-btn__ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cast-btn__ring--outer {
+  inset: -0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.cast-btn__ring--inner {
+  inset: -1.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cast-btn[data-state="pull"] .cast-btn__ring--outer {
+  border-color: rgba(255, 215, 100, 0.32);
+}
+
+.cast-btn[data-state="pull"] .cast-btn__ring--inner {
+  border-color: rgba(255, 215, 100, 0.15);
+}
+
+.cast-btn[data-state="wait"] .cast-btn__ring--outer,
+.cast-btn[data-state="wait"] .cast-btn__ring--inner {
+  opacity: 0.25;
+}
+
+/* ─── 텍스트 (CAST / PULL / WAITING 영문) ─── */
+.cast-btn__text {
+  position: relative;
+  font-family: var(--font-impact);
+  font-size: 1.7rem;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  color: #2a3548;        /* CAST: 흰원 위 짙은 색으로 가독성 */
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7),
+    0 0 4px rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+  z-index: 2;             /* 광원/쉬머 위로 */
+}
+
+.cast-btn[data-state="pull"] .cast-btn__text {
+  color: #4a3010;         /* PULL: 황금원 위 진한 갈색 */
+  text-shadow:
+    0 1px 0 rgba(255, 245, 215, 0.85),
+    0 0 6px rgba(255, 220, 130, 0.6);
+}
+
+
+/* ============================================
+   13. TURN 카운터
+   ============================================ */
+
+.turn-counter {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0.5rem;
+  /* Day 16 후속 (대표 결정): cast 버튼 쪽에 좀 더 가깝게 — 위 간격 늘려 아래로 밀어내림. */
+  margin-top: 0.3rem;
+  margin-bottom: -1.5rem;
+}
+
+.turn-counter__label {
+  font-family: var(--font-impact);
+  font-size: 0.9rem;
+  letter-spacing: 0.3em;
+  color: var(--line-soft);
+}
+
+.turn-counter__num {
+  font-family: var(--font-impact);
+  font-size: 1.4rem;
+  color: var(--accent-bright);
+  letter-spacing: 0.05em;
+}
+
+
+/* ============================================
+   14. 장비 + 던지다 버튼 row
+   ============================================ */
+
+.action-row {
+  display: grid;
+  grid-template-columns: var(--gear-slot-size) 1fr var(--gear-slot-size);
+  align-items: center;
+  justify-items: center;
+  gap: 1.4rem;
+  padding: 0;
+}
+
+.gear-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+/* 장비 칸 — 미장착 (점선) + 등급별 장착 (Bag-4 추가) */
+.gear-slot {
+  width: var(--gear-slot-size, 5.6rem);
+  height: var(--gear-slot-size, 5.6rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border-radius: 10px;
+  background: transparent;
+  border: var(--line-thin) dashed rgba(200, 212, 240, 0.4);
+  color: rgba(200, 212, 240, 0.55);
+  cursor: pointer;  /* 클릭 가능 (장착 시 컨텍스트 메뉴, 미장착 시 가방 열기) */
+  transition:
+    background 240ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 240ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 240ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 240ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.gear-slot:hover {
+  transform: translateY(-1px);
+}
+.gear-slot:active {
+  transform: scale(0.94);
+}
+
+.gear-slot__icon {
+  width: 70%;
+  height: 70%;
+}
+
+/* ★ Day 22 Phase 7 후속 (대표 결정): 미장착 슬롯의 부위 아이콘 — 작게 + 흐리게 */
+.gear-slot--empty .gear-slot__icon {
+  width: 50%;
+  height: 50%;
+  opacity: 0.3;
+}
+
+/* Day 11 — 장착 장비 강화 단계 +N 좌상단
+   Day 13 변경 ★ — 대표 결정:
+   - 크기 1.5rem → 2.2rem (강화 시 시선 유도 강조)
+   - 색 #ffd9a0 황금 → #FFFFFF 순백 (전설 등급 황금색과 겹치지 않게)
+   - 그림자 강하게 (어두운 배경에서도 또렷, 어떤 등급 배경에서도 명확)
+*/
+.gear-slot {
+  position: relative;
+}
+.gear-slot__level {
+  position: absolute;
+  top: 0.25rem;
+  left: 0.25rem;
+  font-family: var(--font-impact);
+  font-size: 2.5rem;          /* Day 13 추가 — 2.2rem → 1.8rem (대표 결정 — 조금 줄임) */
+  line-height: 1;
+  color: #fcff31;             /* 황금 → 순백 (등급색 6종 모두와 안 겹침) */
+  letter-spacing: 0.01em;
+  text-shadow:
+    0 0 3px rgba(0, 0, 0, 1),
+    0 0 6px rgba(0, 0, 0, 0.95),
+    0 0 10px rgba(0, 0, 0, 0.7),
+    0 0 14px rgba(255, 255, 255, 0.55);  /* 살짝 빛나는 느낌 (cool white halo) */
+  pointer-events: none;
+  z-index: 3;                  /* cosmetic glow ::after (z=1), icon (z=2) 위로 */
+}
+
+
+/* ── 장착 상태: 6등급 (가방 셀과 동일 톤 — 일관성)
+   Day 13 — 등급별 --grade-rgb 변수 정의 (대표 결정).
+   강화 레벨에 따른 두께/글로우 calc 룰이 var(--grade-rgb) 사용.
+   ── */
+
+/* common — 흰색 (Day 16 후속) */
+.gear-slot--common {
+  --grade-rgb: 255, 255, 255;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.10), rgba(12, 26, 58, 0.6));
+  border: 0.24rem solid rgba(255, 255, 255, 0.70);
+  color: #FFFFFF;
+}
+
+/* uncommon — 초록 */
+.gear-slot--uncommon {
+  --grade-rgb: 157, 227, 107;
+  background: linear-gradient(160deg, rgba(157, 227, 107, 0.12), rgba(12, 26, 58, 0.6));
+  border: 0.24rem solid rgba(157, 227, 107, 0.75);
+  color: #c5f095;
+  box-shadow: 0 0 10px rgba(157, 227, 107, 0.18);
+}
+
+/* rare — 파랑 */
+.gear-slot--rare {
+  --grade-rgb: 37, 99, 235;
+  background: linear-gradient(160deg, rgba(37, 99, 235, 0.14), rgba(12, 26, 58, 0.6));
+  border: 0.24rem solid rgba(37, 99, 235, 0.80);
+  color: #a3dcfa;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.26);
+}
+
+/* epic — 보라 */
+.gear-slot--epic {
+  --grade-rgb: 176, 128, 208;
+  background: linear-gradient(160deg, rgba(176, 128, 208, 0.16), rgba(12, 26, 58, 0.6));
+  border: 0.24rem solid rgba(176, 128, 208, 0.85);
+  color: #d4b3e8;
+  box-shadow: 0 0 14px rgba(176, 128, 208, 0.32);
+}
+
+/* legendary — 황금 */
+.gear-slot--legendary {
+  --grade-rgb: 255, 217, 106;
+  background: linear-gradient(160deg, rgba(255, 217, 106, 0.18), rgba(12, 26, 58, 0.6));
+  border: 0.24rem solid rgba(255, 217, 106, 0.95);
+  color: #ffe9a8;
+  box-shadow:
+    0 0 16px rgba(255, 217, 106, 0.40),
+    inset 0 0 8px rgba(255, 217, 106, 0.10);
+}
+
+/* mythic — 진한 분홍 + 펄스 (Day 16 후속) */
+.gear-slot--mythic {
+  --grade-rgb: 255, 73, 166;
+  background: linear-gradient(160deg, rgba(255, 73, 166, 0.20), rgba(12, 26, 58, 0.6));
+  border: 0.24rem solid rgba(255, 73, 166, 1.0);
+  color: #ffaad4;
+  animation: gear-slot-mythic-pulse 2.4s ease-in-out infinite;
+}
+
+/* ============================================
+   Day 13 ★ — 강화 레벨 (level 1~10) 에 따른 테두리 두께 + 글로우 강화
+   ============================================
+   대표 결정 A 옵션 — 풀강 시 두께 약 2배 + 글로우 ~2배.
+   gear-slot.js 가 root.style.setProperty('--lv', N) 로 0~10 단계 전달.
+   level 0 = inline 변수 부재 → calc() var(--lv, 0) fallback → 기존 톤 유지.
+   level 1+ = 두께/글로우/inset 모두 선형 증가.
+   ============================================ */
+
+.gear-slot[style*="--lv"] {
+  /* 두께 — 0.24rem + lv × 0.025rem (lv=10 → 0.49rem 약 2배) */
+  border-width: calc(0.24rem + var(--lv, 0) * 0.025rem);
+  /* 외곽 글로우 — 등급색 (--grade-rgb) base + level 가산 */
+  box-shadow:
+    0 0 calc(10px + var(--lv, 0) * 1.6px) rgba(var(--grade-rgb, 200, 212, 240), calc(0.30 + var(--lv, 0) * 0.04)),
+    0 0 calc(20px + var(--lv, 0) * 2.5px) rgba(var(--grade-rgb, 200, 212, 240), calc(0.12 + var(--lv, 0) * 0.025)),
+    inset 0 0 calc(6px + var(--lv, 0) * 0.4px) rgba(var(--grade-rgb, 200, 212, 240), calc(0.10 + var(--lv, 0) * 0.012));
+}
+
+/* mythic 은 펄스 keyframe 안에서도 var(--lv) 활용 — 펄스 강도도 강화 */
+.gear-slot--mythic[style*="--lv"] {
+  animation: gear-slot-mythic-pulse-lv 2.4s ease-in-out infinite;
+}
+@keyframes gear-slot-mythic-pulse-lv {
+  0%, 100% {
+    box-shadow:
+      0 0 calc(12px + var(--lv, 0) * 1.6px) rgba(var(--grade-rgb), calc(0.30 + var(--lv, 0) * 0.03)),
+      0 0 calc(24px + var(--lv, 0) * 2.5px) rgba(var(--grade-rgb), calc(0.12 + var(--lv, 0) * 0.020)),
+      inset 0 0 calc(6px + var(--lv, 0) * 0.4px) rgba(var(--grade-rgb), calc(0.10 + var(--lv, 0) * 0.012));
+  }
+  50% {
+    box-shadow:
+      0 0 calc(20px + var(--lv, 0) * 2.5px) rgba(var(--grade-rgb), calc(0.55 + var(--lv, 0) * 0.04)),
+      0 0 calc(36px + var(--lv, 0) * 3.5px) rgba(var(--grade-rgb), calc(0.22 + var(--lv, 0) * 0.025)),
+      inset 0 0 calc(10px + var(--lv, 0) * 0.5px) rgba(var(--grade-rgb), calc(0.18 + var(--lv, 0) * 0.014));
+  }
+}
+
+@keyframes gear-slot-mythic-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 12px rgba(255, 73, 166, 0.30),
+      inset 0 0 6px rgba(255, 73, 166, 0.10);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(255, 73, 166, 0.55),
+      inset 0 0 10px rgba(255, 73, 166, 0.18);
+  }
+}
+
+/* ============================================
+   Day 10 (C-2) — 장착 장비칸 꾸미기 글로우
+   ============================================
+   결정 (대표):
+   - cosmeticColor 보유 장비 = 가운데서 퍼지는 등급별 색 글로우
+   - 단순하지만 예쁘게 + 렉 X (radial-gradient + opacity 펄스만)
+   - 등급 색은 cosmetic 색 = 등급 베이스 색과 동일
+   ============================================ */
+
+.gear-slot--has-cosmetic {
+  position: relative;
+}
+
+.gear-slot--has-cosmetic::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at 50% 50%,
+    var(--cosmetic-glow, rgba(255, 255, 255, 0.25)) 0%,
+    transparent 60%
+  );
+  /* 부드럽게 호흡하는 펄스 — opacity 만 변경 (transform/box-shadow 없음 = 렉 X) */
+  animation: gear-slot-cosmetic-pulse 2.4s ease-in-out infinite;
+  z-index: 1;
+}
+
+/* 등급별 글로우 색 — cosmeticColor 와 동일 */
+.gear-slot--rare.gear-slot--has-cosmetic      { --cosmetic-glow: rgba(37, 99, 235, 0.50); }
+.gear-slot--epic.gear-slot--has-cosmetic      { --cosmetic-glow: rgba(176, 128, 208, 0.55); }
+.gear-slot--legendary.gear-slot--has-cosmetic { --cosmetic-glow: rgba(255, 217, 106, 0.55); }
+.gear-slot--mythic.gear-slot--has-cosmetic    { --cosmetic-glow: rgba(255, 73, 166, 0.6); }
+
+/* Day 16 후속 (대표 결정) — 꾸미기 옵션 있는 장착 장비 슬롯에도 단색 등급 배경색 적용.
+   bag.css 의 .bag-cell--has-cosmetic 패턴과 동일 — 셀 본체 linear-gradient 통째로 덮음. */
+.gear-slot--rare.gear-slot--has-cosmetic      { background: rgba(37, 99, 235, 0.55) !important; }
+.gear-slot--epic.gear-slot--has-cosmetic      { background: rgba(176, 128, 208, 0.55) !important; }
+.gear-slot--legendary.gear-slot--has-cosmetic { background: rgba(255, 217, 106, 0.50) !important; }
+.gear-slot--mythic.gear-slot--has-cosmetic    { background: rgba(255, 73, 166, 0.55) !important; }
+
+@keyframes gear-slot-cosmetic-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1.0; }
+}
+
+/* 글로우 위에 아이콘이 깔리지 않도록 z-index */
+.gear-slot--has-cosmetic .gear-slot__icon {
+  position: relative;
+  z-index: 2;
+}
+
+
+/* ============================================
+   15. 결과 팝업
+   ============================================ */
+
+.fish-result {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--fade-easing);
+  will-change: opacity;  /* Day 17 후속 v2 폰 최적화 */
+}
+
+.fish-result.show { opacity: 1; pointer-events: auto; }
+.fish-result.hide { opacity: 0; pointer-events: none; }
+
+.fish-result__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 19, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.fish-result__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  text-align: center;
+  transform-origin: center center;
+  transform: scale(0.5);
+  opacity: 0;
+  will-change: transform, opacity;  /* Day 17 후속 v2 폰 최적화 — pull-from-slot 애니메이션 GPU 가속 */
+}
+
+.fish-result.show .fish-result__panel {
+  animation: pull-from-slot 1.0s var(--fade-easing) forwards;
+}
+
+/* 부드러운 등장 — 갑작스런 튀어나옴 X, 코지한 페이드+살짝 커짐 */
+@keyframes pull-from-slot {
+  0%   { transform: scale(0.5);  opacity: 0; }
+  60%  { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+.fish-result__grade {
+  font-family: var(--font-impact);
+  font-size: 1.6rem;
+  letter-spacing: 0.3em;
+  color: var(--line-soft);
+  opacity: 0.8;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.95);
+}
+
+/* Day 16: 8등급 — 신화 추가 (마젠타 톤, 가장 큰 사이즈) */
+/* Day 17 후속 v2 (대표 결정 C-a): fish-result 영문 라벨 색을 새 등급 색으로 통일.
+   GRADE_COLORS / codex-fish-cell GRADE_HEX 와 같은 톤.
+   Day 18 후속 (대표 결정) — font-size 분기 제거. 모든 케이스 동일 크기로 통일(아래 베이스 3.2rem).
+   골든힛 결과 / 일반 single / 멀티힛 모두 같은 큰 크기 + 색만 등급별. */
+.fish-result[data-grade="치어"]    .fish-result__grade-main { color: #B0DCFF; }
+.fish-result[data-grade="소형"]    .fish-result__grade-main { color: #FFFFFF; }
+.fish-result[data-grade="중형"]    .fish-result__grade-main { color: #C8E664; }
+.fish-result[data-grade="월척"]    .fish-result__grade-main { color: #7B61FF; }
+.fish-result[data-grade="대물"]    .fish-result__grade-main { color: #FFA94D; }
+.fish-result[data-grade="보스"]    .fish-result__grade-main { color: #E94560; }
+.fish-result[data-grade="전설보스"] .fish-result__grade-main { color: #FFD700; }
+.fish-result[data-grade="신화보스"] .fish-result__grade-main { color: #FF49A6; }
+
+/* Day 7: grade 컨테이너 = column flex (메인 + sub 두 줄) */
+.fish-result__grade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+.fish-result__grade-main {
+  font-family: var(--font-impact);
+  letter-spacing: 0.08em;
+  /* Day 18 후속 (대표 결정) — 등급/multihit/goldenHit 모두 같은 큰 크기 (골든힛 팝업 기준) */
+  font-size: 3.2rem;
+}
+/* Day 7: multi-hit 시 등급명 sub 라벨 (작게, 흐림) */
+.fish-result__grade-sub {
+  font-family: var(--font-impact);
+  font-size: 1.2rem;
+  letter-spacing: 0.18em;
+  color: rgba(220, 230, 245, 0.75);
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
+  margin-top: -0.1rem;
+}
+.fish-result__grade-sub:empty {
+  display: none;
+}
+
+/* Day 4: 다중매칭 multihit 라벨 — 등급 색 무시, 매칭 마리 수에 따른 색
+   Day 7: grade-main 으로 셀렉터 변경 (sub 등급명은 별도)
+   Day 18 후속 (대표 결정) — font-size 베이스(3.2rem) 통일 됨 → 여기선 색/letter-spacing 만
+   Day 19 (대표 결정) — 모든 멀티힛 색을 일반 HIT 와 같은 황금색(--accent-warm)으로 통일.
+     이전: hit-count 2~5 각자 다른 색 (연두/파랑/보라/분홍) — 물고기/장비 등급 색과 혼동.
+     변경: 색 통일 + 반짝 효과(sparkle-stars)로 임팩트 보완. */
+.fish-result[data-multihit] .fish-result__grade-main {
+  letter-spacing: 0.22em;
+  opacity: 1;
+  font-family: var(--font-impact);
+  color: var(--accent-warm);
+  text-shadow: 0 0 14px rgba(255, 217, 160, 0.9),
+               0 0 8px rgba(0, 0, 0, 0.9),
+               0 0 28px rgba(255, 217, 160, 0.45);
+}
+
+/* MEGA — 6+ 매칭은 깜빡 효과 유지 (brightness 펄스만, 색은 황금 그대로) */
+.fish-result[data-multihit="6"] .fish-result__grade-main,
+.fish-result[data-multihit="7"] .fish-result__grade-main,
+.fish-result[data-multihit="8"] .fish-result__grade-main,
+.fish-result[data-multihit="9"] .fish-result__grade-main {
+  animation: multihit-mega-blink 0.7s ease-in-out infinite;
+}
+
+@keyframes multihit-mega-blink {
+  0%, 100% { opacity: 0.85; filter: brightness(1); }
+  50%      { opacity: 1;    filter: brightness(1.35); }
+}
+
+/* Day 19 — 결과 팝업 등급 영역 별빛 반짝 효과 표시 규칙.
+   단일 일반 등급(보라/주황 등 grade 색이 메인 임팩트)에는 표시 X.
+   멀티힛 또는 골든힛 케이스에서만 sparkle 표시 — 대표 결정.
+   v2: sparkle 이 prepend 로 텍스트 뒤에 자연 paint order — z-index 안 씀. */
+.fish-result__grade {
+  position: relative;          /* sparkle absolute 중앙 정렬 기준점 */
+}
+.fish-result__grade > .sparkle-stars {
+  display: none;
+}
+.fish-result[data-multihit] .fish-result__grade > .sparkle-stars,
+.fish-result[data-golden-hit="true"] .fish-result__grade > .sparkle-stars {
+  display: block;
+}
+
+.fish-result__fish {
+  position: relative;
+  width: 18rem;
+  height: 12rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 14px rgba(0, 0, 0, 0.8));
+}
+
+.fish-result[data-grade="치어"]    .fish-result__fish { width: 18rem; height: 12rem; }
+.fish-result[data-grade="소형"]    .fish-result__fish { width: 18rem; height: 12rem; }
+.fish-result[data-grade="중형"]    .fish-result__fish { width: 24rem; height: 16rem; }
+.fish-result[data-grade="월척"]    .fish-result__fish { width: 30rem; height: 20rem; }
+.fish-result[data-grade="대물"]    .fish-result__fish { width: 30rem; height: 20rem; }
+.fish-result[data-grade="보스"]    .fish-result__fish { width: 36rem; height: 24rem; }
+.fish-result[data-grade="전설보스"] .fish-result__fish { width: 40rem; height: 27rem; }
+.fish-result[data-grade="신화보스"] .fish-result__fish { width: 44rem; height: 30rem; }   /* Day 16 — 가장 크게 */
+
+.fish-result__shadow,
+.fish-result__real {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s ease-out;
+}
+
+.fish-result__shadow { opacity: 1; transition: opacity 0.6s var(--fade-easing); }
+.fish-result__real   { opacity: 0; transition: opacity 0.6s var(--fade-easing); }
+
+.fish-result.revealed .fish-result__shadow { opacity: 0; }
+.fish-result.revealed .fish-result__real {
+  opacity: 1;
+  animation: fish-emerge-soft 0.8s var(--fade-easing);
+}
+
+/* ──────────────────────────────────────────
+   missed (놓침) — 잡기 게임 실패 시 표시
+   - 그림자 유지 (어떤 물고기였는지 실루엣만)
+   - "MISSED" 빨간 큰 라벨
+   - 무게 안 보임 (JS에서 빈 텍스트)
+   ────────────────────────────────────────── */
+.fish-result[data-missed="true"] .fish-result__grade {
+  color: #FF4646 !important;
+  font-size: 3.8rem !important;
+  letter-spacing: 0.18em;
+  opacity: 1;
+  text-shadow:
+    0 0 18px rgba(255, 70, 70, 0.95),
+    0 0 36px rgba(255, 70, 70, 0.5),
+    0 2px 6px rgba(0, 0, 0, 0.85);
+  animation: fish-result-missed-pulse 2s ease-in-out infinite;
+}
+
+@keyframes fish-result-missed-pulse {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 1; }
+}
+
+/* 진짜 물고기는 안 보이게 (그림자만 유지) */
+.fish-result[data-missed="true"] .fish-result__real {
+  display: none;
+}
+
+/* 그림자 — 기본 어두운 톤 + 도망가는 느낌의 부유 애니메이션
+   등급별 글로우는 아래 [data-grade]별로 덮어쓰기 */
+.fish-result[data-missed="true"] .fish-result__shadow {
+  filter: brightness(0.78) blur(0.4px);
+  animation: fish-result-missed-shadow-flee 4s ease-in-out infinite;
+}
+
+/* "도망간 느낌" — 좌우 부유 + 위아래 살짝 + 회전
+   화면 좌측으로 멀어져 가는 듯한 패턴 */
+@keyframes fish-result-missed-shadow-flee {
+  0%, 100% { transform: translate(0,     0)    rotate(-2deg); }
+  25%      { transform: translate(-10px, -4px) rotate(-3deg); }
+  50%      { transform: translate(-14px, 2px)  rotate(2deg); }
+  75%      { transform: translate(-6px,  -2px) rotate(3deg); }
+}
+
+/* 등급별 글로우 — 검은 그림자 외곽에 등급 색 빛 (도망가는 물고기 인상) */
+.fish-result[data-missed="true"][data-grade="치어"] .fish-result__shadow,
+.fish-result[data-missed="true"][data-grade="소형"] .fish-result__shadow {
+  filter:
+    drop-shadow(0 0 14px rgba(255, 255, 255, 0.85))
+    drop-shadow(0 0 28px rgba(255, 255, 255, 0.45))
+    brightness(0.82) blur(0.4px);
+}
+.fish-result[data-missed="true"][data-grade="중형"] .fish-result__shadow {
+  filter:
+    drop-shadow(0 0 14px rgba(200, 230, 100, 0.85))
+    drop-shadow(0 0 30px rgba(200, 230, 100, 0.5))
+    brightness(0.82) blur(0.4px);
+}
+.fish-result[data-missed="true"][data-grade="월척"] .fish-result__shadow {
+  /* Day 19 — 잡았을 때 grade-main 색(#7B61FF 인디고)과 일치시킴.
+     이전에는 대물과 같이 주황 묶음이었으나, 잡은 결과 색과 missed 글로우 색 불일치 문제 수정. */
+  filter:
+    drop-shadow(0 0 16px rgba(123, 97, 255, 0.9))
+    drop-shadow(0 0 32px rgba(123, 97, 255, 0.5))
+    brightness(0.82) blur(0.4px);
+}
+.fish-result[data-missed="true"][data-grade="대물"] .fish-result__shadow {
+  filter:
+    drop-shadow(0 0 16px rgba(255, 169, 77, 0.9))
+    drop-shadow(0 0 32px rgba(255, 169, 77, 0.5))
+    brightness(0.82) blur(0.4px);
+}
+.fish-result[data-missed="true"][data-grade="보스"] .fish-result__shadow {
+  filter:
+    drop-shadow(0 0 18px rgba(233, 69, 96, 0.95))
+    drop-shadow(0 0 38px rgba(233, 69, 96, 0.6))
+    brightness(0.85) blur(0.4px);
+}
+.fish-result[data-missed="true"][data-grade="전설보스"] .fish-result__shadow {
+  filter:
+    drop-shadow(0 0 22px rgba(255, 215, 0, 1))
+    drop-shadow(0 0 44px rgba(255, 215, 0, 0.65))
+    brightness(0.88) blur(0.3px);
+}
+/* Day 18 후속 (대표 결정) — 골든힛 타임 missed 글로우 = 황금색 (등급 무관 오버라이드).
+   등급별 룰셋들보다 specifity 동일 + 뒤쪽 정의라 우선 적용됨. */
+.fish-result[data-missed="true"][data-golden-hit="true"] .fish-result__shadow {
+  filter:
+    drop-shadow(0 0 18px rgba(255, 224, 144, 0.95))
+    drop-shadow(0 0 38px rgba(255, 200, 80, 0.6))
+    brightness(0.85) blur(0.3px);
+}
+
+/* Day 16 — 신화보스 missed shadow (마젠타) */
+.fish-result[data-missed="true"][data-grade="신화보스"] .fish-result__shadow {
+  filter:
+    drop-shadow(0 0 26px rgba(255, 73, 166, 1))
+    drop-shadow(0 0 52px rgba(255, 73, 166, 0.70))
+    brightness(0.90) blur(0.3px);
+}
+
+/* ★ Day 28 (대표 결정) — 히든힛(시크릿꿈고래) missed 그림자 = 완전 검정 톤.
+   기존엔 grade='보스' placeholder 로 인해 보스 룰(붉은 글로우, rgba(233,69,96,...))이 적용되어
+   "붉은빛 분홍 고래" 형태였음. 이 룰이 등급/골든힛/신화 룰보다 뒤에 정의되어 동일 specificity 에서 우선 적용.
+   SVG 본체도 fish-svg.js shadow 옵션으로 단색 #000000 fill 처리됨 (radial gradient 제거). */
+.fish-result[data-missed="true"][data-hidden-hit="true"] .fish-result__shadow {
+  filter:
+    drop-shadow(0 0 14px rgba(0, 0, 0, 0.85))
+    drop-shadow(0 0 28px rgba(0, 0, 0, 0.5))
+    brightness(0.6) blur(0.4px);
+}
+
+/* 무게 자리 비움 */
+.fish-result[data-missed="true"] .fish-result__weight {
+  display: none;
+}
+
+/* 등급별 색깔 덮어쓰기 (모든 등급에서 MISSED는 빨강 유지) */
+.fish-result[data-missed="true"][data-grade]    .fish-result__grade {
+  color: #FF4646 !important;
+}
+
+/* 부드러운 등장 — 강한 부풀기 제거, 자연스러운 페이드+살짝 커짐 */
+@keyframes fish-emerge-soft {
+  0%   { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+/* flash 효과 — 완전 비활성 (코지 톤) */
+.fish-result__flash {
+  display: none !important;
+}
+
+.fish-result__name,
+.fish-result__weight {
+  opacity: 0;
+  text-shadow: 0 0 14px rgba(0, 0, 0, 0.95),
+               0 0 6px rgba(0, 0, 0, 0.7);
+}
+
+/* Day 7-2: 무게 컨테이너 = column flex (작은 줄 + 큰 줄) */
+.fish-result__weight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.fish-result.revealed .fish-result__name {
+  animation: text-fade-in 0.4s ease-out 0.1s forwards;
+}
+.fish-result.revealed .fish-result__weight {
+  animation: text-fade-in 0.4s ease-out 0.2s forwards;
+}
+
+@keyframes text-fade-in {
+  0%   { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.fish-result__name {
+  position: relative;             /* Day 16 — NEW 배지 절대위치 부모 */
+  font-family: var(--font-base);
+  font-size: 2rem;
+  font-weight: 500;
+  color: var(--accent-bright);
+  letter-spacing: 0.04em;
+  display: inline-block;          /* Day 16 — NEW 배지 부착 위해 inline 박스로 */
+}
+.fish-result[data-grade="치어"]    .fish-result__name { font-size: 1.8rem; }
+.fish-result[data-grade="소형"]    .fish-result__name { font-size: 1.8rem; }
+.fish-result[data-grade="중형"]    .fish-result__name { font-size: 2.2rem; }
+.fish-result[data-grade="월척"]    .fish-result__name { font-size: 2.6rem; }
+.fish-result[data-grade="대물"]    .fish-result__name { font-size: 2.6rem; }
+.fish-result[data-grade="보스"]    .fish-result__name { font-size: 3rem; }
+.fish-result[data-grade="전설보스"] .fish-result__name { font-size: 3.4rem; }
+.fish-result[data-grade="신화보스"] .fish-result__name { font-size: 3.4rem; }  /* Day 16 신규 */
+
+/* Day 16 — 잡기 성공 시 신규 등록 NEW 배지 (이름 우상단 단정한 fade-in).
+   Day 18 후속 (대표 결정) — 위치 살짝 아래로 + 크기 축소. */
+.fish-result__new-badge {
+  position: absolute;
+  top: 0.3rem;            /* Day 19 — -0.1rem → 0.3rem (대표 결정 — 더 아래로) */
+  right: -2.8rem;         /* 크기 축소에 맞춰 외부 거리도 살짝 조정 */
+  padding: 0.14rem 0.4rem;
+  font-family: var(--font-impact);
+  font-size: 0.82rem;     /* 1.0rem → 0.82rem 축소 */
+  letter-spacing: 0.16em;
+  color: #fff;
+  background: linear-gradient(135deg, #FF49A6, #FF8E5B);
+  border-radius: 3px;
+  box-shadow:
+    0 0 8px rgba(255, 73, 166, 0.50),
+    0 0 14px rgba(255, 142, 91, 0.25);
+  animation: fish-result-new-pop 360ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  pointer-events: none;
+}
+@keyframes fish-result-new-pop {
+  0%   { transform: scale(0) rotate(-8deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* Day 18 후속 (대표 결정) — 신기록 갱신 시 NEW RECORD 배지 (연두색).
+   - 위치: 최종 무게 텍스트 오른쪽 위쪽 외부 (NEW 배지가 이름 우상단에 떠 있는 것과 동일 패턴).
+   - position: absolute → finalEl(inline-block + relative) 우상단 외부.
+     무게 텍스트 가운데 정렬에 영향 X (배지 추가/제거해도 무게는 항상 가운데).
+   - 기본 hidden → .fish-result.final-reveal 시점에 final 과 동시 pop (살짝 회전). */
+.fish-result__record-badge {
+  position: absolute;
+  top: 0.3rem;                /* Day 19 — -0.1rem → 0.3rem (NEW 배지와 통일, 대표 결정) */
+  left: 100%;                 /* finalEl 우측 끝 (inline-block 폭 기준) */
+  margin-left: 0.4rem;        /* 무게와 배지 사이 여유 */
+  padding: 0.14rem 0.4rem;    /* NEW 배지와 동일 — 축소 */
+  font-family: var(--font-impact);
+  font-size: 0.82rem;         /* NEW 배지와 동일 — 0.95rem → 0.82rem 축소 */
+  letter-spacing: 0.16em;
+  color: #fff;
+  background: linear-gradient(135deg, #9DE36B, #4FC76E);
+  border-radius: 3px;
+  box-shadow:
+    0 0 8px rgba(157, 227, 107, 0.55),
+    0 0 14px rgba(79, 199, 110, 0.28);
+  pointer-events: none;
+  white-space: nowrap;
+  transform-origin: left center;
+  /* 기본 hidden (final-reveal 시점에 동시 pop, 살짝 회전) */
+  opacity: 0;
+  transform: scale(0) rotate(-6deg);
+}
+.fish-result.final-reveal .fish-result__record-badge {
+  animation: fish-result-record-pop 450ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes fish-result-record-pop {
+  0%   { opacity: 0; transform: scale(0)    rotate(-6deg); }
+  60%  { opacity: 1; transform: scale(1.18) rotate(3deg);  }
+  100% { opacity: 1; transform: scale(1)    rotate(0deg);  }
+}
+
+/* Day 7-2: 큰 줄 = 최종 무게 (현재 weight 스타일 그대로 이어받음) */
+.fish-result__weight-final {
+  font-family: var(--font-impact);
+  font-size: 2.6rem;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 12px currentColor,
+               0 0 14px rgba(0, 0, 0, 0.95);
+  /* Day 18 후속 (대표 결정) — final-reveal 시점에 뿅 등장. 기본 hidden.
+     inline-block + relative: record-badge absolute(left:100%) 기준점 + 가운데 정렬 영향 X */
+  display: inline-block;
+  position: relative;
+  transform-origin: center;
+  opacity: 0;
+  transform: scale(0.3);
+}
+/* final-reveal 시점에 final + record-badge 동시 pop (탱탱볼) */
+.fish-result.final-reveal .fish-result__weight-final {
+  animation: fish-result-final-pop 450ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes fish-result-final-pop {
+  0%   { opacity: 0; transform: scale(0.3); }
+  60%  { opacity: 1; transform: scale(1.18); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.fish-result[data-grade="치어"]    .fish-result__weight-final { font-size: 2.2rem; }
+.fish-result[data-grade="소형"]    .fish-result__weight-final { font-size: 2.2rem; }
+.fish-result[data-grade="중형"]    .fish-result__weight-final { font-size: 3rem; }
+.fish-result[data-grade="월척"]    .fish-result__weight-final { font-size: 3.6rem; }
+.fish-result[data-grade="대물"]    .fish-result__weight-final { font-size: 3.6rem; }
+.fish-result[data-grade="보스"]    .fish-result__weight-final { font-size: 4.4rem; }
+.fish-result[data-grade="전설보스"] .fish-result__weight-final { font-size: 5.4rem; }
+.fish-result[data-grade="신화보스"] .fish-result__weight-final { font-size: 6rem; }    /* Day 16 — 가장 큼 */
+
+/* Day 7-2: 작은 줄 = 보너스 분해 표시 ("1.000 kg + (0.350 kg + 0.050 kg)")
+   - 한 줄 nowrap (줄바꿈 방지)
+   - 수치별 색 분리: 기본=흰색 / 콤보=연두 / 장비=황금 / 연산자=흐림 */
+.fish-result__weight-breakdown {
+  font-family: var(--font-impact);
+  font-size: 1.0rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.95);
+  line-height: 1;
+}
+.fish-result__weight-breakdown:empty {
+  display: none;
+}
+
+/* 분해 색 분리 */
+.fish-result__weight-base {
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.4), 0 0 4px rgba(0, 0, 0, 0.95);
+}
+.fish-result__weight-combo {
+  color: #b0ff5a;
+  text-shadow: 0 0 8px rgba(176, 255, 90, 0.85), 0 0 4px rgba(0, 0, 0, 0.95);
+}
+.fish-result__weight-equip {
+  color: #ffd96a;
+  text-shadow: 0 0 8px rgba(255, 217, 106, 0.85), 0 0 4px rgba(0, 0, 0, 0.95);
+}
+.fish-result__weight-op {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Day 4: 다중매칭 무게 옆 부수 표기 — 예: "3.42 kg ×2"
+   Day 7: 연두색 + 더 크게 + 팍 등장 (overshoot 애니메이션) */
+.fish-result__weight-multi {
+  display: inline-block;
+  margin-left: 0.5em;
+  font-size: 1.4em;                   /* 메인 무게보다 크게 (이전 0.55em → 1.4em) */
+  letter-spacing: 0.12em;
+  vertical-align: middle;
+  font-weight: 700;
+  color: #b0ff5a;                     /* 형광 연두 */
+  text-shadow:
+    0 0 12px rgba(176, 255, 90, 0.95),
+    0 0 22px rgba(176, 255, 90, 0.55),
+    0 0 6px rgba(0, 0, 0, 0.85);
+  font-family: var(--font-impact);
+  animation: weight-multi-pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: center;
+}
+
+@keyframes weight-multi-pop {
+  0%   { transform: scale(0.3); opacity: 0; }
+  60%  { transform: scale(1.5); opacity: 1; }
+  85%  { transform: scale(0.95); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.fish-result__btn {
+  margin-top: 0.8rem;
+  padding: 1rem 2.8rem;
+  background: rgba(10, 16, 36, 0.5);
+  border: var(--line-thin) solid var(--line-primary);
+  color: var(--line-primary);
+  font-family: var(--font-impact);
+  font-size: 1.6rem;
+  letter-spacing: 0.18em;
+  cursor: pointer;
+  opacity: 0;
+  transition: background 0.2s var(--fade-easing),
+              color 0.2s var(--fade-easing);
+}
+
+.fish-result.revealed .fish-result__btn {
+  animation: text-fade-in 0.4s ease-out 0.3s forwards;
+}
+
+.fish-result__btn:hover {
+  background: var(--line-primary);
+  color: var(--bg-deepest);
+}
+
+/* 도전하기 버튼 */
+.fish-result__btn--challenge {
+  border-color: var(--accent-warm);
+  color: var(--accent-warm);
+  font-size: 1.8rem;
+  padding: 1.2rem 3.6rem;
+}
+
+.fish-result.revealed .fish-result__btn--challenge {
+  animation: text-fade-in 0.4s ease-out 0.3s forwards,
+             challenge-btn-pulse 1.2s ease-in-out 0.7s infinite;
+}
+
+@keyframes challenge-btn-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 217, 160, 0.6);   }
+  50%      { box-shadow: 0 0 24px 4px rgba(255, 217, 160, 0.4); }
+}
+
+.fish-result__btn--challenge:hover {
+  background: var(--accent-warm);
+  color: var(--bg-deepest);
+}
+
+/* 등급별 글로우 (Day 15: 7등급 — 치어/소형은 글로우 X / 대물 = 월척 복제) */
+.fish-result.revealed[data-grade="중형"] .fish-result__fish {
+  filter: drop-shadow(0 0 18px rgba(157, 227, 107, 0.6))
+          drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+}
+.fish-result.revealed[data-grade="월척"] .fish-result__fish,
+.fish-result.revealed[data-grade="대물"] .fish-result__fish {
+  filter: drop-shadow(0 0 25px rgba(37, 99, 235, 0.75))
+          drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+}
+.fish-result.revealed[data-grade="보스"] .fish-result__fish {
+  filter: drop-shadow(0 0 35px rgba(176, 128, 208, 0.9))
+          drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  animation: boss-glow 1.4s ease-in-out infinite;
+}
+.fish-result.revealed[data-grade="전설보스"] .fish-result__fish {
+  filter: drop-shadow(0 0 50px rgba(255, 111, 111, 1))
+          drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  animation: legend-fish-glow 1.6s ease-in-out infinite;
+}
+/* Day 16 — 신화보스 (마젠타 + 더 큰 글로우, 가장 강렬) */
+.fish-result.revealed[data-grade="신화보스"] .fish-result__fish {
+  filter: drop-shadow(0 0 60px rgba(255, 73, 166, 1))
+          drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  animation: mythic-fish-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes boss-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 35px rgba(176, 128, 208, 0.9))
+            drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  }
+  50% {
+    filter: drop-shadow(0 0 50px rgba(176, 128, 208, 1))
+            drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  }
+}
+
+@keyframes legend-fish-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 50px rgba(255, 111, 111, 1))
+            drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  }
+  50% {
+    filter: drop-shadow(0 0 80px rgba(255, 200, 100, 1))
+            drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  }
+}
+
+/* Day 16 — 신화 fish glow (마젠타 ↔ 무지개 살짝 톤 변화로 가장 강렬) */
+@keyframes mythic-fish-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 60px rgba(255, 73, 166, 1))
+            drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  }
+  50% {
+    filter: drop-shadow(0 0 92px rgba(255, 130, 200, 1))
+            drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  }
+}
+
+
+/* ============================================
+   16. 미니게임 인트로 팝업
+   ============================================ */
+
+.minigame-intro {
+  position: absolute;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--fade-easing);
+}
+
+.minigame-intro.show { opacity: 1; pointer-events: auto; }
+.minigame-intro.hide { opacity: 0; pointer-events: none; }
+
+.minigame-intro__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 19, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.minigame-intro__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  text-align: center;
+  transform: scale(0.3);
+  opacity: 0;
+}
+
+.minigame-intro.show .minigame-intro__panel {
+  animation: intro-pop 0.7s cubic-bezier(0.18, 0.89, 0.32, 1.18) forwards;
+}
+
+@keyframes intro-pop {
+  /* ★ Day 26 (대표 결정) — 흔들림(rotate) 제거 → 부드러운 페이드인 + 살짝 scale */
+  0%   { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+.minigame-intro__icon {
+  /* ★ Day 26 (대표 결정) — 사이즈 축소 (14×9 → 11×7) */
+  width: 11rem;
+  height: 7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 30px rgba(255, 233, 160, 1))
+          drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  animation: golden-icon-glow 1.4s ease-in-out infinite;
+}
+
+.minigame-intro__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes golden-icon-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 30px rgba(255, 233, 160, 1))
+            drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  }
+  50% {
+    filter: drop-shadow(0 0 50px rgba(255, 233, 160, 1))
+            drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  }
+}
+
+.minigame-intro__title {
+  font-family: var(--font-impact);
+  /* ★ Day 26 (대표 결정) — 6.4rem → 5rem 축소 */
+  font-size: 5rem;
+  letter-spacing: 0.12em;
+  color: #FFE090;
+  text-shadow: 0 0 24px rgba(255, 224, 144, 0.95),
+               0 0 12px rgba(0, 0, 0, 0.95);
+}
+
+.minigame-intro__sub {
+  font-family: var(--font-base);
+  /* ★ Day 26 (대표 결정) — 1.8rem → 1.5rem 축소 */
+  font-size: 1.5rem;
+  color: var(--accent-bright);
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.95);
+}
+
+.minigame-intro__btn {
+  /* ★ Day 26 (대표 결정) — 테두리 삭제 / 텍스트 작게 / "터치하여 시작하기" 깜빡임 */
+  margin-top: 1.2rem;
+  padding: 0.6rem 2rem;
+  background: transparent;
+  border: none;
+  color: #FFE090;
+  font-family: var(--font-base);
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  animation: intro-btn-fade 2.0s ease-in-out infinite;
+  text-shadow: 0 0 8px rgba(255, 224, 144, 0.6),
+               0 0 4px rgba(0, 0, 0, 0.85);
+  transition: color 0.2s var(--fade-easing);
+}
+
+@keyframes intro-btn-fade {
+  /* ★ Day 26 (대표 결정) — 천천히 사라졌다 나타났다 (opacity pulse). */
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 1.00; }
+}
+
+.minigame-intro__btn:hover {
+  color: #FFFFFF;
+  background: transparent;
+}
+
+
+/* ============================================
+   Day 20: 트윙클(꿈조각) 타임 진입 팝업 — minigame-intro 의 톤 변경판
+   ============================================
+   "TWINKLE TIME / 꿈조각을 낚으세요 / 시작" 흰색·연푸른빛 글로우
+   ============================================ */
+
+.twinkle-intro {
+  position: absolute;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--fade-easing);
+}
+
+.twinkle-intro.show { opacity: 1; pointer-events: auto; }
+.twinkle-intro.hide { opacity: 0; pointer-events: none; }
+
+.twinkle-intro__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 19, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.twinkle-intro__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  text-align: center;
+  transform: scale(0.3);
+  opacity: 0;
+}
+
+.twinkle-intro.show .twinkle-intro__panel {
+  animation: twinkle-intro-pop 0.7s cubic-bezier(0.18, 0.89, 0.32, 1.18) forwards;
+}
+
+@keyframes twinkle-intro-pop {
+  /* ★ Day 26 (대표 결정) — 흔들림(rotate) 제거 → 부드러운 페이드인 + 살짝 scale */
+  0%   { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+.twinkle-intro__icon {
+  /* ★ Day 26 (대표 결정) — 사이즈 축소 (14×9 → 11×7) */
+  width: 11rem;
+  height: 7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 30px rgba(215, 239, 255, 1))
+          drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  animation: twinkle-icon-glow 1.4s ease-in-out infinite;
+}
+
+.twinkle-intro__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes twinkle-icon-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 30px rgba(215, 239, 255, 1))
+            drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  }
+  50% {
+    filter: drop-shadow(0 0 50px rgba(255, 255, 255, 1))
+            drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  }
+}
+
+.twinkle-intro__title {
+  font-family: var(--font-impact);
+  /* ★ Day 26 (대표 결정) — 6.4rem → 5rem 축소 */
+  font-size: 5rem;
+  letter-spacing: 0.12em;
+  color: #FFFFFF;
+  text-shadow: 0 0 24px rgba(215, 239, 255, 0.95),
+               0 0 12px rgba(0, 0, 0, 0.95);
+}
+
+.twinkle-intro__sub {
+  font-family: var(--font-base);
+  /* ★ Day 26 (대표 결정) — 1.8rem → 1.5rem 축소 */
+  font-size: 1.5rem;
+  color: var(--accent-bright);
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.95);
+}
+
+.twinkle-intro__btn {
+  /* ★ Day 26 (대표 결정) — 테두리 삭제 / 텍스트 작게 / "터치하여 시작하기" 깜빡임 */
+  margin-top: 1.2rem;
+  padding: 0.6rem 2rem;
+  background: transparent;
+  border: none;
+  color: #FFFFFF;
+  font-family: var(--font-base);
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  animation: intro-btn-fade 2.0s ease-in-out infinite;
+  text-shadow: 0 0 8px rgba(215, 239, 255, 0.6),
+               0 0 4px rgba(0, 0, 0, 0.85);
+  transition: color 0.2s var(--fade-easing);
+}
+
+.twinkle-intro__btn:hover {
+  color: #FFFFFF;
+  background: transparent;
+}
+
+/* ★ Day 26 — 기존 box-shadow pulse keyframe 폐기 (intro-btn-fade 로 통합).
+   파일 상단 cleanup 부담 줄이려 더미 keyframe 만 유지. */
+@keyframes twinkle-intro-btn-pulse {
+  0%, 100% { opacity: 1; }
+}
+
+.twinkle-intro__btn:hover {
+  background: #FFFFFF;
+  color: var(--bg-deepest);
+}
+
+
+/* ============================================
+   ★ Day 22: HIDDEN BOSS 진입 팝업
+   ============================================
+   twinkle-intro CSS 의 분홍 톤 변경판.
+   - 구조/타이밍 동일. 색만 분홍 + description 요소 추가.
+   - description: 서브 아래 작은 설명 글 (트윙클에는 없는 신규 요소)
+   ============================================ */
+
+.hidden-intro {
+  position: absolute;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--fade-easing);
+}
+
+.hidden-intro.show { opacity: 1; pointer-events: auto; }
+.hidden-intro.hide { opacity: 0; pointer-events: none; }
+
+.hidden-intro__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 19, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.hidden-intro__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.6rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  text-align: center;
+  transform: scale(0.3);
+  opacity: 0;
+}
+
+.hidden-intro.show .hidden-intro__panel {
+  animation: hidden-intro-pop 0.7s cubic-bezier(0.18, 0.89, 0.32, 1.18) forwards;
+}
+
+@keyframes hidden-intro-pop {
+  /* ★ Day 26 (대표 결정) — 흔들림(rotate) 제거 → 부드러운 페이드인 + 살짝 scale */
+  0%   { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+.hidden-intro__icon {
+  /* ★ Day 26 (대표 결정) — 사이즈 축소 (14×7.5 → 11×5.9, 비율 유지) */
+  width: 11rem;
+  height: 5.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 30px rgba(255, 184, 216, 1))
+          drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  animation: hidden-icon-glow 1.4s ease-in-out infinite;
+}
+
+.hidden-intro__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes hidden-icon-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 30px rgba(255, 184, 216, 1))
+            drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  }
+  50% {
+    filter: drop-shadow(0 0 50px rgba(255, 224, 238, 1))
+            drop-shadow(0 0 14px rgba(0, 0, 0, 0.7));
+  }
+}
+
+.hidden-intro__title {
+  font-family: var(--font-impact);
+  /* ★ Day 26 (대표 결정) — 6.4rem → 5rem 축소 */
+  font-size: 5rem;
+  letter-spacing: 0.12em;
+  color: #FFFFFF;
+  text-shadow: 0 0 24px rgba(255, 184, 216, 0.95),
+               0 0 12px rgba(0, 0, 0, 0.95);
+}
+
+.hidden-intro__sub {
+  font-family: var(--font-base);
+  /* ★ Day 26 (대표 결정) — 1.8rem → 1.5rem 축소 */
+  font-size: 1.5rem;
+  color: var(--accent-bright);
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.95);
+}
+
+/* description — twinkle 에는 없는 신규 요소 (작은 설명 글) */
+.hidden-intro__description {
+  font-family: var(--font-base);
+  /* ★ Day 26 (대표 결정) — 1.2rem → 1.05rem 축소 (sub 와 비율 유지) */
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: rgba(255, 224, 238, 0.85);
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+  margin-top: -0.4rem;
+}
+
+.hidden-intro__btn {
+  /* ★ Day 26 (대표 결정) — 테두리 삭제 / 텍스트 작게 / "터치하여 시작하기" 깜빡임 */
+  margin-top: 1.2rem;
+  padding: 0.6rem 2rem;
+  background: transparent;
+  border: none;
+  color: #FFFFFF;
+  font-family: var(--font-base);
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  animation: intro-btn-fade 2.0s ease-in-out infinite;
+  text-shadow: 0 0 8px rgba(255, 184, 216, 0.6),
+               0 0 4px rgba(0, 0, 0, 0.85);
+  transition: color 0.2s var(--fade-easing);
+}
+
+.hidden-intro__btn:hover {
+  color: #FFFFFF;
+  background: transparent;
+}
+
+/* ★ Day 26 — 기존 box-shadow pulse keyframe 폐기 (intro-btn-fade 로 통합). */
+@keyframes hidden-intro-btn-pulse {
+  0%, 100% { opacity: 1; }
+}
+
+
+/* ============================================
+   17. 미니게임 / 리듬게임 overlay
+   ============================================ */
+
+.screen-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  display: none;
+  background: var(--bg-deepest);
+}
+
+.screen-overlay.show { display: block; }
+
+.minigame-screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.minigame-screen__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.6rem;
+  text-align: center;
+  padding: 3.2rem;
+}
+
+.minigame-screen__title {
+  font-family: var(--font-impact);
+  font-size: 3.2rem;
+  color: var(--accent-warm);
+  letter-spacing: 0.1em;
+}
+
+.minigame-screen__sub {
+  font-size: 1.4rem;
+  color: var(--line-soft);
+  opacity: 0.7;
+}
+
+.minigame-screen__btn {
+  padding: 1.2rem 2.8rem;
+  background: transparent;
+  border: var(--line-thin) solid var(--line-primary);
+  color: var(--line-primary);
+  font-family: var(--font-impact);
+  font-size: 1.6rem;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  margin-top: 0.8rem;
+}
+
+/* Day 19 — rhythm-screen 관련 셀렉터 일괄 삭제 (rhythm-game.js stub 폐기).
+   .rhythm-screen / __inner / __title / __grade / __fish / __sub / __btn / __btn--success / __btn--fail */
+
+/* ============================================
+   v11 — 덩어리별 색 매칭 + 황금 라인 정리
+   slot.css 끝에 추가
+   ============================================ */
+
+
+/* ============================================
+   ============================================
+   Day 3 변경: 클러스터 인덱스(1~6) → 등급(5단계) 기반
+   Day 15 — 7등급 확장: 치어/대물 추가 (각각 소형/월척 색상 복제 — 임시)
+   잡기 게임 글로우 색과 통일성 ↑
+   기본 .matched 는 그대로 두고, data-grade 로 색 오버라이드
+   ============================================ */
+
+/* Day 17 후속 v2 폰 최적화 (C안):
+   8개 등급별 box-shadow 무한 변경 keyframes 통합 1개로 변경.
+   변경 전: 매 프레임 box-shadow 다층 재계산 (composite layer 재합성 매우 비쌈)
+   변경 후: transform scale 변경만 (GPU layer 합성만 — 매우 가벼움)
+   각 등급 box-shadow 는 정적(평균값) 으로 변경, 색 톤은 그대로 유지.
+   ★ 12×12 슬롯 확장 대비 — 매칭 셀 다수 동시 펄스 시 가장 큰 효과 */
+
+/* 통합 펄스 keyframes (전 등급 공용, 1.2s) */
+@keyframes grade-pulse-unified {
+  0%, 100% { transform: scale(1);     }
+  50%      { transform: scale(1.025); }
+}
+
+/* 강렬한 펄스 (전설/신화 — 살짝 더 큰 호흡) */
+@keyframes grade-pulse-unified-strong {
+  0%, 100% { transform: scale(1);    }
+  50%      { transform: scale(1.04); }
+}
+
+/* 치어 — 청백 (Day 17 후속 v2) */
+.slot-cell.matched[data-grade="치어"] {
+  border-color: #B0DCFF;
+  background: rgba(230, 240, 255, 0.20);
+  box-shadow: 0 0 18px rgba(230, 240, 255, 0.78),
+              inset 0 0 15px rgba(230, 240, 255, 0.38);
+  animation: grade-pulse-unified 1.2s ease-in-out infinite;
+}
+
+/* 소형 — 흰 (잔잔, 얕은 물 톤) */
+.slot-cell.matched[data-grade="소형"] {
+  border-color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.75),
+              inset 0 0 15px rgba(255, 255, 255, 0.38);
+  animation: grade-pulse-unified 1.2s ease-in-out infinite;
+}
+
+/* 중형 — 라임 */
+.slot-cell.matched[data-grade="중형"] {
+  border-color: #C8E664;
+  background: rgba(200, 230, 100, 0.20);
+  box-shadow: 0 0 18px rgba(200, 230, 100, 0.75),
+              inset 0 0 15px rgba(200, 230, 100, 0.38);
+  animation: grade-pulse-unified 1.2s ease-in-out infinite;
+}
+
+/* 월척 — 인디고 (Day 17 후속 v2 ★) */
+.slot-cell.matched[data-grade="월척"] {
+  border-color: #7B61FF;
+  background: rgba(123, 97, 255, 0.22);
+  box-shadow: 0 0 18px rgba(123, 97, 255, 0.78),
+              inset 0 0 15px rgba(123, 97, 255, 0.40);
+  animation: grade-pulse-unified 1.2s ease-in-out infinite;
+}
+
+/* 대물 — 앰버 (Day 17 후속 v2 — 월척 복제 폐기, 별도) */
+.slot-cell.matched[data-grade="대물"] {
+  border-color: #FFA94D;
+  background: rgba(255, 169, 77, 0.20);
+  box-shadow: 0 0 18px rgba(255, 169, 77, 0.75),
+              inset 0 0 15px rgba(255, 169, 77, 0.38);
+  animation: grade-pulse-unified 1.2s ease-in-out infinite;
+}
+
+/* 보스 — 진홍 */
+.slot-cell.matched[data-grade="보스"] {
+  border-color: #E94560;
+  background: rgba(233, 69, 96, 0.22);
+  box-shadow: 0 0 21px rgba(233, 69, 96, 0.85),
+              inset 0 0 18px rgba(233, 69, 96, 0.45);
+  animation: grade-pulse-unified-strong 1.2s ease-in-out infinite;
+}
+
+/* 전설보스 — 황금 */
+.slot-cell.matched[data-grade="전설보스"] {
+  border-color: #FFD700;
+  background: rgba(255, 215, 0, 0.24);
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.92),
+              inset 0 0 21px rgba(255, 215, 0, 0.52);
+  animation: grade-pulse-unified-strong 1.0s ease-in-out infinite;
+}
+
+/* Day 16 — 신화보스 (마젠타, 가장 강렬한 펄스) */
+.slot-cell.matched[data-grade="신화보스"] {
+  border-color: #FF49A6;
+  background: rgba(255, 73, 166, 0.28);
+  box-shadow: 0 0 30px rgba(255, 73, 166, 0.98),
+              inset 0 0 26px rgba(255, 73, 166, 0.58);
+  animation: grade-pulse-unified-strong 0.9s ease-in-out infinite;
+}
+
+
+/* ============================================
+   분홍(rainbow) 매칭 = 흰빛 코어 펄스 (S-010)
+   클러스터 색(1~6)을 무시하고 항상 이 스타일로 덮어씀
+   ============================================ */
+
+.slot-cell.matched[data-match-type="rainbow"] {
+  border-color: #FF9DCB;
+  background: radial-gradient(circle at center,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 220, 235, 0.30) 30%,
+    rgba(255, 157, 203, 0.18) 65%,
+    rgba(255, 157, 203, 0.10) 100%);
+  box-shadow:
+    0 0 18px rgba(255, 255, 255, 0.7),
+    0 0 32px rgba(255, 157, 203, 0.55),
+    inset 0 0 14px rgba(255, 255, 255, 0.55);
+  animation: rainbow-core-pulse 1.0s ease-in-out infinite;
+}
+
+@keyframes rainbow-core-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 18px rgba(255, 255, 255, 0.7),
+      0 0 32px rgba(255, 157, 203, 0.55),
+      inset 0 0 14px rgba(255, 255, 255, 0.55);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(255, 255, 255, 1),
+      0 0 48px rgba(255, 157, 203, 0.85),
+      inset 0 0 24px rgba(255, 255, 255, 0.8);
+  }
+}
+
+
+/* ============================================
+   별 파티클 + 황금 라인 점 스타일 제거 (안 쓰임)
+   ============================================ */
+
+.golden-star,
+.golden-line-trail,
+.golden-line-particle,
+.golden-line-dot {
+  display: none !important;
+}
+
+/* ============================================
+   Day 10 (Phase D) — 게임 화면 꾸미기 시각 효과 4종
+   ============================================
+   결정로그 Day 10 / 시스템 ① 부위별 매핑 SSOT.
+
+   원칙 (대표 결정):
+   - 단순하지만 예쁘게 + 렉 X (게임의 핵심 중 하나)
+   - opacity / filter 위주 (transform 충돌 X — bobber idle/bite 애니메이션 보존)
+   - 등급별 색 = 등급 베이스 색 (희귀 청은 / 영웅 보라 / 전설 황금 / 신화 빨강)
+   - 클래스 prefix 분리: float-bobber--rod-cosmetic-{grade},
+                        float-bobber--float-cosmetic-{grade},
+                        slot-grid--clothes-cosmetic-{grade},
+                        slot-grid--boat-cosmetic-{grade}
+   ============================================ */
+
+
+/* --------------------------------------------
+   D-1. 낚싯대 cosmetic → 찌의 낚싯줄 색/글로우
+   --------------------------------------------
+   Day 13 강화 ★ — 대표 결정 ("좀 더 티가 나게").
+   변경 사항:
+   - drop-shadow 한 겹 (4-7px) → 두 겹 (가까운 + 먼 글로우)
+   - stroke-width 0.6 → 0.85 (살짝 굵게)
+   - opacity 펄스 신규 (0.85 ↔ 1.0)
+   원칙 유지: transform 미사용, filter/opacity 만 (bobber 애니메이션 보존).
+   -------------------------------------------- */
+
+.float-bobber--rod-cosmetic-rare      .float-bobber__line {
+  filter: drop-shadow(0 0 10px rgba(37, 99, 235, 0.85)) drop-shadow(0 0 18px rgba(37, 99, 235, 0.45));
+}
+.float-bobber--rod-cosmetic-epic      .float-bobber__line {
+  filter: drop-shadow(0 0 12px rgba(176, 128, 208, 0.90)) drop-shadow(0 0 20px rgba(176, 128, 208, 0.50));
+}
+.float-bobber--rod-cosmetic-legendary .float-bobber__line {
+  filter: drop-shadow(0 0 14px rgba(255, 217, 106, 0.95)) drop-shadow(0 0 22px rgba(255, 217, 106, 0.55));
+}
+.float-bobber--rod-cosmetic-mythic    .float-bobber__line {
+  filter: drop-shadow(0 0 16px rgba(255, 73, 166, 1.0))  drop-shadow(0 0 24px rgba(255, 73, 166, 0.60));
+}
+
+/* SVG line stroke + 굵기 (0.6 → 0.85 — 더 또렷) */
+.float-bobber--rod-cosmetic-rare      .float-bobber__line line { stroke: #2563EB; stroke-width: 0.85; opacity: 0.95; }
+.float-bobber--rod-cosmetic-epic      .float-bobber__line line { stroke: #B080D0; stroke-width: 0.85; opacity: 0.95; }
+.float-bobber--rod-cosmetic-legendary .float-bobber__line line { stroke: #FFD96A; stroke-width: 0.85; opacity: 1.0;  }
+.float-bobber--rod-cosmetic-mythic    .float-bobber__line line { stroke: #FF49A6; stroke-width: 0.85; opacity: 1.0;  }
+
+/* Day 13 신규 — 낚싯줄 펄스 (opacity 만 — transform 충돌 X) */
+.float-bobber--rod-cosmetic-rare      .float-bobber__line,
+.float-bobber--rod-cosmetic-epic      .float-bobber__line,
+.float-bobber--rod-cosmetic-legendary .float-bobber__line,
+.float-bobber--rod-cosmetic-mythic    .float-bobber__line {
+  animation: float-bobber-rod-cosmetic-pulse 2.4s ease-in-out infinite;
+}
+@keyframes float-bobber-rod-cosmetic-pulse {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 1.0;  }
+}
+
+
+/* --------------------------------------------
+   D-2. 찌 cosmetic → ★ Day 26 (대표 결정) 입자 떠다님 효과
+   --------------------------------------------
+   이전 (Day 13 강화안 폐기):
+     - .float-bobber__body filter: drop-shadow 다중 글로우
+     - ::after radial-gradient halo
+   변경 (Day 26):
+     - 글로우/halo 모두 제거 (대표 명세 — "기존 글로우 효과는 빼고")
+     - 찌 주위 반짝 입자 N개 떠다님 (float-bobber.js syncFloatCosmeticParticles)
+     - 등급별 4/6/8/12개 + 등급별 색
+   원칙: transform 미사용 (bobber idle/bite 애니메이션 보존) — 입자 layer 별도 absolute.
+   -------------------------------------------- */
+
+/* ★ Day 26 — 기존 filter 글로우 폐기 (drop-shadow 모두 제거).
+   본체 자체는 SVG 색만으로 cosmetic 표현. 입자가 화려함 담당. */
+.float-bobber--float-cosmetic-rare      .float-bobber__body,
+.float-bobber--float-cosmetic-epic      .float-bobber__body,
+.float-bobber--float-cosmetic-legendary .float-bobber__body,
+.float-bobber--float-cosmetic-mythic    .float-bobber__body {
+  /* opacity 호흡 펄스만 유지 (잔잔한 호흡감) */
+  animation: float-bobber-cosmetic-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes float-bobber-cosmetic-pulse {
+  0%, 100% { opacity: 0.88; }
+  50%      { opacity: 1.00; }
+}
+
+/* ★ Day 26 — 입자 레이어 (찌 root 안 absolute) */
+.float-bobber__particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;  /* 찌 본체 위 */
+}
+
+.float-bobber__particle {
+  position: absolute;
+  border-radius: 50%;
+  background-color: currentColor;
+  box-shadow:
+    0 0 3px currentColor,
+    0 0 6px currentColor,
+    0 0 10px rgba(255, 255, 255, 0.35);
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+
+/* 등급별 색 + 크기 (점진적 화려함) */
+.float-bobber__particle--rare      { color: rgba(120, 170, 255, 1.0); width: 1.6px; height: 1.6px; }
+.float-bobber__particle--epic      { color: rgba(196, 148, 228, 1.0); width: 1.9px; height: 1.9px; }
+.float-bobber__particle--legendary { color: rgba(255, 217, 106, 1.0); width: 2.2px; height: 2.2px; }
+.float-bobber__particle--mythic    { color: rgba(255, 113, 186, 1.0); width: 2.6px; height: 2.6px; }
+
+/* 4가지 drift keyframes — 입자별 다른 방향/궤도 (i % 4) */
+@keyframes float-particle-drift-1 {
+  0%, 100% { transform: translate(0, 0);     opacity: 0.30; }
+  25%      { transform: translate(8px, -6px); opacity: 1.00; }
+  50%      { transform: translate(-4px, -10px); opacity: 0.65; }
+  75%      { transform: translate(-8px, 4px);  opacity: 1.00; }
+}
+@keyframes float-particle-drift-2 {
+  0%, 100% { transform: translate(0, 0);     opacity: 0.35; }
+  30%      { transform: translate(-7px, -8px); opacity: 1.00; }
+  60%      { transform: translate(5px, -5px);  opacity: 0.75; }
+  85%      { transform: translate(6px, 6px);   opacity: 1.00; }
+}
+@keyframes float-particle-drift-3 {
+  0%, 100% { transform: translate(0, 0);    opacity: 0.30; }
+  20%      { transform: translate(6px, 6px); opacity: 1.00; }
+  55%      { transform: translate(-9px, -3px); opacity: 0.70; }
+  80%      { transform: translate(-3px, -8px); opacity: 1.00; }
+}
+@keyframes float-particle-drift-4 {
+  0%, 100% { transform: translate(0, 0);    opacity: 0.35; }
+  35%      { transform: translate(5px, -10px); opacity: 1.00; }
+  65%      { transform: translate(-6px, 8px);  opacity: 0.75; }
+  90%      { transform: translate(7px, 0);     opacity: 1.00; }
+}
+
+/* ★ Day 26 — 기존 ::after halo 폐기 (none 강제 — 호환성). */
+.float-bobber--float-cosmetic-rare::after,
+.float-bobber--float-cosmetic-epic::after,
+.float-bobber--float-cosmetic-legendary::after,
+.float-bobber--float-cosmetic-mythic::after {
+  display: none;
+}
+
+/* Day 13 신규 — 찌 외곽 halo (등급색 radial-gradient, 본체 뒤에 깔리는 빛 무리)
+   .float-bobber 컨테이너 자체에 ::after 추가. 본체보다 살짝 큰 영역에 등급색 그라디언트.
+
+   Day 14 ★ 버그픽스 (대표 보고 — 찌/낚싯줄 cosmetic 장착 시 슬롯-장비칸 거리 멀어지고
+   찌·낚싯줄이 아래쪽에서 출력되는 오류) — 부트스트랩 규칙 24번 위반 수정.
+   .float-bobber 자체가 position: absolute + top/left 50% + transform translate (-50%) 로
+   부모 안에서 가운데 정렬되는 구조. 여기에 cosmetic 클래스가 position: relative 를 덮어쓰면
+   absolute → relative 로 바뀌어 layout flow 에 다시 들어가서 부모 공간을 차지 (거리 멀어짐),
+   동시에 top/left 50% 가 자기 자신 기준으로 동작해서 정상 위치에서 50% 만큼 밀림 (아래쪽 출력).
+   ::after 가 absolute 로 위치하려면 positioned ancestor 가 필요하지만 .float-bobber 자체가
+   이미 absolute (positioned) 라 컨테이닝 블록 역할 충족 — 별도 position 선언 불필요. 룰 제거. */
+.float-bobber--float-cosmetic-rare::after,
+.float-bobber--float-cosmetic-epic::after,
+.float-bobber--float-cosmetic-legendary::after,
+.float-bobber--float-cosmetic-mythic::after {
+  content: '';
+  position: absolute;
+  /* 찌 본체 위치 (상단 안테나 ~ 다리 약 70px) 중심에 halo */
+  left: 50%;
+  top: calc(100% - 70px);
+  width: 80px;
+  height: 80px;
+  transform: translate(-50%, -10px);
+  pointer-events: none;
+  z-index: -1;                /* 본체 뒤로 (드러나지 않게) */
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    var(--float-halo, rgba(255, 255, 255, 0.4)) 0%,
+    transparent 65%
+  );
+  animation: float-bobber-halo-pulse 3.2s ease-in-out infinite;
+}
+
+.float-bobber--float-cosmetic-rare      { --float-halo: rgba(37, 99, 235, 0.55); }
+.float-bobber--float-cosmetic-epic      { --float-halo: rgba(176, 128, 208, 0.60); }
+.float-bobber--float-cosmetic-legendary { --float-halo: rgba(255, 217, 106, 0.65); }
+.float-bobber--float-cosmetic-mythic    { --float-halo: rgba(255, 73, 166, 0.70); }
+
+@keyframes float-bobber-halo-pulse {
+  0%, 100% { opacity: 0.50; }
+  50%      { opacity: 1.00; }
+}
+
+
+/* --------------------------------------------
+   D-3. 옷 cosmetic → 슬롯 안 별이 돌아다님 (Day 10 v4 — 대표 결정 변경)
+   --------------------------------------------
+   기존 정적 ::before 6개 점 → 동적 별 layer 로 변경.
+   slot.js 의 syncClothesCosmeticStars() 가 등급별 N 개 별 spawn,
+   각 별이 임의 위치 등장 → 페이드인 → 이동 → 페이드아웃 (반복).
+
+   layer: position absolute, 슬롯 그리드 안 영역만 차지 (셀 클릭 X — pointer-events none).
+   별: mask-image SVG (5각 별) + background-color (등급 색) + mix-blend-mode screen.
+   등급별 차등 (대표 결정 A 안):
+     희귀  4 개 / 9px
+     영웅  6 개 / 11px
+     전설  8 개 / 13px
+     신화 10 개 / 15px
+   -------------------------------------------- */
+
+.slot-grid__star-layer {
+  position: absolute;
+  inset: 0.4rem;
+  pointer-events: none;
+  z-index: 2;                 /* 셀(z:1) 위 — 빛이 셀 위로 합성 */
+  border-radius: var(--slot-frame-radius);
+  overflow: hidden;           /* 별이 그리드 밖 안 나가도록 */
+}
+
+.cosmetic-star {
+  position: absolute;
+  pointer-events: none;
+  background-color: currentColor;
+  /* ★ Day 25 (대표 결정) — 별 → 작은 점 변경.
+   *   mask-image (별 모양) 폐기, border-radius: 50% 로 원형 점.
+   *   글로우는 box-shadow 2겹 (currentColor 가까운 글로우 + 흰빛 후광).
+   *   비대칭 좌표는 slot.js POSITIONS_BY_GRADE 에서 결정.
+   */
+  border-radius: 50%;
+  box-shadow:
+    0 0 3px currentColor,
+    0 0 6px currentColor,
+    0 0 10px rgba(255, 255, 255, 0.45);
+  /* ★ Day 21 (대표 결정 C안) — 정적화: 위치 고정 + opacity 펄스만.
+   *   transform 0 + DOM mutation 0 → 렉 부담 -90%
+   */
+  animation: cosmetic-star-pulse 3s ease-in-out infinite;
+  mix-blend-mode: screen;     /* 어두운 슬롯 배경에서 빛만 더해짐 */
+}
+
+/* 등급별 색 + 크기 — ★ Day 25 점이라서 크기 더 작게 (기존 9~15px → 5~9px) */
+.cosmetic-star--rare      { color: rgba(120, 170, 255, 1.0);  width: 5px; height: 5px; }
+.cosmetic-star--epic      { color: rgba(196, 148, 228, 1.0);  width: 6px; height: 6px; }
+.cosmetic-star--legendary { color: rgba(255, 217, 106, 1.0);  width: 7px; height: 7px; }
+.cosmetic-star--mythic    { color: rgba(255, 113, 186, 1.0);  width: 9px; height: 9px; }
+
+/* ★ Day 21 — 정적 별 opacity 펄스 (transform X, 매우 가벼움).
+ *   각 별마다 JS 가 animationDuration + animationDelay 다르게 inline 적용 → 자연스러운 깜빡임.
+ * ★ Day 26 (대표 결정 Q5) — scale 추가 (커졌다 작아졌다 연출).
+ *   - JS 의 animationDelay 가 각 점 다른 phase 보장 → 자연스러운 흐름.
+ *   - opacity + scale 결합으로 더 살아있는 호흡감.
+ *   - GPU 부담 미미 (점 4~16개, transform 1개씩만).
+ */
+@keyframes cosmetic-star-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.7); }
+  50%      { opacity: 1.0;  transform: scale(1.25); }
+}
+
+
+/* --------------------------------------------
+   D-4. 배 cosmetic → 슬롯 그리드 외곽 테두리 + 글로우
+   --------------------------------------------
+   Day 13 추가 ★ — 대표 결정 (테두리 개선안 적용 — "허접해보이지 않게").
+   기존: 0 0 0 2px 단일 라인 + 외곽 글로우 1겹 + inset 1겹 = 단조로움
+   변경: 6 레이어 다중 box-shadow — 입체감 + 깊이감 + 멋
+     ① inset 0 0 0 1px white  : 안쪽 흰빛 액센트 (반짝)
+     ② 0 0 0 1px <등급색 진함> : 진한 등급색 명확선
+     ③ 0 0 0 4px <등급색 옅음> : 부드러운 등급색 띠 (이중 테두리 효과)
+     ④ 0 0 Npx <등급색 진함>   : 가까운 외곽 글로우
+     ⑤ 0 0 NNpx <등급색 옅음>  : 먼 외곽 글로우 (부드러운 후광)
+     ⑥ inset 0 0 NNpx <등급색> : 안쪽 깊이감
+   잔잔한 호흡 펄스 — 6 레이어 모두 강도 변동 (0%→50%→100%).
+   -------------------------------------------- */
+
+/* Day 16 후속 (대표 결정): 등급 색 테두리선 (1px/4px) 2개 제거.
+   흰빛 inset + 글로우 3개(가까운/먼/안쪽)만 유지 → 부드러운 등급 색 빛만 퍼지는 효과.
+
+   ★ Day 21 (대표 결정 C안) — 배 cosmetic box-shadow 4겹 무한 펄스 전부 폐기 ★
+     사유: 모바일 GPU 최대 약점 (box-shadow 다겹 펄스 + 슬롯 그리드 외곽 큰 영역)
+     대체: 슬롯 우상단에 단정한 미니멀리즘 돛단배 SVG 1개 (정적, 등급색)
+     효과: GPU 부담 사실상 0 (SVG 1개, animation X)
+   ---- 폐기된 코드 ----
+   .slot-grid--boat-cosmetic-{grade} 셀렉터 4종 + @keyframes slot-grid-boat-pulse-{grade} 4종 제거.
+   slot.js 의 syncBoatCosmeticIcon 함수가 .slot-grid__boat-icon SVG 를 직접 부착.
+*/
+
+/* ★ Day 25 (대표 결정) — 배 cosmetic 위치 변경: HUD 게이지바 바로 위.
+   기존: 슬롯 우상단 정적 1개. 변경: 게이지바 위에서 우→좌 20초 무한루프 + 미세 흔들기.
+   구조: outer (좌→우 이동) + inner (흔들기) + SVG.
+   GPU 부담 최소화 — 1 요소, left + transform rotate 합성, 60fps 무난. */
+.slot-grid__boat-icon {
+  position: absolute;
+  bottom: 100%;                /* 게이지바 바로 위에 위치 */
+  margin-bottom: 0.15rem;       /* 게이지바와 약간 간격 */
+  left: 100%;                  /* 시작: 오른쪽 끝 (keyframe 0% 와 일치) */
+  width: 1.6rem;
+  height: 1.6rem;
+  pointer-events: none;
+  z-index: 5;
+  /* 20초 무한루프 좌→우 이동 (페이드 인/아웃 포함) */
+  animation: boat-sail 20s linear infinite;
+}
+
+@keyframes boat-sail {
+  0%   { left: 100%;                  opacity: 0; }
+  5%   { left: calc(100% - 1.6rem);   opacity: 1; }
+  95%  { left: 0;                     opacity: 1; }
+  100% { left: -1.6rem;               opacity: 0; }
+}
+
+/* 내부 — 미세한 흔들기 (좌우 살짝 + 위아래 살짝) */
+.slot-grid__boat-icon__inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: boat-rock 3.2s ease-in-out infinite;
+  transform-origin: 50% 95%;     /* 배 바닥 기준 회전 (배가 물 위에 떠있는 느낌) */
+}
+
+@keyframes boat-rock {
+  0%, 100% { transform: rotate(-2.5deg) translateY(0); }
+  50%      { transform: rotate(2.5deg)  translateY(-0.8px); }
+}
+
+.slot-grid__boat-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 등급별 색 + 글로우 (drop-shadow 1겹만 — 가벼움) */
+.slot-grid__boat-icon--rare {
+  color: rgba(120, 170, 255, 1.0);
+  filter: drop-shadow(0 0 4px rgba(120, 170, 255, 0.65));
+}
+.slot-grid__boat-icon--epic {
+  color: rgba(196, 148, 228, 1.0);
+  filter: drop-shadow(0 0 5px rgba(196, 148, 228, 0.70));
+}
+.slot-grid__boat-icon--legendary {
+  color: rgba(255, 217, 106, 1.0);
+  filter: drop-shadow(0 0 6px rgba(255, 217, 106, 0.75));
+}
+.slot-grid__boat-icon--mythic {
+  color: rgba(255, 113, 186, 1.0);
+  filter: drop-shadow(0 0 7px rgba(255, 113, 186, 0.80));
+}
+
+/* ============================================
+   Day 15 — 골든힛 타임 비주얼 (Phase 2C)
+
+/* ★ Day 21 — @keyframes slot-grid-boat-pulse-{rare/epic/legendary/mythic} 4종 모두 제거.
+ *   배 cosmetic 이 SVG 정적 아이콘으로 대체됨 (위 .slot-grid__boat-icon 참고). 참조 X.
+ */
+
+/* ============================================
+   Day 15 — 골든힛 타임 비주얼 (Phase 2C)
+   ============================================
+   1) 슬롯 외곽 라스베가스 마퀴 (큰 흰 전구 + 약한 점멸 — 대표 결정)
+      회전은 X (렉 방지). 점멸만으로 충분한 라스베가스 톤.
+   2) 황금어 결과 팝업 황금빛 오버라이드
+   ============================================ */
+
+/* (1) Day 19 — 라스베가스 마퀴 효과 통째로 삭제 (대표 결정 — 싼티 난다).
+       대신 src/ui/sparkle-stars.js 의 createSparkleField() 가 슬롯 그리드 안에
+       별빛 입자 36개를 부유 + 깜빡 효과로 깔아줌. JS 측에서
+       enterGoldenHitTime → grid.root.appendChild / exitGoldenHitTime → remove 처리. */
+
+/* (2) 황금어 결과 팝업 황금빛 오버라이드 — fish-result.js Phase 2B 의 data-golden-hit */
+.fish-result[data-golden-hit="true"] .fish-result__grade-main {
+  /* Day 16 후속 (대표 결정): 빨강 → 황금. sub/name/fish/weight 와 톤 통일. */
+  color: #FFD96A !important;
+  font-size: 4rem !important;
+  text-shadow:
+    0 0 1.4rem rgba(255, 217, 106, 0.85),
+    0 0 2.8rem rgba(255, 217, 106, 0.40),
+    0 2px 6px rgba(0, 0, 0, 0.7);
+  letter-spacing: 0.08em;
+}
+.fish-result[data-golden-hit="true"] .fish-result__grade-sub {
+  color: #FFD96A;                       /* GOLDEN HIT 서브 = 황금 */
+  font-family: var(--font-impact, sans-serif);
+  letter-spacing: 0.1em;
+  font-size: 1.1rem;
+  opacity: 1.0;
+  text-shadow: 0 0 0.8rem rgba(255, 217, 106, 0.8);
+  animation: golden-hit-text-pulse 1.4s ease-in-out infinite;
+}
+.fish-result[data-golden-hit="true"] .fish-result__name {
+  color: #FFD96A;                       /* 황금어 이름 = 황금 */
+  text-shadow: 0 0 1rem rgba(255, 217, 106, 0.6);
+}
+.fish-result[data-golden-hit="true"] .fish-result__fish {
+  filter:
+    drop-shadow(0 0 1.4rem rgba(255, 217, 106, 0.85))
+    drop-shadow(0 0 2.8rem rgba(255, 217, 106, 0.45));
+  animation: golden-hit-fish-glow 1.8s ease-in-out infinite;
+}
+.fish-result[data-golden-hit="true"] .fish-result__weight-final {
+  color: #FFD96A;
+  text-shadow: 0 0 0.8rem rgba(255, 217, 106, 0.5);
+}
+
+@keyframes golden-hit-text-pulse {
+  0%, 100% { opacity: 0.9; }
+  50%      { opacity: 1.0; }
+}
+@keyframes golden-hit-fish-glow {
+  0%, 100% {
+    filter:
+      drop-shadow(0 0 1.0rem rgba(255, 217, 106, 0.7))
+      drop-shadow(0 0 2.0rem rgba(255, 217, 106, 0.35));
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 1.8rem rgba(255, 217, 106, 1.0))
+      drop-shadow(0 0 3.6rem rgba(255, 217, 106, 0.55));
+  }
+}
+
+
+/* ============================================
+   Day 15 추가 — 골든힛 타임 bite-alert 빨간색 (대표 결정)
+   ============================================
+   골든힛 single hit 시 등급 라벨 + "HIT" 모두 빨간색 강조.
+   기본 톤(--accent-warm 황금)을 빨간색으로 오버라이드.
+   ============================================ */
+
+/* Day 18 후속 (대표 결정) — 골든힛 타임 매칭 시 HIT 텍스트 황금색
+   (이전 빨간색 #FF3B30 → 황금 #FFE090)
+   !important: data-boss="true" 빨강 + data-hit-count 등급별 색 모두 오버라이드 */
+.bite-alert[data-golden-hit="true"] .bite-alert__grade {
+  color: #FFE090 !important;
+  text-shadow:
+    0 0 1.0rem rgba(255, 224, 144, 0.85),
+    0 0 0.4rem rgba(0, 0, 0, 0.95) !important;
+}
+.bite-alert[data-golden-hit="true"] .bite-alert__prefix,
+.bite-alert[data-golden-hit="true"] .bite-alert__main {
+  color: #FFE090 !important;
+  text-shadow:
+    0 0 1.4rem rgba(255, 224, 144, 0.95),
+    0 0 0.8rem rgba(0, 0, 0, 0.95),
+    0 0 2.6rem rgba(255, 200, 80, 0.5) !important;
+}
+
+/* Day 20: 트윙클(꿈조각) 매칭 시 HIT 텍스트 — 밝은 흰색 + 연한 푸른빛 글로우
+   !important: data-boss / data-hit-count 등급별 색 모두 오버라이드
+   (트윙클 매칭은 cluster.js findTwinkleClusters 단일 매칭 — 보스/등급 분기 없음) */
+.bite-alert[data-twinkle-hit="true"] .bite-alert__grade {
+  color: #FFFFFF !important;
+  text-shadow:
+    0 0 1.0rem rgba(215, 239, 255, 0.85),
+    0 0 0.4rem rgba(0, 0, 0, 0.95) !important;
+}
+.bite-alert[data-twinkle-hit="true"] .bite-alert__prefix,
+.bite-alert[data-twinkle-hit="true"] .bite-alert__main {
+  color: #FFFFFF !important;
+  text-shadow:
+    0 0 1.4rem rgba(255, 255, 255, 0.95),
+    0 0 0.8rem rgba(0, 0, 0, 0.95),
+    0 0 2.6rem rgba(181, 220, 255, 0.55) !important;
+}
+
+/* ★ Day 22: HIDDEN HIT(분홍) 매칭 시 텍스트 — 연한 핑크 + 분홍 글로우
+   !important: data-boss / data-hit-count / 등급별 색 모두 오버라이드.
+   - 골든힛/트윙클힛과 동일 2단 구성: grade("HIDDEN" 작게) + main("HIT" 크게)
+   - prefix 는 hide (단일 트리거)
+   - 크기는 일반 HIT 과 동일 (별도 폰트 사이즈 오버라이드 X) */
+.bite-alert[data-hidden-hit="true"] .bite-alert__prefix {
+  display: none !important;
+}
+.bite-alert[data-hidden-hit="true"] .bite-alert__grade {
+  color: #FFE0EE !important;
+  text-shadow:
+    0 0 1.0rem rgba(255, 224, 238, 0.85),
+    0 0 0.4rem rgba(0, 0, 0, 0.95) !important;
+}
+.bite-alert[data-hidden-hit="true"] .bite-alert__main {
+  color: #FFE0EE !important;
+  text-shadow:
+    0 0 1.4rem rgba(255, 224, 238, 0.95),
+    0 0 0.8rem rgba(0, 0, 0, 0.95),
+    0 0 2.6rem rgba(255, 157, 203, 0.6) !important;
+}
+
+/* ============================================
+   ★ Day 22 Phase 6: HIDDEN HIT 카드뒤집기 (무게 보너스)
+   ============================================
+   잡기 성공 후 X1/X3/X5 카드 3장 셔플 → 사용자 선택 → 모든 카드 공개 → 선택 카드 확대/사라짐.
+   디자인:
+     - 카드 뒷면: 분홍 그라데이션 + 흰 원 + 분홍 fish 심볼 (잡기게임 orb 컨셉 일관)
+     - 카드 앞면: 어두운 배경 + "×N" 분홍 글로우
+     - 3:4 직사각형 비율 (8rem × 11rem)
+   ============================================ */
+
+.hidden-card-flip {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--fade-easing);
+}
+
+.hidden-card-flip.show { opacity: 1; pointer-events: auto; }
+.hidden-card-flip.hide { opacity: 0; pointer-events: none; }
+
+.hidden-card-flip__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 19, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.hidden-card-flip__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.2rem;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.hidden-card-flip__title {
+  font-family: var(--font-impact);
+  font-size: 1.8rem;             /* ★ Day 22 Phase 7 후속 (대표 결정): "무게 보너스" → "BONUS" 작은 글씨 */
+  letter-spacing: 0.14em;
+  color: #FFFFFF;
+  text-shadow:
+    0 0 12px rgba(255, 184, 216, 0.95),
+    0 0 6px rgba(0, 0, 0, 0.85);
+}
+
+.hidden-card-flip__cards {
+  display: flex;
+  gap: 1.2rem;
+  perspective: 1200px;
+}
+
+.hidden-card-flip__card {
+  width: 8rem;
+  height: 11rem;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.3s var(--fade-easing);
+}
+
+.hidden-card-flip__card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.hidden-card-flip__card--revealed .hidden-card-flip__card-inner {
+  transform: rotateY(180deg);
+}
+
+.hidden-card-flip__face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.8rem;
+}
+
+.hidden-card-flip__face--back {
+  background: linear-gradient(135deg, #FF9DCB 0%, #FFB8D8 50%, #FF85B8 100%);
+  border: 0.2rem solid #FFE0EE;
+  box-shadow:
+    inset 0 0 18px rgba(255, 224, 238, 0.6),
+    0 0 14px rgba(255, 157, 203, 0.6);
+}
+
+.hidden-card-flip__face--front {
+  background: rgba(20, 10, 20, 0.95);
+  border: 0.2rem solid #FFB8D8;
+  transform: rotateY(180deg);
+  box-shadow:
+    inset 0 0 12px rgba(255, 184, 216, 0.4),
+    0 0 14px rgba(255, 184, 216, 0.7);
+}
+
+/* 카드 뒷면 — 잡기게임 흰 원 + 분홍 심볼 (catch-orb--hidden 컨셉) */
+.hidden-card-flip__orb {
+  position: relative;
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    #FFFFFF 0%,
+    #FFFFFF 55%,
+    rgba(255, 255, 255, 0.7) 80%,
+    rgba(255, 255, 255, 0) 100%);
+  box-shadow:
+    0 0 12px rgba(255, 255, 255, 0.95),
+    0 0 6px rgba(255, 224, 238, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hidden-card-flip__orb-symbol {
+  width: 3.4rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 3px rgba(255, 157, 203, 0.7));
+}
+
+/* 카드 앞면 — ×N 큰 분홍 글로우 */
+.hidden-card-flip__multiplier {
+  font-family: var(--font-impact);
+  font-size: 4rem;
+  letter-spacing: 0.06em;
+  color: #FFE0EE;
+  text-shadow:
+    0 0 18px rgba(255, 184, 216, 0.95),
+    0 0 8px rgba(255, 224, 238, 0.85),
+    0 1px 4px rgba(0, 0, 0, 0.85);
+}
+
+/* 안내 텍스트 */
+.hidden-card-flip__hint {
+  font-family: var(--font-base);
+  font-size: 1.4rem;
+  color: rgba(255, 224, 238, 0.85);
+  letter-spacing: 0.05em;
+  min-height: 1.4rem;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.85);
+  transition: opacity 0.3s var(--fade-easing);
+}
+
+.hidden-card-flip__hint--hide {
+  opacity: 0;
+}
+
+/* ★ Day 22 Phase 7 후속 (대표 결정): 흔들림 셔플 애니메이션 폐기.
+   카드 등장 = 모달 자체 .show transition (opacity 0.3s) 으로 자연 페이드인 처리.
+   기존 --shuffling 클래스 + hidden-card-shuffle 키프레임 제거 (JS 미참조). */
+
+/* 선택된 카드 — 분홍 글로우 강조 (Phase 6 초안) */
+.hidden-card-flip__card--selected .hidden-card-flip__face--front {
+  box-shadow:
+    inset 0 0 14px rgba(255, 184, 216, 0.6),
+    0 0 24px rgba(255, 184, 216, 0.95);
+  border-color: #FFE0EE;
+}
+
+/* ★ Day 22 Phase 6 후속 (대표 결정): 나머지 공개 후 선택 카드 보라(#7B61FF) 강조 */
+.hidden-card-flip__card--selected-purple .hidden-card-flip__face--front {
+  border-color: #7B61FF;
+  box-shadow:
+    inset 0 0 14px rgba(123, 97, 255, 0.5),
+    0 0 28px rgba(123, 97, 255, 0.95),
+    0 0 14px rgba(123, 97, 255, 0.7);
+  transition:
+    border-color 0.3s var(--fade-easing),
+    box-shadow 0.3s var(--fade-easing);
+}
+.hidden-card-flip__card--selected-purple .hidden-card-flip__multiplier {
+  color: #C9BFFF;
+  text-shadow:
+    0 0 18px rgba(123, 97, 255, 0.95),
+    0 0 8px rgba(201, 191, 255, 0.85),
+    0 1px 4px rgba(0, 0, 0, 0.85);
+  transition:
+    color 0.3s var(--fade-easing),
+    text-shadow 0.3s var(--fade-easing);
+}
+
+/* 선택 카드 중앙 확대 + 페이드 (0.7초) */
+.hidden-card-flip__card--zoom {
+  position: relative;
+  z-index: 1;
+  animation: hidden-card-zoom-fade 0.7s ease-out forwards;
+}
+
+@keyframes hidden-card-zoom-fade {
+  0%   { transform: scale(1)   translateY(0);     opacity: 1; }
+  40%  { transform: scale(1.6) translateY(-1rem); opacity: 1; }
+  100% { transform: scale(2.4) translateY(-2rem); opacity: 0; }
+}
+
+/* 다른 카드 페이드 아웃 — Phase 6 초안 (0.7초, 동시 페이드) */
+.hidden-card-flip__card--fade-out {
+  animation: hidden-card-fade-out 0.7s ease-out forwards;
+}
+
+@keyframes hidden-card-fade-out {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.85); }
+}
+
+/* ★ Day 22 Phase 6 후속 (대표 결정): 다른 카드 빠른 페이드 (0.15초) — 선택 카드 강조 흐름 */
+.hidden-card-flip__card--fade-out-fast {
+  animation: hidden-card-fade-out-fast 0.15s ease-out forwards;
+}
+
+@keyframes hidden-card-fade-out-fast {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9); }
+}

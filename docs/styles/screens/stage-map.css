@@ -1,0 +1,651 @@
+/* ===========================================
+   stage-map.css — 낚시터 맵 (Day 18 출시 수준 UI)
+   ============================================
+   대표 결정 — 출시 수준만큼 잘 만들 것 (맵 화면은 미니멀 아니어도 됨).
+
+   구조:
+   1. 화면 베이스 (전체 fill)
+   2. 헤더 (뒤로 + 타이틀)
+   3. 동그라미 헤더 (5+5+1)
+   4. 카드 viewport + track + 카드 본체
+   5. 카드 안 — 배경 그라데이션 (11개 stage 별 분기) + 별빛 + 본문
+   6. 화살표 / 입장 버튼
+   ============================================ */
+
+
+/* ============================================
+   1. 화면 베이스
+   ============================================ */
+
+.stagemap-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 1.4rem 1.2rem 1.6rem;
+  box-sizing: border-box;
+  background:
+    radial-gradient(140% 80% at 50% 0%, rgba(104, 144, 200, 0.12), transparent 60%),
+    linear-gradient(180deg, #050813 0%, #020410 100%);
+  color: #e0e8f5;
+  overflow: hidden;
+}
+
+
+/* ============================================
+   2. 헤더 (강화/합성 화면과 통일 — 대표 결정)
+   ============================================ */
+
+.stagemap-screen__header {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 4.6rem;
+  margin-bottom: 0.6rem;
+}
+
+/* 뒤로 버튼 — 강화/합성과 동일 (4rem × 4rem, SVG 2.2rem) */
+.stagemap-back {
+  position: absolute;
+  left: -0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4rem;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--line-primary, #c8d4f0);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 160ms ease, transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.stagemap-back:hover { opacity: 0.75; }
+.stagemap-back:active { transform: translateY(-50%) scale(0.9); }
+.stagemap-back svg {
+  width: 2.2rem;
+  height: 2.2rem;
+}
+
+/* 타이틀 — 강화/합성과 동일 (황금 톤 + 양 옆 fade 선, 1.7rem) */
+.stagemap-screen__title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  font-family: var(--font-base, sans-serif);
+  font-size: 1.7rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: #ffe9a8;
+  text-shadow:
+    0 0 8px rgba(255, 217, 160, 0.45),
+    0 0 16px rgba(255, 217, 160, 0.18);
+}
+/* 양 옆 fade 선 (강화/합성과 동일 장식) */
+.stagemap-screen__title::before,
+.stagemap-screen__title::after {
+  content: '';
+  display: inline-block;
+  width: 1.8rem;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 217, 160, 0.65) 50%,
+    transparent);
+  flex-shrink: 0;
+}
+
+/* 헤더 우측 placeholder — absolute back + flex:1 title 패턴이라 불필요하지만
+   기존 HTML 구조 유지 위해 보이지 않게 둠 */
+.stagemap-screen__header-spacer {
+  display: none;
+}
+
+
+/* ============================================
+   3. 동그라미 헤더 (5 + 5 + 1)
+   ============================================ */
+
+.stagemap-dots {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.4rem;
+  flex-shrink: 0;
+}
+
+.stagemap-dots__row {
+  display: flex;
+  justify-content: center;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+/* (Day 18 후속) — 11지역 separator 제거. 다른 동그라미와 같은 gap 유지 (대표 결정) */
+
+/* 동그라미 본체 */
+.stagemap-dot {
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(200, 212, 240, 0.06);
+  border: 1.5px solid rgba(200, 212, 240, 0.22);
+  color: rgba(200, 212, 240, 0.75);
+  font-family: var(--font-impact, 'Bebas Neue', sans-serif);
+  cursor: pointer;
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    box-shadow 240ms ease,
+    transform 120ms ease;
+  position: relative;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.stagemap-dot__num {
+  font-size: 0.95rem;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.stagemap-dot svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+/* 잠금 상태 */
+.stagemap-dot--locked {
+  background: rgba(80, 90, 110, 0.18);
+  border-color: rgba(120, 130, 150, 0.30);
+  color: rgba(180, 190, 210, 0.40);
+  cursor: pointer;        /* 잠긴 곳도 클릭은 됨 (카드는 회색으로 표시) */
+}
+.stagemap-dot--locked:hover {
+  background: rgba(80, 90, 110, 0.24);
+}
+
+/* 활성 상태 (현재 선택) */
+.stagemap-dot--active {
+  background: linear-gradient(180deg, rgba(255, 217, 160, 0.32), rgba(255, 217, 160, 0.16));
+  border-color: rgba(255, 217, 160, 0.78);
+  color: #fff5dc;
+  box-shadow:
+    0 0 14px rgba(255, 217, 160, 0.55),
+    0 0 24px rgba(255, 217, 160, 0.28);
+  transform: scale(1.08);
+}
+
+/* 11지역 — 잠금 시 검은 톤 + 보랏빛 글로우 */
+.stagemap-dot--hidden11 {
+  background: radial-gradient(60% 60% at 50% 50%, rgba(80, 50, 140, 0.18), rgba(10, 10, 25, 0.6));
+  border-color: rgba(120, 90, 200, 0.42);
+  color: rgba(180, 160, 240, 0.55);
+}
+.stagemap-dot--hidden11:hover {
+  box-shadow: 0 0 12px rgba(120, 90, 200, 0.30);
+}
+
+/* 11지역 — 활성화 시 무지개빛 (만렙 도달 시) */
+.stagemap-dot--special.stagemap-dot--active {
+  background: linear-gradient(135deg, rgba(255, 73, 166, 0.32), rgba(255, 215, 0, 0.32), rgba(123, 97, 255, 0.32));
+  border-color: rgba(255, 215, 0, 0.85);
+  box-shadow:
+    0 0 16px rgba(255, 215, 0, 0.55),
+    0 0 28px rgba(255, 73, 166, 0.35);
+}
+
+/* ★ Day 22 Phase 7 후속 (대표 결정): 미관람 stage(잠금 해제 + 안 봄) — 우상단 빨간점 배지
+   확인하면 (해당 dot 클릭/스와이프 도달) syncTo 에서 자동 제거. */
+.stagemap-dot--unseen::after {
+  content: '';
+  position: absolute;
+  top: -0.15rem;
+  right: -0.15rem;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: #ff3850;
+  box-shadow:
+    0 0 4px rgba(255, 56, 80, 0.95),
+    0 0 8px rgba(255, 56, 80, 0.5);
+  pointer-events: none;
+}
+
+
+/* ============================================
+   4. 카드 viewport
+   ============================================ */
+
+.stagemap-card-viewport {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  margin-bottom: 1.2rem;
+  /* 스와이프 시 가로 스크롤 충돌 방지 */
+  touch-action: pan-y;
+  overflow: hidden;
+}
+
+.stagemap-card-track {
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  transition:
+    transform 260ms cubic-bezier(0.22, 0.9, 0.32, 1),
+    opacity 200ms ease;
+}
+
+/* 슬라이드 애니메이션 (syncTo 시 토글) */
+.stagemap-card-track--slide-out-left {
+  transform: translateX(-32%);
+  opacity: 0;
+}
+.stagemap-card-track--slide-out-right {
+  transform: translateX(32%);
+  opacity: 0;
+}
+.stagemap-card-track--slide-in-left {
+  transform: translateX(-32%);
+  opacity: 0;
+  /* immediately set then transition to 0 */
+  animation: stagemap-slide-in-from-left 240ms cubic-bezier(0.22, 0.9, 0.32, 1) forwards;
+}
+.stagemap-card-track--slide-in-right {
+  transform: translateX(32%);
+  opacity: 0;
+  animation: stagemap-slide-in-from-right 240ms cubic-bezier(0.22, 0.9, 0.32, 1) forwards;
+}
+@keyframes stagemap-slide-in-from-left {
+  from { transform: translateX(-32%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes stagemap-slide-in-from-right {
+  from { transform: translateX(32%);  opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+
+/* ============================================
+   5. 카드 본체
+   ============================================ */
+
+.stagemap-card {
+  position: relative;
+  width: 100%;
+  max-width: 22rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(200, 212, 240, 0.18);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.55),
+    inset 0 0 60px rgba(0, 0, 0, 0.35);
+  /* 카드 비율 유지 (가로 길이 따라 세로 비례) */
+  aspect-ratio: 3 / 4;
+}
+
+/* 배경 (그라데이션 placeholder — Phase E 에서 이미지로 교체) */
+.stagemap-card__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* 잠금 카드 = 회색 dim + saturate 0 */
+.stagemap-card[data-unlocked="0"]:not([data-hidden11="1"]) .stagemap-card__bg {
+  filter: grayscale(1) brightness(0.35);
+}
+
+/* 11지역 잠금 = 검은 + 보랏빛 안개 */
+.stagemap-card[data-hidden11="1"] .stagemap-card__bg {
+  background:
+    radial-gradient(80% 100% at 50% 30%, rgba(80, 50, 140, 0.28), transparent 60%),
+    linear-gradient(180deg, #0a0518 0%, #02010a 100%);
+}
+
+/* 11지역 보랏빛 안개 베일 */
+.stagemap-card__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(50% 40% at 50% 50%, rgba(120, 90, 200, 0.18), transparent 70%);
+  animation: stagemap-veil-pulse 5s ease-in-out infinite;
+}
+@keyframes stagemap-veil-pulse {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1.0; }
+}
+
+/* 별빛 입자 (SVG circle) */
+.stagemap-card__stars {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.stagemap-card__star {
+  fill: rgba(255, 255, 255, 0.3);
+  animation: stagemap-star-twinkle 3s ease-in-out infinite;
+}
+.stagemap-card__star--0 { animation-delay: 0s;    fill: rgba(255, 240, 200, 0.7); }
+.stagemap-card__star--1 { animation-delay: 0.8s;  fill: rgba(200, 220, 255, 0.6); }
+.stagemap-card__star--2 { animation-delay: 1.6s;  fill: rgba(255, 255, 255, 0.65); }
+.stagemap-card__star--3 { animation-delay: 2.2s;  fill: rgba(200, 240, 255, 0.55); }
+@keyframes stagemap-star-twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.85); }
+  50%      { opacity: 1.0; transform: scale(1.15); }
+}
+
+/* 큰 자물쇠 (잠금 카드) */
+.stagemap-card__biglock {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  width: 4.2rem;
+  height: 4.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(200, 212, 240, 0.55);
+}
+.stagemap-card[data-hidden11="1"] .stagemap-card__biglock {
+  color: rgba(180, 160, 240, 0.7);
+  filter: drop-shadow(0 0 12px rgba(120, 90, 200, 0.5));
+}
+.stagemap-card__biglock svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* 본문 (이름 + 영문 + 소개 + 요구 레벨) */
+.stagemap-card__body {
+  position: relative;
+  z-index: 2;
+  padding: 1.4rem 1.2rem 1.3rem;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.55) 35%, rgba(0, 0, 0, 0.85) 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.stagemap-card__name {
+  font-family: var(--font-base, sans-serif);
+  font-size: 1.65rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  text-shadow:
+    0 0 14px rgba(255, 255, 255, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.9);
+  line-height: 1.15;
+}
+
+.stagemap-card[data-hidden11="1"] .stagemap-card__name {
+  color: #d8c8ff;
+  text-shadow:
+    0 0 14px rgba(180, 140, 255, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.9);
+  letter-spacing: 0.12em;
+}
+
+.stagemap-card__name-en {
+  font-family: var(--font-impact, 'Bebas Neue', sans-serif);
+  font-size: 0.85rem;
+  letter-spacing: 0.18em;
+  color: rgba(200, 212, 240, 0.65);
+  margin-top: -0.15rem;
+}
+
+.stagemap-card__intro {
+  margin-top: 0.45rem;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: rgba(220, 230, 245, 0.86);
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.stagemap-card__req {
+  margin-top: 0.7rem;
+  font-family: var(--font-impact, 'Bebas Neue', sans-serif);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(200, 212, 240, 0.18);
+  /* ★ Day 25 Phase 3 (대표 명세 후속) — 입장 레벨 + 권장 상상력 한 줄 배치 */
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+/* .stagemap-card__req-label 별도 룰셋 불필요 —
+   라벨 색은 부모 .stagemap-card__req의 modifier (unlocked/locked/hidden11) 가 결정. */
+.stagemap-card__req--unlocked {
+  color: rgba(200, 240, 200, 0.85);
+}
+.stagemap-card__req--locked {
+  color: rgba(255, 180, 100, 0.85);
+}
+.stagemap-card__req--hidden11 {
+  color: rgba(220, 180, 255, 0.85);
+}
+
+/* ★ Day 25 Phase 3 — 권장 상상력 (입장 레벨 옆 우측, 황금 톤 작게).
+   잔존 임시값 — 추후 밸런스 정밀 조정 시 imagination.js RECOMMENDED_IMAGINATION 수정. */
+.stagemap-card__recommend {
+  font-family: var(--font-base, 'Pretendard', sans-serif);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 217, 106, 0.82);
+  text-shadow: 0 0 4px rgba(255, 217, 106, 0.3);
+}
+
+
+/* ============================================
+   5-2. 11개 stage 별 배경 그라데이션 (placeholder)
+        Phase E 에서 stage 이미지로 교체 예정
+   ============================================ */
+
+/* 1. 별빛 연못 — 잔잔·평온 (청남) */
+.stagemap-card[data-stage-id="1"] .stagemap-card__bg {
+  background:
+    radial-gradient(80% 60% at 50% 30%, rgba(120, 160, 240, 0.18), transparent 60%),
+    linear-gradient(180deg, #0d1a3a 0%, #050a1c 100%);
+}
+/* 2. 반딧불 저수지 — 동화·이끼 (녹) */
+.stagemap-card[data-stage-id="2"] .stagemap-card__bg {
+  background:
+    radial-gradient(70% 50% at 50% 40%, rgba(140, 200, 100, 0.20), transparent 60%),
+    linear-gradient(180deg, #0a1f1a 0%, #03100c 100%);
+}
+/* 3. 새벽 안개 호수 — 안개·신비 (회청) */
+.stagemap-card[data-stage-id="3"] .stagemap-card__bg {
+  background:
+    radial-gradient(90% 70% at 50% 30%, rgba(180, 200, 220, 0.22), transparent 60%),
+    linear-gradient(180deg, #1c2530 0%, #0a1018 100%);
+}
+/* 4. 꿈빛 폭포 — 빛·청량 (청록) */
+.stagemap-card[data-stage-id="4"] .stagemap-card__bg {
+  background:
+    radial-gradient(60% 80% at 50% 20%, rgba(140, 230, 230, 0.22), transparent 70%),
+    linear-gradient(180deg, #0a2a30 0%, #03141a 100%);
+}
+/* 5. 노을 흐르는 강 — 노을·따뜻함 */
+.stagemap-card[data-stage-id="5"] .stagemap-card__bg {
+  background:
+    radial-gradient(80% 60% at 50% 30%, rgba(255, 160, 100, 0.22), transparent 60%),
+    linear-gradient(180deg, #3a1a14 0%, #1a0808 100%);
+}
+/* 6. 천둥꿈 바다 — 천둥·거친 */
+.stagemap-card[data-stage-id="6"] .stagemap-card__bg {
+  background:
+    radial-gradient(80% 60% at 50% 35%, rgba(120, 140, 220, 0.20), transparent 60%),
+    linear-gradient(180deg, #0a1230 0%, #03061a 100%);
+}
+/* 7. 별을 삼킨 심해 — 심해·별 (보라) */
+.stagemap-card[data-stage-id="7"] .stagemap-card__bg {
+  background:
+    radial-gradient(60% 60% at 50% 30%, rgba(160, 120, 220, 0.22), transparent 60%),
+    linear-gradient(180deg, #1a0a30 0%, #08041a 100%);
+}
+/* 8. 잠의 협곡 — 깊은 잠·정적 */
+.stagemap-card[data-stage-id="8"] .stagemap-card__bg {
+  background:
+    radial-gradient(50% 50% at 50% 40%, rgba(100, 80, 160, 0.18), transparent 60%),
+    linear-gradient(180deg, #100a24 0%, #050310 100%);
+}
+/* 9. 달의 정원 — 달빛·휴식 (연보라) */
+.stagemap-card[data-stage-id="9"] .stagemap-card__bg {
+  background:
+    radial-gradient(70% 50% at 50% 25%, rgba(220, 200, 255, 0.20), transparent 60%),
+    linear-gradient(180deg, #1c1a30 0%, #0a081a 100%);
+}
+/* 10. 별빛 사막 — 사막·별 */
+.stagemap-card[data-stage-id="10"] .stagemap-card__bg {
+  background:
+    radial-gradient(80% 60% at 50% 50%, rgba(220, 180, 120, 0.20), transparent 60%),
+    linear-gradient(180deg, #2a1f18 0%, #100a08 100%);
+}
+/* 11. 꿈의 심해 — 활성화 시 무지개빛 정점 (만렙 도달 후) */
+.stagemap-card[data-stage-id="11"][data-unlocked="1"] .stagemap-card__bg {
+  background:
+    radial-gradient(70% 60% at 50% 30%, rgba(255, 215, 0, 0.20), transparent 50%),
+    radial-gradient(80% 80% at 50% 60%, rgba(255, 73, 166, 0.18), transparent 50%),
+    linear-gradient(180deg, #1a0530 0%, #050010 100%);
+}
+
+
+/* ============================================
+   6. 화살표 (좌/우 인접 이동) — Day 18 후속: 크기 증가 (대표 결정)
+   ============================================ */
+
+.stagemap-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3.4rem;          /* 2.2 → 3.4 */
+  height: 4.4rem;         /* 2.8 → 4.4 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 8, 19, 0.55);
+  border: 1px solid rgba(200, 212, 240, 0.26);
+  border-radius: 3px;
+  color: rgba(220, 230, 245, 0.92);
+  font-size: 2.4rem;      /* 1.6 → 2.4 */
+  line-height: 1;
+  cursor: pointer;
+  z-index: 4;
+  transition:
+    opacity 200ms ease,
+    background 160ms ease,
+    transform 120ms ease,
+    box-shadow 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.stagemap-arrow:hover {
+  background: rgba(5, 8, 19, 0.75);
+  color: #ffd9a0;
+  border-color: rgba(255, 217, 160, 0.55);
+  box-shadow: 0 0 14px rgba(255, 217, 160, 0.25);
+}
+.stagemap-arrow:active {
+  transform: translateY(-50%) scale(0.94);
+}
+.stagemap-arrow--left  { left: 0.4rem;  }
+.stagemap-arrow--right { right: 0.4rem; }
+.stagemap-arrow--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+
+/* ============================================
+   7. 입장 버튼
+   ============================================ */
+
+.stagemap-enter-row {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 22rem;      /* 카드와 동일 너비 (대표 결정) */
+  margin: 0 auto;
+}
+
+.stagemap-enter {
+  width: 100%;           /* row 가득 채움 → 카드 가로와 동일 */
+  padding: 0.85rem 0;    /* 가로 padding 제거 (width 100% 이므로) */
+  font-family: var(--font-impact, 'Bebas Neue', sans-serif);
+  font-size: 1.15rem;
+  letter-spacing: 0.18em;
+  color: #fff5dc;
+  background: linear-gradient(180deg, rgba(255, 217, 160, 0.28), rgba(255, 217, 160, 0.10));
+  border: 1px solid rgba(255, 217, 160, 0.65);
+  border-radius: 2px;
+  cursor: pointer;
+  transition:
+    background 200ms ease,
+    box-shadow 200ms ease,
+    transform 120ms ease;
+}
+.stagemap-enter:hover {
+  background: linear-gradient(180deg, rgba(255, 217, 160, 0.40), rgba(255, 217, 160, 0.18));
+  box-shadow: 0 0 20px rgba(255, 217, 160, 0.45);
+}
+.stagemap-enter:active {
+  transform: translateY(1px);
+}
+.stagemap-enter:focus-visible {
+  outline: 2px solid rgba(255, 217, 160, 0.75);
+  outline-offset: 2px;
+}
+
+.stagemap-enter--locked {
+  background: rgba(100, 100, 120, 0.18);
+  border-color: rgba(150, 150, 170, 0.32);
+  color: rgba(180, 190, 210, 0.50);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.stagemap-enter--locked:hover {
+  background: rgba(100, 100, 120, 0.18);
+  box-shadow: none;
+}
+
+
+/* ============================================
+   8. 모바일 미세 조정 (좁은 화면)
+   ============================================ */
+
+@media (max-width: 360px) {
+  .stagemap-screen { padding: 1.0rem 0.9rem 1.2rem; }
+  .stagemap-dot { width: 1.85rem; height: 1.85rem; }
+  .stagemap-dot__num { font-size: 0.82rem; }
+  .stagemap-card__name { font-size: 1.45rem; }
+  .stagemap-enter-row { max-width: 18rem; }
+  .stagemap-enter { padding: 0.7rem 0; font-size: 1.05rem; }
+}

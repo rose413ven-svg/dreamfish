@@ -1,0 +1,127 @@
+/* ===========================================
+   sparkle-stars.css — 별빛 반짝 효과 (Day 19 / v3)
+   ============================================
+   sparkle-stars.js 의 두 컴포넌트 공통 CSS:
+   - .sparkle-stars      bite-alert / fish-result__grade 용 외형 (24rem × 4rem 중앙 정렬)
+   - .sparkle-field      골든힛 슬롯 그리드 용 외형 (inset:0 슬롯 영역 가득)
+   - .sparkle-drift      <g> wrapper — 10s 부유 (translate, CSS variable --drift-dx/dy)
+   - .sparkle-star       <circle> — 1.8s 깜빡 (scale + fill, 레벨업 팝업과 동일)
+
+   대표 결정 — 두 컴포넌트 모두 부유 10s + 깜빡 1.8s 패턴 통일.
+   별 모양 / 색 / 깜빡 keyframes 는 레벨업 팝업과 100% 동일 (별 r=2.5 만 크게).
+   ============================================ */
+
+/* ============ A. bite-alert / fish-result__grade 용 ============ */
+.sparkle-stars {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* 영역 양옆 펼침 — viewBox 280×60 비율과 일치하는 24rem × 4rem */
+  width: 24rem;
+  height: 4rem;
+  pointer-events: none;
+  will-change: transform, opacity;
+  overflow: visible;
+}
+
+/* ============ B. 골든힛 슬롯 그리드 용 ============ */
+.sparkle-field {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  will-change: transform, opacity;
+  /* 슬롯 그리드 모서리 안쪽으로 입자 자르지 않도록 visible (셀 위에 자연스럽게 깔림) */
+  overflow: visible;
+  z-index: 5;   /* 슬롯 셀 위, 컨텍스트 메뉴(z>10) 아래 */
+}
+
+/* Day 19 — 잡기게임 진입 시 sparkle-field paint 비용 0으로 (대표 결정).
+   visibility:hidden = animation 계속 진행하지만 paint 안 함 → CPU/GPU 부담 거의 0.
+   잡기게임 종료 시 클래스 제거하면 즉시 다시 보임 (GPU 레이어 유지). */
+.sparkle-field--hidden { visibility: hidden; }
+
+/* ============ 공통 — 부유 wrapper <g> ============ */
+.sparkle-drift {
+  animation: sparkle-drift 6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* ============ 공통 — 별 자체 <circle> 깜빡 ============ */
+.sparkle-star {
+  fill: rgba(255, 217, 160, 0);
+  animation: sparkle-twinkle 1.8s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* bite-alert/fish-result 8개 별 — 깜빡 시차 1.8s 주기 균등 분배 */
+.sparkle-star--0 { animation-delay: 0s;     }
+.sparkle-star--1 { animation-delay: 0.225s; }
+.sparkle-star--2 { animation-delay: 0.45s;  }
+.sparkle-star--3 { animation-delay: 0.675s; }
+.sparkle-star--4 { animation-delay: 0.9s;   }
+.sparkle-star--5 { animation-delay: 1.125s; }
+.sparkle-star--6 { animation-delay: 1.35s;  }
+.sparkle-star--7 { animation-delay: 1.575s; }
+
+/* bite-alert/fish-result 8개 별 — 부유 시차 6s 주기 균등 분배 (Day 19 fix2 — 10s → 6s) */
+.sparkle-drift--0 { animation-delay: 0s;     }
+.sparkle-drift--1 { animation-delay: 0.75s;  }
+.sparkle-drift--2 { animation-delay: 1.5s;   }
+.sparkle-drift--3 { animation-delay: 2.25s;  }
+.sparkle-drift--4 { animation-delay: 3s;     }
+.sparkle-drift--5 { animation-delay: 3.75s;  }
+.sparkle-drift--6 { animation-delay: 4.5s;   }
+.sparkle-drift--7 { animation-delay: 5.25s;  }
+
+/* ============ keyframes ============ */
+/* 깜빡 — 레벨업 팝업 @keyframes levelup-star-twinkle 과 100% 동일 */
+@keyframes sparkle-twinkle {
+  0%, 100% {
+    fill: rgba(255, 217, 160, 0.15);
+    transform: scale(0.85);
+  }
+  50% {
+    fill: rgba(255, 240, 200, 0.95);
+    transform: scale(1.2);
+  }
+}
+
+/* 부유 — 6s 주기 (Day 19 fix2: 10s 너무 느려 안 움직이는 인상 → 6s 로 조정).
+   별마다 CSS variable 로 다른 거리. 천천히 떠다님 인상은 유지. */
+@keyframes sparkle-drift {
+  0%   { transform: translate(0, 0); }
+  50%  { transform: translate(var(--drift-dx, 0px), var(--drift-dy, 0px)); }
+  100% { transform: translate(0, 0); }
+}
+
+/* ============================================
+   Day 20 — 트윙클(꿈조각) 타임 별 입자 (data-tone="twinkle")
+   ============================================
+   골든힛 입자(circle, 황금 톤)와 별도로 트윙클은 5점 별 polygon + 흰색·연푸른 톤.
+   .sparkle-field[data-tone="twinkle"] 분기로 색만 덮어씀.
+
+   별 모양 자체는 sparkle-stars.js 의 createStarPolygon (5점 별).
+   polygon 도 fill 속성 사용 → keyframes 와 동일 패턴으로 작동.
+   ============================================ */
+
+/* 트윙클 입자 — 깜빡 (흰색 ↔ 옅은 푸른빛) */
+.sparkle-field[data-tone="twinkle"] .sparkle-star {
+  fill: rgba(215, 239, 255, 0);
+  animation: sparkle-twinkle-white 1.8s ease-in-out infinite;
+}
+
+@keyframes sparkle-twinkle-white {
+  0%, 100% {
+    fill: rgba(215, 239, 255, 0.18);
+    transform: scale(0.85);
+  }
+  50% {
+    fill: rgba(255, 255, 255, 0.95);
+    transform: scale(1.2);
+  }
+}
