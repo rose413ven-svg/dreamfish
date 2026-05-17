@@ -155,6 +155,11 @@ self.addEventListener('fetch', (e) => {
 fs.writeFileSync(path.join(DIST, 'sw.js'), swCode);
 console.log(`✓ docs/sw.js 생성 (캐시 ${filesToCache.length}개 파일, version: ${cacheVersion})`);
 
+// ── 7. .nojekyll 파일 생성 (GitHub Pages 의 Jekyll 처리 비활성화) ─
+// Jekyll 은 underscore(_) 로 시작하는 파일을 무시함 → _stub.css, _stub-helper.js 등이 404 가 되는 문제 해결.
+fs.writeFileSync(path.join(DIST, '.nojekyll'), '');
+console.log('✓ docs/.nojekyll 생성 (Jekyll 비활성화)');
+
 // ── 완료 ─────────────────────────────────────────────────
 console.log('');
 console.log('✅ 빌드 완료! docs/ 폴더가 만들어졌습니다.');

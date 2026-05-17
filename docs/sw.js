@@ -1,5 +1,5 @@
 /* ★ Day 28 — Service Worker (자동 생성). 빌드 시 캐시 목록 갱신됨. */
-const CACHE_NAME = 'dreamfish-1778976687129';
+const CACHE_NAME = 'dreamfish-1778977223471';
 const FILES_TO_CACHE = [
   "./",
   "./assets/images/equipment/boat_common.png",
