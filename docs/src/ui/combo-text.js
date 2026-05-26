@@ -32,19 +32,37 @@ export function createComboText() {
 
 /**
  * 콤보 텍스트 표시 + 팡 펄스 애니메이션.
+ *
+ * Day 38 (대표 결정) — 콤보 시스템 변경:
+ *   - 1~29 콤보: "{N} COMBO BONUS" (예: "15 COMBO BONUS")
+ *   - 30+ 콤보: "MAX COMBO BONUS" (숫자 hide, 카운트는 무한 누적되어도 텍스트 동일)
+ *   - 시각 단계(data-level)는 기존 1~10 그대로 (10 단계 시각 = MAX 시각).
+ *
  * @param {HTMLElement} el
- * @param {number} count - 콤보 카운트 (1+)
+ * @param {number} count - 콤보 카운트 (1+, 무한 누적 가능)
  */
 export function showComboText(el, count) {
   if (!el || count < 1) return;
 
-  // 단계별 클래스 — 1~10, 11+ = 10 단계 동일
+  // 단계별 클래스 — 1~10, 11+ = 10 단계 동일 (시각은 그대로)
   const level = count >= 10 ? 10 : count;
   el.dataset.level = String(level);
 
+  // ★ Day 38 — 30+ 콤보 시 MAX 모드 분기 (텍스트만 변경, 시각은 level=10 그대로 사용).
+  //   data-max="true" 가 있으면 CSS 에서 .combo-text__num 을 hide,
+  //   .combo-text__label 를 "MAX COMBO BONUS" 로 교체 (CSS content X — JS 가 직접 텍스트 세팅).
+  const isMax = count >= 30;
+  el.dataset.max = isMax ? 'true' : '';
+
   // 텍스트 갱신 (숫자 + 라벨 분리)
-  const numEl = el.querySelector('.combo-text__num');
-  if (numEl) numEl.textContent = String(count);
+  const numEl   = el.querySelector('.combo-text__num');
+  const labelEl = el.querySelector('.combo-text__label');
+  if (numEl) {
+    numEl.textContent   = String(count);
+    // ★ Day 38 — 30+ 콤보 시 숫자 숨김 (CSS 추가 없이 JS 에서 직접 처리, (가) 안)
+    numEl.style.display = isMax ? 'none' : '';
+  }
+  if (labelEl) labelEl.textContent = isMax ? 'MAX COMBO BONUS' : 'COMBO BONUS';
 
   // 표시 + 펄스 재발동 (이미 보이고 있어도 새 펄스 재시작)
   el.classList.add('combo-text--show');
@@ -56,12 +74,17 @@ export function showComboText(el, count) {
 
 /**
  * 콤보 텍스트 숨김 (매칭 실패 시).
+ * Day 38: dataset.max 도 함께 클리어 + numEl.style.display 복원 (다음 콤보 시작 시 잔존 X).
  * @param {HTMLElement} el
  */
 export function hideComboText(el) {
   if (!el) return;
   el.classList.remove('combo-text--show', 'combo-text--pulse');
   el.dataset.level = '';
+  el.dataset.max = '';
+  // ★ Day 38 — 30+ 콤보로 numEl display:none 된 경우 복원
+  const numEl = el.querySelector('.combo-text__num');
+  if (numEl) numEl.style.display = '';
 }
 
 /**
@@ -78,11 +101,15 @@ export function showGoldenHitCount(el, remaining) {
   el.dataset.mode = 'golden-hit';
   // 숫자 + 라벨 갱신
   const numEl = el.querySelector('.combo-text__num');
-  if (numEl) numEl.textContent = String(remaining);
+  if (numEl) {
+    numEl.textContent = String(remaining);
+    numEl.style.display = '';  // ★ Day 38 — 이전 콤보 MAX 상태에서 display:none 됐을 수 있으므로 복원
+  }
   const labelEl = el.querySelector('.combo-text__label');
   if (labelEl) labelEl.textContent = 'GOLDEN CHANCE';
   // 콤보 단계 색 비활성화
   el.dataset.level = '';
+  el.dataset.max = '';  // ★ Day 38 — MAX 상태 해제
   // 표시 + 짧은 펄스 (카운트 갱신 시점 강조)
   el.classList.add('combo-text--show');
   el.classList.remove('combo-text--pulse');
@@ -118,11 +145,15 @@ export function showTwinkleChance(el, remaining) {
   if (!el) return;
   el.dataset.mode = 'twinkle';
   const numEl = el.querySelector('.combo-text__num');
-  if (numEl) numEl.textContent = String(remaining);
+  if (numEl) {
+    numEl.textContent = String(remaining);
+    numEl.style.display = '';  // ★ Day 38 — MAX 상태에서 display:none 복원
+  }
   const labelEl = el.querySelector('.combo-text__label');
   if (labelEl) labelEl.textContent = 'Twinkle chance';
   // 콤보 단계 색 비활성화
   el.dataset.level = '';
+  el.dataset.max = '';  // ★ Day 38 — MAX 상태 해제
   // 표시 + 짧은 펄스 (카운트 갱신 시점 강조)
   el.classList.add('combo-text--show');
   el.classList.remove('combo-text--pulse');

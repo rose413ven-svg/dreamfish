@@ -4,15 +4,15 @@
    결정로그 Day 10 / 시스템 ② SSOT.
 
    책임:
-   1. 4부위 동일 등급 검사 (= 세트 발동 여부)
+   1. 6부위 동일 등급 검사 (= 세트 발동 여부)
    2. 등급별 세트 보너스 수치 데이터
    3. 세트 효과 적용 헬퍼 (무게 / 드롭 확률)
-   4. 세트 진행도 계산 (UI 용 — 가방 모달 헤더 "영웅의 세트 3/4")
+   4. 세트 진행도 계산 (UI 용 — 가방 모달 헤더 "영웅의 세트 3/6")
 
    설계 원칙:
    - 데이터-엔진 분리 — inventory 만 읽기, UI 무관.
    - stateless — 호출 측에서 inv 캐싱 후 헬퍼 호출 (equipment-effects.js 패턴 동일).
-   - 발동 조건: 4부위(rod/float/clothes/boat) 모두 장착 + 모두 같은 등급 + 희귀 이상.
+   - 발동 조건: 6부위(rod/float/clothes/boat/hook/pet) 모두 장착 + 모두 같은 등급 + 희귀 이상.
    - 강화 영향 X (item.level 무관).
 
    적용 위치 (Phase A 에서):
@@ -63,7 +63,7 @@ export const SET_NAMES = Object.freeze({
 
 /**
  * 세트 발동 등급 검사.
- * 4부위(rod/float/clothes/boat) 모두 장착 + 모두 같은 등급 + 희귀 이상이어야 발동.
+ * 6부위(rod/float/clothes/boat/hook/pet) 모두 장착 + 모두 같은 등급 + 희귀 이상이어야 발동.
  * 한 부위라도 미장착 / 다른 등급 섞임 / 일반·고급 = null 반환.
  *
  * @param {object} inv — loadInventory 결과
@@ -71,7 +71,7 @@ export const SET_NAMES = Object.freeze({
  */
 export function getSetGrade(inv) {
   if (!inv || !Array.isArray(inv.items)) return null;
-  const SLOTS = ['rod', 'float', 'clothes', 'boat'];
+  const SLOTS = ['rod', 'float', 'clothes', 'boat', 'hook', 'pet'];
   let firstGrade = null;
   for (const slotId of SLOTS) {
     const item = getEquippedBySlot(inv, slotId);
@@ -81,17 +81,18 @@ export function getSetGrade(inv) {
     if (firstGrade === null) firstGrade = entry.grade;
     else if (entry.grade !== firstGrade) return null;  // 다른 등급 섞임 = 미발동
   }
-  // 4부위 동일 등급 — 희귀+ 만 발동
+  // 6부위 동일 등급 — 희귀+ 만 발동
   if (!SET_ELIGIBLE_GRADES.includes(firstGrade)) return null;
   return firstGrade;
 }
 
 /**
- * 세트 진행도 (UI 용 — 가방 모달 헤더 "영웅의 세트 3/4").
- * 4개 장착 슬롯에서 가장 많이 일치하는 등급을 찾아 N/4 형태로 반환.
+ * 세트 진행도 (UI 용 — 가방 모달 헤더 "영웅의 세트 3/6").
+ * ★ Day 38 후속 (대표 결정) — 4 → 6 표기 통일.
+ * 6개 장착 슬롯에서 가장 많이 일치하는 등급을 찾아 N/6 형태로 반환.
  *
- * 동점 시 더 높은 등급 우선 (영웅2 + 희귀2 → 영웅 2/4).
- * 4부위 미장착 슬롯이 있어도 표시 (0이 아닌 경우).
+ * 동점 시 더 높은 등급 우선 (영웅2 + 희귀2 → 영웅 2/6).
+ * 6부위 미장착 슬롯이 있어도 표시 (0이 아닌 경우).
  *
  * 일반/고급은 진행도 후보에서 제외 (세트 X 등급).
  *
@@ -100,7 +101,7 @@ export function getSetGrade(inv) {
  */
 export function getSetProgress(inv) {
   if (!inv || !Array.isArray(inv.items)) return null;
-  const SLOTS = ['rod', 'float', 'clothes', 'boat'];
+  const SLOTS = ['rod', 'float', 'clothes', 'boat', 'hook', 'pet'];
   /** @type {Record<string, number>} */
   const gradeCounts = Object.create(null);
   for (const slotId of SLOTS) {
@@ -176,17 +177,18 @@ export function getSetName(setGrade) {
    ============================================ */
 
 /**
- * 특정 등급의 4부위 장착 개수 (진행도 N/4 표시용).
+ * 특정 등급의 6부위 장착 개수 (진행도 N/6 표시용).
+ * ★ Day 38 후속 (대표 결정) — 4 → 6 표기 통일.
  * 일반/고급 등 비-eligible 등급은 N=0.
  *
  * @param {object} inv
  * @param {string} grade — 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic'
- * @returns {number} — 0 ~ 4
+ * @returns {number} — 0 ~ 6
  */
 export function countEquippedByGrade(inv, grade) {
   if (!inv || !Array.isArray(inv.items)) return 0;
   if (!SET_ELIGIBLE_GRADES.includes(grade)) return 0;
-  const SLOTS = ['rod', 'float', 'clothes', 'boat'];
+  const SLOTS = ['rod', 'float', 'clothes', 'boat', 'hook', 'pet'];
   let count = 0;
   for (const slotId of SLOTS) {
     const item = getEquippedBySlot(inv, slotId);
@@ -223,7 +225,10 @@ export function isSetActive(inv, grade) {
 export function getContextMenuSetInfo(inv, itemGrade) {
   if (!SET_ELIGIBLE_GRADES.includes(itemGrade)) return null;  // 일반/고급 = 영역 X
   const count    = countEquippedByGrade(inv, itemGrade);
-  const isActive = count === 4;
+  // ★ Day 38 후속 (대표 결정) — 세트 발동 기준 4 → 6 (getSetGrade 와 일관성).
+  //   기존: count === 4 → 4부위만 모아도 UI 활성 색 → 실제 효과는 적용 X (getSetGrade는 6 필요).
+  //   변경: count === 6 → UI 와 실제 효과 일치.
+  const isActive = count === 6;
   const bonus    = SET_BONUSES[itemGrade] || { weightPct: 0, dropRatePct: 0 };
   return {
     grade:       itemGrade,

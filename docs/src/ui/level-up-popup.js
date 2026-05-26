@@ -33,13 +33,18 @@ const NO_PERCENT_KEYS = new Set(['fish_rate', 'golden_rate', 'rainbow_rate', 'tw
 /**
  * 보상값 포맷 — 부호 포함, 단위 분기.
  * fish/golden/rainbow_rate = 정수 가중치 / 나머지 = %
+ *
+ * ★ Day 41 (대표 결정) — 입질 4종 (NO_PERCENT_KEYS) ×100 표시 적용.
+ *   다른 화면 (profile-modal / stats-bar 등) 과 일관성 — 내부 값 0.05 → 화면 +5 로 표시.
  */
 function fmtBonusValue(value, key) {
   const unit = NO_PERCENT_KEYS.has(key) ? '' : '%';
   if (!value || value === 0) return `0${unit}`;
+  // ★ Day 41 — 입질 4종은 ×100 표시 (내부 0.05 → +5).
+  const displayValue = NO_PERCENT_KEYS.has(key) ? value * 100 : value;
   // 소수점 2자리 + trailing 0 제거
-  const numStr = String(Number((Number(value) || 0).toFixed(2)));
-  if (value > 0) return `+${numStr}${unit}`;
+  const numStr = String(Number((Number(displayValue) || 0).toFixed(2)));
+  if (displayValue > 0) return `+${numStr}${unit}`;
   return `${numStr}${unit}`;   // 음수는 그대로 (-0.4 등)
 }
 

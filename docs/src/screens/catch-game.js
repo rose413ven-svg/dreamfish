@@ -20,7 +20,7 @@ import {
   gradeColorOf,
 } from '../data/catch-game-config.js';
 import { loadInventory } from '../core/storage.js';
-import { getActiveOptions, applyRockRate, applyOrbDuration } from '../data/equipment-effects.js';
+import { getActiveOptions, applyRockRate, applyOrbDuration, CRITICAL_BASE_RATE } from '../data/equipment-effects.js';
 // ★ Day 22 Phase 4C: HIDDEN HIT 미니게임 상수 (체력 20 / 시간 30초 / 카운트다운 3)
 import {
   HIDDEN_HIT_BOSS_HP,
@@ -33,6 +33,8 @@ import {
 import { rollWeight } from '../engine/weight.js';
 // ★ Day 28: 골든힛 전용 잡기게임 속도 (매칭 개수 기준)
 import { getGoldenHitOrbDuration } from '../data/golden-hit-engine.js';
+// ★ Day 38 (대표 결정) — 변종 단계 판별 (잡기존 숨김 기믹: +++(p3) 이상 또는 mythic_01)
+import { getFishMeta } from '../data/fish-data.js';
 
 /* ============================================
    ★ 반응형 픽셀 상수 (B 방식)
@@ -61,33 +63,25 @@ const GRADE_LABEL = {
 };
 
 /**
- * ★ Day 27 — result → 변종 + 포함 영문 등급 라벨.
+ * ★ Day 27 — result → 영문 등급 라벨.
+ * ★ Day 29 (대표 결정) — 잡기게임 상단에는 변종 + 표시 안 함.
+ *   변종 등급 확인은 최종 결과팝업의 Lucky Lucky 연쇄에서만 노출.
+ *   골든힛 변종은 예외로 표시 유지 (골든힛 자체가 특수 매칭이라 변종 즉시 노출 OK).
+ * ★ Day 40 (대표 결정) — 골든힛도 일반힛과 동일하게 잡기게임 상단에 변종 + 표시 X.
+ *   'GOLDEN ' 접두 + base 등급만 (예: 'GOLDEN BOSS'). 변종 노출은 결과팝업 사이즈 업그레이드만.
  *
  * 우선순위:
- *   1. goldenHitInfo.plusCount (골든힛 변종)
- *   2. fish.id 의 tier (일반 매칭 변종)
- *   3. 기본 등급 라벨 (변종 없음)
- *
- * 예: result.grade='보스' + fish.id='boss_p2_01' → 'BOSS++'
- *     result.grade='전설보스' + goldenHitInfo.plusCount=4 → 'LEGEND++++'
- *     result.grade='신화보스' (mythic_01) → 'MYTHIC' (변종 없음)
+ *   1. 골든힛: 'GOLDEN ' + base 등급 (변종 + 표시 X)
+ *   2. 기본 등급 라벨 (변종 X)
  */
 function gradeLabelWithPlus(result) {
   const baseEn = GRADE_LABEL[result?.grade] || '';
   if (!baseEn) return '';
-  // 1. 골든힛 변종 우선
+  // ★ Day 40 — 골든힛: 'GOLDEN ' 접두 + base 만 (변종 + 표시 X)
   if (result?.goldenHitInfo && typeof result.goldenHitInfo.plusCount === 'number') {
-    return baseEn + '+'.repeat(result.goldenHitInfo.plusCount);
+    return 'GOLDEN ' + baseEn;
   }
-  // 2. fish.id 에서 변종 추출
-  const fishId = result?.fish?.id || '';
-  const m = fishId.match(/^(?:tiny|sml|med|big|huge|boss|legend)_(base|p1|p2|p3|p4|p5)_/);
-  if (m) {
-    const tier = m[1];
-    const plusCount = tier === 'base' ? 0 : Number(tier.slice(1));
-    return baseEn + '+'.repeat(plusCount);
-  }
-  // 3. 변종 없음 (신화/히든/황금어 또는 패턴 매칭 실패)
+  // 일반 매칭은 base 등급만 (변종 + 표시 X — ★ Day 29 결과팝업에서만)
   return baseEn;
 }
 
@@ -100,7 +94,7 @@ const JUDGE_LABEL = {
 };
 
 /** Day 4: 돌멩이(꽝 원) 시스템 */
-const ROCK_SPAWN_RATE = 0.30;        // Day 4-3: 20% → 25%
+const ROCK_SPAWN_RATE = 0.20;        // Day 4-3: 20% → 25%
 const BAD_TIME_PENALTY_MS = 3000;    // BAD 발생 시 시간 -3초
 /* ─── 잡기존: 90px 네모 ───
    사각 충돌 판정 — 원 중심이 잡기존 중심에서 (dx, dy) 거리일 때:
@@ -148,11 +142,14 @@ let containerEl = null;
 let orbContainerEl = null;
 let buttonEl = null;
 let timeFillEl = null;
+// ★ Day 38 후속E — 시간 바 안쪽 남은 초 텍스트 element
+let timeTextEl = null;
 let resultsLayoutEl = null;
 let selectMessageEl = null;
 let fishStates = [];   // 전체 매칭 결과 마리들 (위쪽 표시용)
 let selectedFishIdx = -1; // 다중 매칭 시 사용자가 선택한 마리 인덱스
 let selectionMode = false; // true: 선택 대기 / false: 게임 진행
+let originalMatchCount = 1; // ★ Day 29 — 멀티히트 자동선택: 원본 매칭 클러스터 수 (×N 배수 보상용)
 
 let rafId = null;
 let activeOrbs = [];
@@ -163,6 +160,22 @@ let totalTimeMs = 0;   // 선택한 마리 등급별 시간
 let judgeLocked = false; // 판정 직후 짧은 시간 잠금 (시간 텀)
 let activeOpts = null; // Equipment-4c: 게임 시작 시 캐싱된 장비 옵션 효과 합산
 let firstOrbSpawned = false;  // Day 10 후속: 첫 orb 등장 전 화면 터치 시 MISS/BAD 처리 방지 (대표 결정)
+// ★ Day 38 후속H — 잡기존 페이드 보류 플래그.
+//   selectFish 시점에 true 로 설정만 → spawnOrb 에서 첫 orb 의 lifetime 후 dataset 적용.
+let pendingZoneHide = false;
+
+// ★ Day 38 후속 (대표 보고 — 신화 잡기존 판정 너무 후한 버그 수정).
+//   기존: 잡기존이 시각만 sizeScale 축소되고 판정 좌표(PERFECT_HALF/NICE_HALF)는 그대로 → 잡기존 밖이어도 NICE 판정.
+//   변경: 판정 좌표도 sizeScale 배율로 축소 → 시각/판정 일치.
+//   selectFish 시 결정, 판정 코드(handlePullClick / hidden) 에서 매번 곱셈 적용.
+//   기본 1.0 (HIDDEN HIT 모드 등 sizeScale 미적용 케이스 호환).
+let currentSizeScale = 1.0;
+
+// ★ Day 40 (대표 결정) — 판정 기준을 orb 외곽(ORB_RADIUS) → 심볼 반지름으로 변경.
+//   orb 시각 크기는 등급별 새 변수 --orb-scale (orbVisualScale, 옵션 나) 적용. 판정과 무관.
+//   심볼은 CSS 역 scale 로 원래 크기 유지. 그 반지름(px) 을 selectFish 에서 저장 → 판정 사용.
+//   기본 ORB_RADIUS(25) — selectFish 미적용 케이스 호환.
+let currentSymbolHalfPx = 25;
 
 // ★ Day 22 Phase 4C — HIDDEN HIT 미니게임 전용 상태
 let hiddenModeActive = false;
@@ -200,6 +213,9 @@ export default {
 
     onCloseCallback = params.onClose;
     const results = params.results || [];
+    // ★ Day 29 — 멀티히트 자동선택: slot.js 에서 전달된 원본 매칭 수 (×N 배수 보상용).
+    //   없으면 results.length 폴백 (HIDDEN HIT 등 단일 진입 경로 호환).
+    originalMatchCount = params.originalMatchCount ?? results.length ?? 1;
     // ★ Day 22: HIDDEN HIT 모드 플래그 (Phase 4 — 4A 진입/분홍 배경 / 4B 보스 그림자+체력 / 4C 카운트다운+타이머 / 4D 종료)
     const hiddenMode = !!params.hiddenMode;
     // ★ Day 24 (대표 결정) ★ — 지역 무게 배율 (밸런스 Phase 2, 하이브리드 안)
@@ -315,6 +331,11 @@ export default {
     timeFillEl = document.createElement('div');
     timeFillEl.className = 'catch-game__time-fill';
     timeBar.appendChild(timeFillEl);
+    // ★ Day 38 후속E (대표 결정) — 시간 바 안쪽에 남은 초 텍스트 표시 (장비 catch_time_bonus 체감).
+    //   흰색 큰 텍스트, 매 프레임 갱신 (Math.ceil(timeLeft / 1000))
+    timeTextEl = document.createElement('div');
+    timeTextEl.className = 'catch-game__time-text';
+    timeBar.appendChild(timeTextEl);
     containerEl.appendChild(timeBar);
 
     /* ── ★ Day 22: HIDDEN 모드 — Phase 4C 게임 흐름 (카운트다운 → 30초 게임 → 종료)
@@ -373,10 +394,20 @@ function buildFishItem(result, idx) {
   // ★ Day 27 — 변종 + 포함 표시 (예: TINY+++ / BOSS++ / LEGEND+++++)
   const gradeLabelEl = document.createElement('div');
   gradeLabelEl.className = 'catch-fish-item__grade-label';
-  gradeLabelEl.textContent = gradeLabelWithPlus(result);
-  gradeLabelEl.style.color = gradeColor.hex;
-  gradeLabelEl.style.textShadow =
-    `0 0 8px ${gradeColor.glow}, 0 1px 3px rgba(0, 0, 0, 0.85)`;
+  // ★ Day 37 (대표 결정) — 황금빛꿈고래(mythic_01) → SPECIAL MYTHIC 황금색 + 특별 연출.
+  //   일반 신화 (mythic_02~04) 는 기존 마젠타 그대로.
+  if (result.fish?.id === 'mythic_01') {
+    gradeLabelEl.textContent = 'SPECIAL MYTHIC';
+    gradeLabelEl.style.color = '#FFD700';
+    gradeLabelEl.style.textShadow =
+      '0 0 12px rgba(255, 215, 0, 0.95), 0 0 6px rgba(255, 215, 0, 0.55), 0 1px 3px rgba(0, 0, 0, 0.85)';
+    gradeLabelEl.classList.add('catch-fish-item__grade-label--special-mythic');
+  } else {
+    gradeLabelEl.textContent = gradeLabelWithPlus(result);
+    gradeLabelEl.style.color = gradeColor.hex;
+    gradeLabelEl.style.textShadow =
+      `0 0 8px ${gradeColor.glow}, 0 1px 3px rgba(0, 0, 0, 0.85)`;
+  }
   itemEl.appendChild(gradeLabelEl);
 
   // 물고기 (검은 실루엣 + 등급 색 글로우)
@@ -386,28 +417,21 @@ function buildFishItem(result, idx) {
   const fishEl = document.createElement('div');
   fishEl.className = 'catch-fish-item__fish';
   if (result.isGoldenHit) {
-    // Day 15 추가 변경: 골든힛 모드 = 눈 X / 테두리 X / 황금 fish + sparkle 5개 오버레이
+    // ★ Day 40 (대표 결정) — 골든힛 상단 물고기를 검은 그림자 + 황금 글로우 + sparkle 로 변경.
+    //   이전 (Day 15~39): 황금 fill 인라인 SVG → 잡기 전인데 이미 황금어 정체 노출
+    //   변경: 일반 모드와 동일한 renderFishSVG (검은 그림자) + --fish-glow 만 황금색 + sparkle 유지
+    //   → 잡기 전엔 까만 그림자로 보이다가 잡고 나서 결과팝업에서 황금어 정체 드러남
     fishEl.classList.add('catch-fish-item__fish--golden-hit');
     fishEl.style.setProperty('--fish-glow', 'rgba(255, 217, 106, 0.85)');
     fishEl.style.setProperty('--fish-glow-color', '#FFD96A');
-    const viewBox = tightFish ? '0 4 60 32' : '0 -4 60 50';
-    const fishSize = (0.7 * 100) * config.fishScale;
-    // 인라인 SVG — 눈(circle) X / 테두리(stroke) X / 황금 fill 만
-    fishEl.innerHTML = `
-      <svg viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg"
-           style="width: ${fishSize}%; height: auto;">
-        <path d="M8 20 Q18 8 35 12 Q48 16 50 20 Q48 24 35 28 Q18 32 8 20 Z M50 20 L58 13 L58 27 Z"
-              fill="#FFD96A"/>
-      </svg>
+    // 검은 SVG (일반 모드와 동일) + sparkle 2개 (head, tail) 오버레이
+    fishEl.innerHTML = renderFishSVG({ color: '#000000', size: 0.7 }, config.fishScale, { tight: tightFish }) + `
       <div class="catch-fish-item__sparkles" aria-hidden="true">
         <span class="catch-fish-item__sparkle catch-fish-item__sparkle--1"><svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><path d="M20 2 L22 18 L38 20 L22 22 L20 38 L18 22 L2 20 L18 18 Z" fill="#ffffff"/></svg></span>
         <span class="catch-fish-item__sparkle catch-fish-item__sparkle--3"><svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><path d="M20 2 L22 18 L38 20 L22 22 L20 38 L18 22 L2 20 L18 18 Z" fill="#ffffff"/></svg></span>
       </div>
     `;
-    // ★ Day 21 (대표 결정 A안) — 잡기게임 렉 최적화:
-    //   - sparkle 5개 → 2개 (head, tail 만 유지)
-    //   - 마리당 SVG 60% ↓, 6마리 골든힛 시 30개 → 12개 sparkle 동시 펄스
-    //   - 시각 변화 최소 (head + tail 만 있어도 황금 강조 충분)
+    // ★ Day 21 (대표 결정 A안) — 잡기게임 렉 최적화: sparkle 5개 → 2개 (head, tail) 유지
   } else {
     // 일반 모드 (기존 룰 그대로)
     fishEl.style.setProperty('--fish-glow', gradeColor.glow);
@@ -648,6 +672,10 @@ function hiddenTick(now) {
     } else {
       timeFillEl.classList.remove('catch-game__time-fill--low');
     }
+  }
+  // ★ Day 38 후속E — 시간 텍스트 (초 단위, 올림) 갱신
+  if (timeTextEl) {
+    timeTextEl.textContent = `${Math.ceil(timeLeft / 1000)}s`;
   }
 
   // hp 0 도달 → 잡기 성공
@@ -1003,6 +1031,74 @@ function selectFish(idx) {
   selectionMode = false;
   containerEl.classList.remove('catch-game--selecting');
 
+  /* ★ Day 38 (대표 결정) — 잡기존 + 물고기원 등급별 크기 축소 + 변종 +++ 잡기존 숨김.
+   * ★ Day 40 (대표 결정) — 골든힛도 일반힛과 동일하게 +++ 이상 잡기존 숨김 적용 + GOLDEN MYTHIC 전체 적용.
+   *
+   *  적용 조건 (HIDDEN HIT 모드 제외 — 히든은 별도 기믹):
+   *  1. sizeScale (모든 등급 적용)
+   *     - 치어 1.0 / 소형 0.9 / 중형 0.8 / 월척 0.7 / 대물 0.6 / 보스 0.5 / 전설 0.4 / 신화 0.3
+   *     - CSS 변수 --zone-scale / --orb-scale 로 일괄 적용 (잡기존 + 모든 orb)
+   *  2. 잡기존 숨김 (히든보스와 동일 기믹 — 시각만 사라지고 터치 위치/판정은 그대로)
+   *     - 일반 등급 (치어~전설): plusCount >= 3 (변종 +++, ++++, +++++)
+   *     - 신화: id === 'mythic_01' (황금빛꿈고래) 만, mythic_02~04 제외
+   *     - ★ Day 40 — 골든힛 일반 등급(MEDIUM~LEGEND): goldenHitInfo.plusCount >= 3
+   *     - ★ Day 40 — GOLDEN MYTHIC (신화보스 분기 / fishId=golden_01): 항상 적용
+   *     - containerEl.dataset.zoneHidden = 'true' → CSS opacity 0 페이드
+   */
+  if (!hiddenModeActive) {
+    const fishResult = fishStates[idx]?.result;
+    if (fishResult) {
+      const cfg = getCatchConfig(fishResult.grade);
+      const sizeScale = cfg.sizeScale ?? 1.0;
+      // ★ Day 40 (대표 결정) — 잡기존(zone-scale)과 물고기원(orb-scale) 분리.
+      //   잡기존: 기존 sizeScale 그대로 (등급↑ = 작아짐, 난이도 유지)
+      //   물고기원 외곽: 새 orbVisualScale (등급↑ = 커짐, 컨셉 일치 — 옵션 나)
+      //   심볼: CSS 역 scale 로 원래 크기 유지 (.catch-orb__symbol 참조)
+      //   판정: 심볼 반지름 기준 (currentSymbolHalfPx 사용)
+      const orbVisualScale = cfg.orbVisualScale ?? sizeScale;
+      containerEl.style.setProperty('--zone-scale', String(sizeScale));
+      containerEl.style.setProperty('--orb-scale', String(orbVisualScale));
+
+      // ★ Day 38 후속 — 판정 좌표도 sizeScale 적용 (시각/판정 일치).
+      //   handlePullClick 에서 PERFECT_HALF * currentSizeScale, NICE_HALF * currentSizeScale 로 비교.
+      currentSizeScale = sizeScale;
+
+      // ★ Day 40 (대표 결정) — 판정 기준 심볼 반지름 (px).
+      //   orbSymbolSize 값 / 10 = rem 단위, × remPx = px. 그 절반이 반지름.
+      //   예: 치어 22 → 2.2rem → 22px(@기준) → 반지름 11px
+      //       신화 44 → 4.4rem → 44px(@기준) → 반지름 22px
+      const remPxNow = parseFloat(getComputedStyle(document.documentElement).fontSize) || 10;
+      const symbolSize = cfg.orbSymbolSize ?? 22;
+      currentSymbolHalfPx = (symbolSize / 10) * remPxNow / 2;
+
+      // 잡기존 숨김 판별
+      const fishId = fishResult.fish?.id || '';
+      const isGoldenHitResult = !!fishResult.isGoldenHit;
+      const goldenPlusCount = fishResult.goldenHitInfo?.plusCount ?? 0;
+      let zoneHidden = false;
+      if (fishResult.grade === '신화보스') {
+        // ★ Day 40 — 신화: 황금빛꿈고래(mythic_01) + 골든힛 신화(GOLDEN MYTHIC, fishId='golden_01') 둘 다 적용
+        zoneHidden = (fishId === 'mythic_01') || isGoldenHitResult;
+      } else if (isGoldenHitResult) {
+        // ★ Day 40 — 골든힛 일반 등급: goldenHitInfo.plusCount >= 3 (GOLDEN xxx+++, ++++, +++++)
+        if (goldenPlusCount >= 3) zoneHidden = true;
+      } else if (fishId) {
+        // 일반 등급: 변종 +++(p3) 이상
+        const meta = getFishMeta(fishId);
+        if (meta && meta.plusCount >= 3) {
+          zoneHidden = true;
+        }
+      }
+      if (zoneHidden) {
+        // ★ Day 38 후속H (대표 결정) — 잡기존 페이드 시점 변경:
+        //   기존: selectFish 직후 즉시 dataset.zoneHidden='true' → 게임 시작과 동시에 페이드
+        //   변경: pendingZoneHide 로 저장만 → 첫 orb 가 잡기존 통과한 후 페이드 시작
+        //         (spawnOrb 에서 처음 orb 의 lifetime 후 dataset 설정)
+        pendingZoneHide = true;
+      }
+    }
+  }
+
   // 안내 메시지 페이드아웃
   if (selectMessageEl) {
     selectMessageEl.classList.add('catch-game__select-message--hide');
@@ -1105,7 +1201,12 @@ function startGame() {
   }
 
   gameState = 'playing';
-  totalTimeMs = selectedFish.config.timeMs || TIME_LIMIT_MS;
+  // ★ Day 30 (대표 결정) — 펫 catch_time_bonus 옵션 적용:
+  //   기존 timeMs × (1 + bonus/100). 풀강 최종 천장 5~7% ~ 17~20% (catch_time_bonus 옵션 + 강화 합).
+  //   예: 신화보스 65초 × 1.20 = 78초 (mythic 펫 풀강 +20%).
+  const baseTimeMs = selectedFish.config.timeMs || TIME_LIMIT_MS;
+  const catchTimeBonusPct = (activeOpts && activeOpts.catch_time_bonus) || 0;
+  totalTimeMs = baseTimeMs * (1 + catchTimeBonusPct / 100);
   startTime = performance.now();
   nextSpawnAt = startTime + FIRST_SPAWN_DELAY;
   rafId = requestAnimationFrame(tick);
@@ -1127,6 +1228,10 @@ function tick(now) {
     timeFillEl.classList.add('catch-game__time-fill--low');
   } else {
     timeFillEl.classList.remove('catch-game__time-fill--low');
+  }
+  // ★ Day 38 후속E — 시간 텍스트 (초 단위, 올림) 갱신
+  if (timeTextEl) {
+    timeTextEl.textContent = `${Math.ceil(timeLeft / 1000)}s`;
   }
 
   const selectedFish = fishStates[selectedFishIdx];
@@ -1172,6 +1277,8 @@ function tick(now) {
 
 function spawnOrb(now, targetFish) {
   // Day 10 후속: 첫 orb 등장 시점 표시 — doPull 의 시작 시점 무시 검사용
+  // ★ Day 38 후속H — 첫 orb 인지 미리 판별 (pendingZoneHide 처리용)
+  const wasFirstOrb = !firstOrbSpawned;
   firstOrbSpawned = true;
 
   const rect = containerEl.getBoundingClientRect();
@@ -1246,6 +1353,7 @@ function spawnOrb(now, targetFish) {
     orbEl.innerHTML = `
       <span class="catch-orb__core"></span>
       <span class="catch-orb__shine"></span>
+      <span class="catch-orb__guide" style="width:${symbolSize / 10}rem;height:${symbolSize / 10}rem;"></span>
       <span class="catch-orb__symbol" style="width:${symbolSize / 10}rem;height:${symbolSize / 10}rem;">
         ${renderFishSymbolSilhouette(symbolSize)}
       </span>
@@ -1283,6 +1391,23 @@ function spawnOrb(now, targetFish) {
     gradeColor: targetFish.gradeColor,
     kind: isRock ? 'rock' : 'fish',
   });
+
+  // ★ Day 38 후속H (대표 결정) — 첫 orb 통과 후 잡기존 페이드 시작.
+  //   첫 orb 의 lifetime (출발→반대편 통과 시간 = duration*2) 만큼 기다린 후
+  //   dataset.zoneHidden 설정 → CSS opacity 0 transition 1s 페이드아웃 시작.
+  //   사용자 시각: 첫 orb 가 잡기존을 완전히 지나간 후 잡기존이 서서히 사라짐.
+  if (wasFirstOrb && pendingZoneHide) {
+    pendingZoneHide = false;  // 1회만 처리
+    const orbLifetimeMs = applyOrbDuration(
+      targetFish.result?.isGoldenHit
+        ? getGoldenHitOrbDuration(targetFish.result.size)
+        : targetFish.config.orbDuration,
+      activeOpts
+    ) * 2;
+    setTimeout(() => {
+      if (containerEl) containerEl.dataset.zoneHidden = 'true';
+    }, orbLifetimeMs);
+  }
 }
 
 /* ============================================
@@ -1363,9 +1488,20 @@ function doPull() {
     const dx = Math.abs(orb.currentX - bx);
     const dy = Math.abs(orb.currentY - by);
 
+    // ★ Day 38 후속 — 잡기존 시각 축소(sizeScale)에 맞춰 판정 좌표도 동일 비율 축소.
+    //   기존: PERFECT_HALF / NICE_HALF 고정 → 시각상 잡기존 밖이어도 판정 인정되는 버그.
+    //   변경: PERFECT_HALF * currentSizeScale / NICE_HALF * currentSizeScale → 시각/판정 일치.
+    // ★ Day 40 (대표 결정) — 판정 기준을 orb 외곽(ORB_RADIUS) → 심볼 반지름(currentSymbolHalfPx)으로 변경.
+    //   orb 시각 크기는 별도 (--orb-scale, orbVisualScale) — 판정과 무관.
+    //   심볼 크기는 등급별로 다름(22~44px) → currentSymbolHalfPx 도 등급별로 selectFish 에서 갱신됨.
+    //   PERFECT = 심볼이 완전히 잡기존 안 (ZONE_HALF - SYMBOL_HALF)
+    //   NICE    = 심볼이 잡기존에 일부 겹침 (ZONE_HALF + SYMBOL_HALF)
+    const perfectHalf = (ZONE_HALF - currentSymbolHalfPx) * currentSizeScale;
+    const niceHalf    = (ZONE_HALF + currentSymbolHalfPx) * currentSizeScale;
+
     let verdict = 'miss';
-    if (dx <= PERFECT_HALF && dy <= PERFECT_HALF)      verdict = 'perfect';
-    else if (dx < NICE_HALF && dy < NICE_HALF)         verdict = 'nice';
+    if (dx <= perfectHalf && dy <= perfectHalf)      verdict = 'perfect';
+    else if (dx < niceHalf && dy < niceHalf)         verdict = 'nice';
 
     if (verdict === 'miss') continue;
 
@@ -1387,7 +1523,22 @@ function doPull() {
     setTimeout(() => orb.wrapEl.remove(), 280);
     activeOrbs.splice(bestIdx, 1);
 
-    const damage = (bestVerdict === 'perfect') ? 2 : 1;
+    // ★ Day 30 (대표 결정) — 크리티컬 확률 적용 (hook + pet critical_rate 합산):
+    //   PERFECT/NICE 시 critical_rate 확률로 데미지 ×2 (퍼펙트 → 4 / 나이스 → 2).
+    //   MISS 는 크리티컬 X (체크 안 함).
+    //
+    // ★ Day 32 (대표 결정) — 기본 확률 추가:
+    //   crit% = CRITICAL_BASE_RATE (3) + activeOpts.critical_rate (장비 hook + pet).
+    //   장비 없어도 기본 3% 발동 가능.
+    let damage = (bestVerdict === 'perfect') ? 2 : 1;
+    const equipCriticalPct = (activeOpts && activeOpts.critical_rate) || 0;
+    const criticalRatePct = CRITICAL_BASE_RATE + equipCriticalPct;
+    const isCritical = (bestVerdict !== 'miss') && (Math.random() * 100 < criticalRatePct);
+    if (isCritical) {
+      damage *= 2;
+      // ★ Day 32 (대표 결정) — CRITICAL ×2 텍스트 표시 (체력바와 잡기존 사이 랜덤 위치, 펑 팝업)
+      showCriticalText();
+    }
 
     // ★ Day 28 (대표 결정) — PERFECT 시 폭발 + 그림자 흔들림 (HIDDEN 톤 확장):
     //   일반 모드 = 등급 색 폭발 / 골든힛 = 황금색 폭발 (#FFD96A).
@@ -1491,6 +1642,75 @@ function showJudgeText(verdict, opts = {}) {
   setTimeout(() => el.remove(), 700);
 }
 
+/**
+ * ★ Day 32 (대표 결정) — CRITICAL ×2 텍스트 (펑 팝업).
+ *
+ * 크리티컬 발동 시 호출. 위치는 물고기 체력바와 잡기존 사이 영역에서 좌우상하 랜덤.
+ * 색상: #E8C870 (황금). 펑 팝업 애니메이션 (scale 0 → 1.3 → 1, rotate -8° → 3° → 0°).
+ * 약 0.8초 후 자동 제거.
+ *
+ * ★ Day 38 후속F (대표 결정) — 화면 밖 짤림 방지:
+ *   기존 left 15~85% 고정 범위 → 작은 화면에서 텍스트(약 280px) 좌우 절반이 컨테이너 밖으로 나감.
+ *   변경: 텍스트 실측 후 안전 범위(half-width + 여백) 안에서만 랜덤 위치 선정 → 절대 짤리지 않음.
+ *         (표시 생략은 X — 반드시 안에 들어가도록 위치를 보정해 표시)
+ */
+function showCriticalText() {
+  if (!containerEl) return;
+  const el = document.createElement('div');
+  el.className = 'catch-critical';
+  el.textContent = 'CRITICAL ×2';
+
+  // 측정 위해 임시로 (50%, 50%) 위치 + visibility hidden 으로 DOM 부착
+  el.style.visibility = 'hidden';
+  el.style.top  = '50%';
+  el.style.left = '50%';
+  // ★ Day 39 (대표 결정) — followupF 가 작동 안 한 진짜 원인 수정:
+  //   catch-critical-pop animation 의 0% 키프레임이 scale(0) 이라
+  //   classList 적용 직후 getBoundingClientRect 가 *scaled (≒0) 박스*를 반환 →
+  //   halfWidthPct ≈ 0 → 안전 범위 = 거의 0~100% → 위치 보정 효과 없음 → 화면 밖 짤림 재발.
+  //   해결: 측정 직전 animation:none + transform 기본값(translate(-50%,-50%)) 명시 →
+  //         scale 적용 안 된 *원본 크기* 측정 → 측정 후 animation 복귀.
+  el.style.animation = 'none';
+  el.style.transform = 'translate(-50%, -50%)';
+  containerEl.appendChild(el);
+
+  // 텍스트 / 컨테이너 실측 → 안전 범위 계산 (scale 무효화된 원본 크기)
+  const containerRect = containerEl.getBoundingClientRect();
+  const textRect = el.getBoundingClientRect();
+  const SAFE_MARGIN_PCT = 2;  // 가장자리 여백 2%
+
+  // 가로: 텍스트 절반 + 여백을 left% 양 끝에서 빼야 안 짤림
+  const halfWidthPct  = (textRect.width  / 2 / containerRect.width)  * 100;
+  let minLeftPct = halfWidthPct + SAFE_MARGIN_PCT;
+  let maxLeftPct = 100 - halfWidthPct - SAFE_MARGIN_PCT;
+  // 텍스트가 컨테이너보다 클 정도로 큰 경우 — 가운데 강제
+  if (maxLeftPct < minLeftPct) {
+    minLeftPct = 50;
+    maxLeftPct = 50;
+  }
+
+  // 세로: 기존 30~55% 범위를 텍스트 높이 반영해 보정
+  const halfHeightPct = (textRect.height / 2 / containerRect.height) * 100;
+  let minTopPct = Math.max(30, halfHeightPct + SAFE_MARGIN_PCT);
+  let maxTopPct = Math.min(55, 100 - halfHeightPct - SAFE_MARGIN_PCT);
+  if (maxTopPct < minTopPct) {
+    // 세로도 너무 큰 경우 — 가운데 강제
+    minTopPct = (minTopPct + maxTopPct) / 2;
+    maxTopPct = minTopPct;
+  }
+
+  const topPct  = minTopPct  + Math.random() * (maxTopPct  - minTopPct);
+  const leftPct = minLeftPct + Math.random() * (maxLeftPct - minLeftPct);
+  el.style.top  = `${topPct}%`;
+  el.style.left = `${leftPct}%`;
+  // ★ Day 39 — 측정용 inline 무력화 해제 → CSS 의 animation + transform keyframes 정상 시작
+  el.style.animation = '';
+  el.style.transform = '';
+  el.style.visibility = 'visible';
+
+  setTimeout(() => el.remove(), 800);
+}
+
 /* Day 4: BAD 처리 — 꽝 원 터치 시
    - 시간 -3초 (startTime 앞당김)
    - 화면 전체 붉은 번쩍 오버레이
@@ -1560,11 +1780,13 @@ function finishGame() {
   // - 잡았으면 caught, 못 잡으면 missed
   // - 안 선택한 마리들은 그냥 사라짐 (결과 팝업 X) — "다 가질 수 없다" 컨셉
   // Day 4 추가: 다중 매칭 시 무게 배수 적용 (×N, N = 매칭 마리 수)
+  // ★ Day 29 — 멀티히트 자동선택 도입: results.length 가 항상 1 (가장 큰 등급 1개만 진입).
+  //   배수는 slot.js 에서 전달된 originalMatchCount 사용 → ×N 보상 보존.
   const caught = [];
   const missed = [];
 
-  // 매칭 마리 수 = 잡기 게임에 들어온 results.length (= fishStates.length)
-  const matchCount = fishStates.length || 1;
+  // 매칭 마리 수 = slot.js 전달 originalMatchCount (Day 29 이전엔 fishStates.length 였음)
+  const matchCount = originalMatchCount || 1;
 
   const selectedFish = fishStates[selectedFishIdx];
   if (selectedFish) {
@@ -1614,6 +1836,7 @@ function cleanupGame() {
   resultsLayoutEl = null;
   selectMessageEl = null;
   timeFillEl = null;
+  timeTextEl = null;  // ★ Day 38 후속E — 시간 텍스트 element 리셋
   fishStates = [];
   selectedFishIdx = -1;
   selectionMode = false;
@@ -1623,6 +1846,8 @@ function cleanupGame() {
   gameState = null;
   activeOpts = null; // Equipment-4c: 다음 게임 시작 시 다시 집계
   firstOrbSpawned = false;  // Day 10 후속: 다음 게임 시작 시 다시 false (첫 orb 대기)
+  pendingZoneHide = false;  // ★ Day 38 후속H — 잡기존 페이드 보류 플래그 리셋
+  currentSizeScale = 1.0;   // ★ Day 38 후속 — 다음 게임 진입 시 잔존 방지 (HIDDEN HIT 모드 등 selectFish 안 불리는 케이스 대비)
 
   // ★ Day 22 Phase 4C — HIDDEN 모드 상태 리셋
   hiddenModeActive = false;

@@ -90,7 +90,14 @@ export function createCastButton(opts = {}) {
 
   const ac = new AbortController();
   if (typeof onClick === 'function') {
-    root.addEventListener('click', onClick, { signal: ac.signal });
+    // ★ Day 38 후속 (대표 결정) — 'click' → 'pointerdown' 변경.
+    //   배경: 가장자리 터치 시 시각 반응(:active)은 동작하는데 click 이벤트는 발화 안 되는
+    //         케이스 (손가락이 살짝 빗나갈 때 등) → 캐스트 처리 미동작 버그.
+    //   변경: pointerdown 으로 즉시 처리 → 버튼이 시각 반응한 시점에 무조건 진행.
+    //   부작용: click 보다 응답성 ↑ (100ms 가까운 차이) — 게임 반응성 좋아짐.
+    //          jitter 우려는 :active CSS 가 이미 처리해주므로 사용자 인지에 영향 X.
+    //   busy 체크: 콜백(handleCast) 내부 isProcessing 가드 그대로 동작 (이벤트 타입 무관).
+    root.addEventListener('pointerdown', onClick, { signal: ac.signal });
   }
 
   return {

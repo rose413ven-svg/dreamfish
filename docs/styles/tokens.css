@@ -119,6 +119,6 @@
   --cast-ripple-time: 0.3s;
 
   /* ── 장비 칸 (B: rem 단위) ── */
-  --gear-slot-size: 7.2rem;     /* 72px @ 기준 화면 */
+  --gear-slot-size: 5.2rem;     /* 72px @ 기준 화면 */
   --gear-icon-size: 3.6rem;     /* 36px @ 기준 화면 */
 }

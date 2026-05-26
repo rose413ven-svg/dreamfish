@@ -2056,11 +2056,11 @@
   50%      { opacity: 1;    transform: scale(1.03); }
 }
 
-/* reveal-pending 단계에서는 안내 표시, result 단계로 가면 숨김 (페이드) */
+/* reveal-pending 단계에서는 안내 표시, result 단계로 가면 즉시 완전 제거.
+   ★ Day 39 (대표 결정) — 이전 opacity:0 + transition 200ms → display:none 으로 변경.
+   카드 뒤집힘 즉시 텍스트 사라짐 (페이드 X, 공간 차지 X). */
 .compose-reveal-overlay[data-phase="result"] .compose-reveal-tap-hint {
-  opacity: 0;
-  transition: opacity 200ms ease-out;
-  pointer-events: none;
+  display: none;
 }
 
 /* ── 다중합성 — result 단계에서 확인 버튼만 활성 ── */

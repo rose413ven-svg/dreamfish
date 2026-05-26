@@ -521,6 +521,9 @@
    ============================================ */
 .bag-cell__compose-mark {
   position: absolute;
+  /* ★ Day 39 (대표 결정) — 별이 셀 외곽선을 침범하는 문제 수정.
+   *   이전 (Day 38 followupF): bottom -0.5rem / left -0.1rem 으로 테두리에 겹치게 → 외곽선 침범.
+   *   변경: 양수 값으로 셀 *안쪽* 좌하단에 배치. */
   bottom: 0.15rem;
   left: 0.3rem;
   font-size: 1.3rem;                 /* 메인 가방 셀이 더 큰 편 → 1.3rem (이전 가방 0.7rem) */
@@ -750,12 +753,19 @@
   display: none;
 }
 .bag-context__option {
-  display: flex;
-  align-items: baseline;
+  /* ★ Day 38 후속 (대표 결정) — 비교 수치 열 맞춤 (grid 3열).
+   *  기존: flex (name flex:1, value 우측, diff 그냥 옆) → 수치 폭 들쭉날쭉, 비교 시작 위치 가변.
+   *  변경: grid 3열 고정 → name 가변폭 / value 5.5rem 우측정렬 / diff 4rem 우측정렬.
+   *        - 모든 행의 수치(value)가 같은 열에서 끝자리 정렬
+   *        - 모든 행의 비교(▲/▼/NEW/'-')가 같은 열에서 끝자리 정렬
+   *        - tabular-nums 로 숫자 폭 균등 (1/3/8 너비 차이 흡수). */
+  display: grid;
+  grid-template-columns: 1fr 5.5rem 4rem;
   gap: 0.6rem;
+  align-items: baseline;
 }
 .bag-context__option-name {
-  flex: 1;
+  /* ★ Day 38 후속 — flex:1 → grid 안에서 첫 열(1fr) 가변폭 자동 처리. */
   font-family: var(--font-base);
   font-size: 1.3rem;
   color: rgba(200, 212, 240, 0.8);
@@ -767,7 +777,9 @@
   color: #ffd96a;  /* 황금 — 좋은 효과 통일 */
   letter-spacing: 0.02em;
   text-shadow: 0 0 4px rgba(255, 217, 106, 0.25);
-  flex-shrink: 0;
+  /* ★ Day 38 후속 — 우측 정렬 + 숫자 등폭 (열 맞춤). */
+  text-align: right;
+  font-variant-numeric: tabular-nums;
   min-width: 3rem;
   text-align: right;
 }
@@ -785,13 +797,15 @@
   font-size: 1.2rem;
   font-weight: 600;
   letter-spacing: 0.02em;
-  flex-shrink: 0;
+  /* ★ Day 38 후속 — 우측 정렬 + 숫자 등폭 (열 맞춤). */
+  text-align: right;
+  font-variant-numeric: tabular-nums;
   min-width: 4rem;
   text-align: right;
 }
-.bag-context__option-diff:empty {
-  display: none;
-}
+/* ★ Day 38 후속 (대표 결정) — :empty 룰 제거.
+ *   기존: diff 가 비어있으면 display: none → 행 폭 흐트러짐.
+ *   변경: 비어있는 케이스는 JS 에서 '-' 텍스트 + --empty 클래스 부여 (열 맞춤 유지). */
 .bag-context__option-diff--up {
   color: #9DE36B;   /* 초록 — uncommon 색과 동일 */
   text-shadow: 0 0 4px rgba(157, 227, 107, 0.45);
@@ -806,17 +820,44 @@
   font-size: 1.0rem;       /* NEW는 살짝 작게 */
   letter-spacing: 0.12em;  /* 글자 살짝 늘려 단정한 강조 */
 }
-
-/* 잃을 옵션 — 장착만 가지고 있어 클릭 장비로 바꾸면 잃는 옵션
-   행 전체에 빨간 톤 + 이름에 line-through */
-.bag-context__option--lost .bag-context__option-name {
-  color: rgba(200, 212, 240, 0.45);
-  text-decoration: line-through;
-  text-decoration-color: rgba(255, 111, 111, 0.45);
+/* ★ Day 38 후속 (대표 결정) — 비교 빈 자리 '-' 표시 (작업 6).
+ *  동일 값이거나 비교 미적용 케이스에 JS 에서 '-' + 이 클래스 부여. */
+.bag-context__option-diff--empty {
+  color: rgba(200, 212, 240, 0.35);   /* 어두운 회색 (옅음) */
+  text-shadow: none;
 }
-.bag-context__option--lost .bag-context__option-value {
-  color: rgba(255, 111, 111, 0.7);
-  text-shadow: 0 0 3px rgba(255, 111, 111, 0.2);
+
+/* 잃을 옵션 — 장착만 가지고 있어 클릭 장비로 바꾸면 잃는 옵션.
+   ★ Day 38 후속 (대표 결정 — 작업 7) — 빨간 line-through → 어두운 회색 (비활성 느낌).
+     기존: 이름에 빨간 취소선 + 값은 빨강 → 강조 톤이 과함.
+     변경: 이름/값 모두 어두운 회색, 취소선 제거 → 차분한 "이 옵션은 사라집니다" 인지.
+   ★ Day 38 후속I (대표 결정 — specificity 강화) — 결합 셀렉터 (.--lost.--random) 추가.
+     배경: --random (황금) 셀렉터와 --lost (회색) 셀렉터가 같은 specificity (0,2,0).
+           코드 순서상 --random 이 뒤에 있어 황금이 이김 → 잃을 옵션이 random 일 때 회색 미표시 버그.
+     변경: 결합 셀렉터 (.--lost.--random) 추가 → specificity (0,3,0) → 항상 lost 회색 우선. */
+.bag-context__option--lost .bag-context__option-name,
+.bag-context__option--lost.bag-context__option--random .bag-context__option-name {
+  color: rgba(200, 212, 240, 0.45);
+  /* text-decoration: line-through 제거 (대표 결정) */
+}
+.bag-context__option--lost .bag-context__option-value,
+.bag-context__option--lost.bag-context__option--random .bag-context__option-value {
+  color: rgba(200, 212, 240, 0.45);   /* 어두운 회색 (빨강 → 회색 변경) */
+  text-shadow: none;
+}
+
+/* ============================================
+   랜덤 풀 옵션 행 — ★ Day 30 (대표 결정)
+   ============================================
+   무게/콤보/까비까비 풀에서 랜덤으로 부착된 옵션은 황금색 텍스트.
+   "추가 랜덤" 의미 강조 — 일반 고정 옵션과 시각적으로 구분.
+   부위별 fixedCount 이후 인덱스 옵션에 자동 적용 (배는 적용 X — 별도 시스템).
+   구분선은 안 넣음 (대표 명시 — 색 차이만으로 충분).
+   ============================================ */
+.bag-context__option--random .bag-context__option-name,
+.bag-context__option--random .bag-context__option-value {
+  color: var(--golden-fish);                  /* tokens.css 황금색 #E8C870 */
+  text-shadow: 0 0 5px rgba(232, 200, 112, 0.45);
 }
 
 /* ============================================
@@ -826,6 +867,12 @@
    compose-result-options__row--extra 와 동일한 시각 패턴 (★ 분홍별 + 분홍 텍스트).
    ============================================ */
 .bag-context__option--extra {
+  /* ★ Day 39 (대표 결정) — 텍스트 오른쪽 밀림 수정.
+   *   원인: 일반 .bag-context__option 은 grid 3열 (1fr 5.5rem 4rem) — name/value/diff.
+   *         --extra 행은 첫 자식으로 ★ 마크 추가 → 별이 1fr 칼럼 차지 → name 이 5.5rem 자리로,
+   *         value 가 4rem 자리로 밀림, diff 는 새 row 로 빠짐 → 전체 우측 정렬 깨짐.
+   *   수정: --extra 행만 4열로 (별 슬롯 추가) → 일반 행과 name/value/diff 컬럼 폭 동일. */
+  grid-template-columns: auto 1fr 5.5rem 4rem;
   border-top: 1px dashed rgba(255, 157, 203, 0.30);
   margin-top: 0.4rem;
   padding-top: 0.6rem;

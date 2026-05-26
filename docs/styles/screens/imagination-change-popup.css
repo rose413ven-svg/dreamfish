@@ -1,0 +1,130 @@
+/* ===========================================
+   imagination-change-popup.css — 상상력 변동 팝업
+   ★ Day 38 신규 (대표 결정) ★
+   ============================================
+   가로띠 형태 흰 박스 — 화면 정중앙, 2초 자동 닫힘.
+
+   대표 결정:
+   - 박스 배경: 흰색
+   - 새 상상력 점수: 검은색
+   - 증가 시 차이값: 초록 (▲ +N)
+   - 감소 시 차이값: 빨강 (▼ -N)
+   - 화면 가로폭 전체에 걸친 가로띠
+   - 화면 모달 위에 표시 (z-index 최상위)
+   ============================================ */
+
+.imagination-change-popup {
+  /* 화면 모달 위에 떠야 함 → fixed + 매우 높은 z-index */
+  position: fixed;
+  top: 50%;
+  left: 0;
+  right: 0;
+  z-index: 99999;
+  /* 가로띠 — 화면 가로폭 100% */
+  width: 100%;
+  background: #FFFFFF;
+  /* 위아래 살짝 두께감 — 패딩으로 띠 높이 확보 */
+  padding: 1.2rem 1.5rem;
+  /* 그림자로 띠 강조 (화면에서 들리는 느낌) */
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 -2px 8px rgba(0, 0, 0, 0.08);
+
+  /* 진입 애니메이션 — 살짝 슬라이드 + 페이드 */
+  transform: translateY(calc(-50% + 12px));
+  opacity: 0;
+  transition:
+    opacity 220ms ease-out,
+    transform 220ms ease-out;
+
+  /* 터치 차단 — 정보 표시용이므로 클릭 통과 */
+  pointer-events: none;
+  user-select: none;
+}
+
+.imagination-change-popup.visible {
+  opacity: 1;
+  transform: translateY(-50%);
+}
+
+.imagination-change-popup__inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  font-family: var(--font-base, 'Pretendard', sans-serif);
+}
+
+/* "상상력" 라벨 */
+.imagination-change-popup__label {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #333333;
+  letter-spacing: 0.02em;
+}
+
+/* 새 상상력 점수 — 검은색 큰 글씨 */
+.imagination-change-popup__value {
+  font-size: 2.0rem;
+  font-weight: 800;
+  color: #000000;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+
+/* 차이값 영역 (화살표 + 숫자) */
+.imagination-change-popup__diff {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.imagination-change-popup__arrow {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.imagination-change-popup__diff-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 증가: 초록 톤 — 명도 살짝 짙은 초록 (가독성) */
+.imagination-change-popup[data-dir="up"] .imagination-change-popup__arrow,
+.imagination-change-popup[data-dir="up"] .imagination-change-popup__diff-num {
+  color: #1FA86A;  /* 초록 */
+}
+
+/* 감소: 빨강 톤 */
+.imagination-change-popup[data-dir="down"] .imagination-change-popup__arrow,
+.imagination-change-popup[data-dir="down"] .imagination-change-popup__diff-num {
+  color: #E0353B;  /* 빨강 */
+}
+
+/* 변동 0 (혹시 표시되면) — 차이값 영역 자체 hide */
+.imagination-change-popup[data-dir="zero"] .imagination-change-popup__diff {
+  display: none;
+}
+
+/* ─── 반응형 ─── */
+/* 작은 화면 (모바일) — 폰트 크기/패딩 살짝 축소 */
+@media (max-width: 380px) {
+  .imagination-change-popup {
+    padding: 1.0rem 1.0rem;
+  }
+  .imagination-change-popup__inner {
+    gap: 0.7rem;
+  }
+  .imagination-change-popup__label {
+    font-size: 1.15rem;
+  }
+  .imagination-change-popup__value {
+    font-size: 1.8rem;
+  }
+  .imagination-change-popup__diff {
+    font-size: 1.25rem;
+  }
+}

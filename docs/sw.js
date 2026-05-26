@@ -1,5 +1,5 @@
 /* ★ Day 28 — Service Worker (자동 생성). 빌드 시 캐시 목록 갱신됨. */
-const CACHE_NAME = 'dreamfish-1778977223471';
+const CACHE_NAME = 'dreamfish-1779762373607';
 const FILES_TO_CACHE = [
   "./",
   "./assets/images/equipment/boat_common.png",
@@ -103,16 +103,20 @@ const FILES_TO_CACHE = [
   "./src/ui/hidden-intro.js",
   "./src/ui/hidden-line.js",
   "./src/ui/hud.js",
+  "./src/ui/imagination-change-popup.js",
   "./src/ui/kabikabi-text.js",
   "./src/ui/level-up-popup.js",
+  "./src/ui/lucky-lucky-effect.js",
   "./src/ui/menu-button.js",
   "./src/ui/menu-panel.js",
   "./src/ui/minigame-intro.js",
+  "./src/ui/mythic-intro.js",
   "./src/ui/new-stage-alert.js",
   "./src/ui/profile-modal.js",
   "./src/ui/slot-cell.js",
   "./src/ui/slot-grid.js",
   "./src/ui/sparkle-stars.js",
+  "./src/ui/special-mythic-hit-intro.js",
   "./src/ui/starfield.js",
   "./src/ui/stats-bar.js",
   "./src/ui/turn-counter.js",
@@ -128,6 +132,7 @@ const FILES_TO_CACHE = [
   "./styles/screens/compose.css",
   "./styles/screens/enhance.css",
   "./styles/screens/fish-result-drop.css",
+  "./styles/screens/imagination-change-popup.css",
   "./styles/screens/level-up-popup.css",
   "./styles/screens/new-stage-alert.css",
   "./styles/screens/profile.css",

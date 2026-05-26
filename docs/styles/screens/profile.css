@@ -231,14 +231,22 @@
 
    Day 10 v2 변경 — 별도 세트 영역 삭제 (대표 결정).
    세트 효과는 옵션 7종 안 weight_bonus 합산 + 신규 8번째 행으로 통합.
+
+   ★ Day 38 후속 (대표 결정) 변경 ★
+   - 옵션 수가 13개로 늘어남에 따라 2개씩 한 줄 grid 배치로 변경.
+   - 상상력 행은 grid 전체 폭 차지 (col-span 2) + 종합점수 강조 박스 스타일.
+   - sub tier 폐기 (입질 4종도 main 동일 분홍 라벨).
    ============================================ */
 
 .profile-stat-list {
-  display: flex;
-  flex-direction: column;
+  /* ★ Day 38 — flex 세로 → grid 2 columns (옵션 13개를 2개씩 배치).
+     gap 으로 셀 사이 여백 (border-top 룰 폐기). */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
   border: 1px solid rgba(200, 212, 240, 0.08);
   border-radius: 0.6rem;
-  background: rgba(10, 16, 36, 0.4);
+  background: rgba(200, 212, 240, 0.05);  /* gap 자리에 보이는 옅은 구분선 */
   overflow: hidden;
 }
 
@@ -247,45 +255,54 @@
   align-items: center;
   justify-content: space-between;
   /* Day 10: padding 살짝 ↑ — 텍스트 커진 만큼 여유 */
-  padding: 0.85rem 1.05rem;
-  background: rgba(255, 255, 255, 0.005);
+  /* ★ Day 38 — 2 columns 라 좌우 패딩 살짝 축소 (좁아진 공간 대응) */
+  padding: 0.85rem 0.95rem;
+  background: rgba(10, 16, 36, 0.85);     /* 셀 배경 — gap 으로 옅은 선 노출 */
   transition: background 120ms ease-out;
+  /* 라벨이 너무 길면 잘리지 않도록 최소 폭 보장 */
+  min-width: 0;
 }
 
-.profile-stat-row + .profile-stat-row {
-  border-top: 1px solid rgba(200, 212, 240, 0.05);
-}
+/* ★ Day 38 — border-top 룰 폐기 (grid gap 으로 대체) */
 
 .profile-stat-row__name {
   font-family: var(--font-base);
   /* Day 10: 0.95rem → 1.15rem (대표 결정 — STATS 텍스트 크기 ↑) */
-  font-size: 1.15rem;
+  /* ★ Day 38 — 2 columns 공간 좁아져서 살짝 축소 (1.15 → 1.05rem) */
+  font-size: 1.05rem;
   font-weight: 400;
   color: rgba(200, 212, 240, 0.78);
   letter-spacing: 0.01em;
+  /* 긴 라벨 ellipsis 대비 (예: "장비 발견 추가 확률") */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
-/* ★ Day 25 Phase 3 — 상위 (main) 메뉴 라벨: 옅은 분홍 (동급 6종 시각 통일).
-   대상: 상상력 / X 등장 확률 / 물고기 속도 / 물고기 kg 보너스 / 콤보 kg 보너스 / 장비 발견 추가 확률 */
+/* ★ Day 25 Phase 3 / Day 38 — 라벨: 옅은 분홍 (동급 모든 항목 통일).
+   ★ Day 38 변경: 입질 4종 sub tier 폐기 → 입질도 main 분홍 동일 적용.
+   대상: 상상력 + 입질 4종 + 다른 모든 옵션 13종 */
 .profile-stat-row--main .profile-stat-row__name {
   color: #FFC8DE;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
-/* ★ Day 25 Phase 3 — 하위 (sub) 메뉴 라벨: 입질 4종 — 들여쓰기만, 색/크기 그대로.
-   대표 명세: 검은/황금/분홍/하얀 입질 = 상상력 하위, 텍스트 앞 여백 들여쓰기. */
-.profile-stat-row--sub .profile-stat-row__name {
-  padding-left: 1.4rem;
-}
+/* ★ Day 38 — sub tier 룰 폐기 (입질 4종 들여쓰기 제거).
+   .profile-stat-row--sub 클래스는 더 이상 생성되지 않음 (profile-modal.js 변경). */
 
 .profile-stat-row__value {
   font-family: var(--font-impact);
-  /* Day 10: 1.15rem → 1.4rem (값은 좀 더 크게 — 가독성) */
-  font-size: 1.4rem;
+  /* ★ Day 38 — 2 columns 공간 좁아져서 살짝 축소 (1.4 → 1.25rem) */
+  font-size: 1.25rem;
   font-weight: 500;
   letter-spacing: 0.04em;
   /* 기본 = 0% 일 때 색 (흐림) */
   color: rgba(200, 212, 240, 0.32);
+  /* 값은 우측 정렬 + 라벨 옆에 붙도록 flex 안 정렬 */
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 /* 보너스 있을 때 강조 — 황금 톤 */
@@ -294,6 +311,61 @@
   text-shadow:
     0 0 8px rgba(255, 217, 106, 0.55),
     0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* ============================================
+   ★ Day 38 후속 (대표 결정) — 상상력 행 종합점수 강조
+   ============================================
+   - grid 전체 폭 차지 (col-span 2) — 다른 옵션들 위에 단독 배치
+   - 종합점수 느낌: 강조 배경 + 황금 테두리 + 큰 글씨
+   - 라벨 "상상력" = 흰색 / 값 = 황금 큰 글씨 (font-impact, 2.2rem)
+   - 다른 행과 시각적 차별화로 "총합 점수"임을 명확히
+   ============================================ */
+.profile-stat-row--imagination {
+  /* grid 전체 폭 — 2 columns 둘 다 차지 */
+  grid-column: 1 / -1;
+  /* 위아래 여유 ↑ — 강조감 */
+  padding: 1.1rem 1.3rem;
+  /* 황금빛 옅은 그라디언트 배경 + 보더 (코지 톤 유지하면서 강조) */
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 217, 106, 0.10) 0%,
+      rgba(10, 16, 36, 0.92) 55%,
+      rgba(255, 200, 222, 0.06) 100%
+    );
+  border-bottom: 1px solid rgba(255, 217, 106, 0.22);
+  /* 옅은 글로우 — 안쪽으로 살짝 빛나는 느낌 */
+  box-shadow:
+    inset 0 0 12px rgba(255, 217, 106, 0.08),
+    inset 0 1px 0 rgba(255, 217, 106, 0.12);
+  /* 다른 셀과 살짝 분리감 */
+  margin-bottom: 1px;
+}
+
+/* 상상력 라벨 — 흰색 + 살짝 두꺼움 (다른 행 분홍보다 한 단계 위 위계감) */
+.profile-stat-row--imagination .profile-stat-row__name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* 상상력 값 — 종합점수 큰 글씨 (font-impact, 2.2rem, 황금 글로우 강화) */
+.profile-stat-row--imagination .profile-stat-row__value {
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-stat-row--imagination .profile-stat-row__value--has-bonus {
+  color: #ffd96a;
+  text-shadow:
+    0 0 14px rgba(255, 217, 106, 0.65),
+    0 0 4px rgba(255, 217, 106, 0.85),
+    0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 

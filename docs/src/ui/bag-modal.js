@@ -34,6 +34,8 @@ import {
 } from '../data/inventory.js';
 import { getCatalogEntry } from '../data/equipment-catalog.js';
 import { getEnhanceBonus } from '../data/equipment-meta.js';   // Day 19 — 옵션 총합(베이스+강화)
+// ★ Day 38 후속F (대표 결정) — 가방 셀 ↑ 화살표를 상상력 합산값 비교로 변경
+import { getCurrentImagination } from '../data/imagination.js';
 import { createGearIcon } from './gear-icons.js';
 import {
   openEquipmentContextMenu,
@@ -142,10 +144,15 @@ function buildOptionTotalsBag(item) {
   const level = item.level || 0;
   const totals = {};
   if (Array.isArray(item.options)) {
+    // ★ Day 30 — 같은 옵션 키 중복 시: 옵션값은 합산 / 강화 보너스는 키별 1회만 적용.
+    const keyValueSums = Object.create(null);
     for (const o of item.options) {
       if (!o || !o.key) continue;
-      const eb = getEnhanceBonus(o.key, e.slotId, e.grade, level);
-      totals[o.key] = (o.value || 0) + eb;
+      keyValueSums[o.key] = (keyValueSums[o.key] || 0) + (o.value || 0);
+    }
+    for (const key of Object.keys(keyValueSums)) {
+      const eb = getEnhanceBonus(key, e.slotId, e.grade, level);
+      totals[key] = keyValueSums[key] + eb;
     }
   }
   return totals;
@@ -160,17 +167,23 @@ function isBetterCandidate(item, inv) {
   if (!equipped) return true;                 // 빈 슬롯 → 모든 후보 ↑
   if (equipped.id === item.id) return false;  // 자기 자신 비교 X
 
-  const itemTotals = buildOptionTotalsBag(item);
-  const equippedTotals = buildOptionTotalsBag(equipped);
-
-  const keys = new Set([...Object.keys(itemTotals), ...Object.keys(equippedTotals)]);
-  for (const key of keys) {
-    const itemVal = itemTotals[key] || 0;
-    const equippedVal = equippedTotals[key] || 0;
-    // 한 가지라도 후보 value > 장착 value 면 더 좋음 (부호 무관, 저장값 자체 비교)
-    if (itemVal > equippedVal + 0.0005) return true;
-  }
-  return false;
+  // ★ Day 38 후속F (대표 결정) — 비교 기준을 상상력 합산값으로 변경.
+  //   기존: buildOptionTotalsBag 의 옵션 키별 비교 (한 가지라도 우위면 ↑)
+  //         → 다른 옵션이 더 나빠도 한 옵션만 우위면 화살표 → 실효 점수 낮은데 화살표 떠서 혼란
+  //   변경: 그 장비를 가상 장착했을 때의 상상력 vs 현재 inv 상상력 비교 → 종합 점수 ↑일 때만 화살표
+  //         (세트/도감/레벨/강화 모두 자동 반영됨 — getCurrentImagination 산식이 통합 처리)
+  const currentImagination = getCurrentImagination(inv);
+  // 가상 inv 만들기: equipped 해제 + item 장착
+  const simInv = {
+    ...inv,
+    items: inv.items.map(it => {
+      if (it.id === equipped.id) return { ...it, equipped: false };
+      if (it.id === item.id)     return { ...it, equipped: true };
+      return it;
+    }),
+  };
+  const simImagination = getCurrentImagination(simInv);
+  return simImagination > currentImagination;
 }
 
 

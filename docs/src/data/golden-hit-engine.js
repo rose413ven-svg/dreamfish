@@ -80,52 +80,99 @@ export const GOLDFISH_CODEX_ID = 'golden_01';
 /* ============================================
    ★ Day 27 — 골든힛 전용 등급 테이블 (SSOT)
    ============================================
-   대표 결정 (Day 27): 골든힛은 cluster.gradeOf 룰과 분리.
-   황금 매칭 개수만으로 등급+변종+무게배율 결정.
+   ★ Day 40 (대표 결정) — 등급 매핑 전면 재구성 (11구간 → 24구간):
+     매칭 개수 → 잡기게임 등급 매핑 변경 + 변종(+ ~ +++++) 분포 재정의.
+       3       → 중형 (GOLDEN MEDIUM)        base
+       4       → 중형 (GOLDEN MEDIUM+)       +
+       5       → 중형 (GOLDEN MEDIUM++)      ++
+       6       → 중형 (GOLDEN MEDIUM+++)     +++
+       7       → 월척 (GOLDEN BIG)           base
+       8~10    → 월척 +, ++, +++
+       11      → 대물 (GOLDEN HUGE)          base
+       12~14   → 대물 +, ++, +++
+       15      → 보스 (GOLDEN BOSS)          base
+       16~20   → 보스 +, ++, +++, ++++, +++++
+       21~22   → 전설보스 (GOLDEN LEGEND)    base
+       23~24   → 전설보스 +
+       25~26   → 전설보스 ++
+       27~28   → 전설보스 +++
+       29~30   → 전설보스 ++++
+       31~32   → 전설보스 +++++
+       33+     → 신화보스 (GOLDEN MYTHIC)    (변종 없음)
 
-   weightMult: 같은 등급 내 변종 단계 올라갈수록 무게 ↑ (×1.0 → ×2.75)
-   - 보스: ×1.0 (base) ~ ×1.55 (++) — 보스는 base/+/++ 3변종만 (16~20개)
-   - 전설: ×1.0 (base) ~ ×2.75 (+++++) — 전설은 base~+++++ 6변종 (21~50개)
-   - 신화: ×1.0 (변종 없음, 51+)
+   weightMult: 일반힛 변종 무게 비율과 동일 (옵션 가) — base ×1.0 ~ +++++ ×5.0:
+     base    1.00
+     +       1.35
+     ++      1.85
+     +++     2.55
+     ++++    3.60
+     +++++   5.00
+   (일반힛 보스 등급 변종 평균 baseWeight 분석 결과와 일치)
+
+   골든힛 보너스 ×1.10 유지 (applyGoldenHitWeight 에서 적용).
+
+   - 변종 + 표시는 결과팝업의 사이즈 업그레이드 펑 연쇄에서만 노출
+     (잡기게임 상단 / 물기 알림은 base만 — 일반힛과 동일)
    ============================================ */
 export const GOLDEN_HIT_GRADE_TABLE = Object.freeze([
-  { min:  3, max:  5,        grade: '대물',     tier: 'base', plusCount: 0, weightMult: 1.00 },
-  { min:  6, max: 10,        grade: '보스',     tier: 'base', plusCount: 0, weightMult: 1.00 },
-  { min: 11, max: 15,        grade: '보스',     tier: 'p1',   plusCount: 1, weightMult: 1.25 },
-  { min: 16, max: 20,        grade: '보스',     tier: 'p2',   plusCount: 2, weightMult: 1.55 },
-  { min: 21, max: 25,        grade: '전설보스', tier: 'base', plusCount: 0, weightMult: 1.00 },
-  { min: 26, max: 30,        grade: '전설보스', tier: 'p1',   plusCount: 1, weightMult: 1.25 },
-  { min: 31, max: 35,        grade: '전설보스', tier: 'p2',   plusCount: 2, weightMult: 1.55 },
-  { min: 36, max: 40,        grade: '전설보스', tier: 'p3',   plusCount: 3, weightMult: 1.90 },
-  { min: 41, max: 45,        grade: '전설보스', tier: 'p4',   plusCount: 4, weightMult: 2.30 },
-  { min: 46, max: 50,        grade: '전설보스', tier: 'p5',   plusCount: 5, weightMult: 2.75 },
-  { min: 51, max: Infinity,  grade: '신화보스', tier: null,   plusCount: 0, weightMult: 1.00 },
+  // GOLDEN MEDIUM (중형) — 3~6
+  { min:  3, max:  3, grade: '중형',     tier: 'base', plusCount: 0, weightMult: 1.00 },
+  { min:  4, max:  4, grade: '중형',     tier: 'p1',   plusCount: 1, weightMult: 1.35 },
+  { min:  5, max:  5, grade: '중형',     tier: 'p2',   plusCount: 2, weightMult: 1.85 },
+  { min:  6, max:  6, grade: '중형',     tier: 'p3',   plusCount: 3, weightMult: 2.55 },
+  // GOLDEN BIG (월척) — 7~10
+  { min:  7, max:  7, grade: '월척',     tier: 'base', plusCount: 0, weightMult: 1.00 },
+  { min:  8, max:  8, grade: '월척',     tier: 'p1',   plusCount: 1, weightMult: 1.35 },
+  { min:  9, max:  9, grade: '월척',     tier: 'p2',   plusCount: 2, weightMult: 1.85 },
+  { min: 10, max: 10, grade: '월척',     tier: 'p3',   plusCount: 3, weightMult: 2.55 },
+  // GOLDEN HUGE (대물) — 11~14
+  { min: 11, max: 11, grade: '대물',     tier: 'base', plusCount: 0, weightMult: 1.00 },
+  { min: 12, max: 12, grade: '대물',     tier: 'p1',   plusCount: 1, weightMult: 1.35 },
+  { min: 13, max: 13, grade: '대물',     tier: 'p2',   plusCount: 2, weightMult: 1.85 },
+  { min: 14, max: 14, grade: '대물',     tier: 'p3',   plusCount: 3, weightMult: 2.55 },
+  // GOLDEN BOSS (보스) — 15~20
+  { min: 15, max: 15, grade: '보스',     tier: 'base', plusCount: 0, weightMult: 1.00 },
+  { min: 16, max: 16, grade: '보스',     tier: 'p1',   plusCount: 1, weightMult: 1.35 },
+  { min: 17, max: 17, grade: '보스',     tier: 'p2',   plusCount: 2, weightMult: 1.85 },
+  { min: 18, max: 18, grade: '보스',     tier: 'p3',   plusCount: 3, weightMult: 2.55 },
+  { min: 19, max: 19, grade: '보스',     tier: 'p4',   plusCount: 4, weightMult: 3.60 },
+  { min: 20, max: 20, grade: '보스',     tier: 'p5',   plusCount: 5, weightMult: 5.00 },
+  // GOLDEN LEGEND (전설보스) — 21~32 (2칸씩)
+  { min: 21, max: 22, grade: '전설보스', tier: 'base', plusCount: 0, weightMult: 1.00 },
+  { min: 23, max: 24, grade: '전설보스', tier: 'p1',   plusCount: 1, weightMult: 1.35 },
+  { min: 25, max: 26, grade: '전설보스', tier: 'p2',   plusCount: 2, weightMult: 1.85 },
+  { min: 27, max: 28, grade: '전설보스', tier: 'p3',   plusCount: 3, weightMult: 2.55 },
+  { min: 29, max: 30, grade: '전설보스', tier: 'p4',   plusCount: 4, weightMult: 3.60 },
+  { min: 31, max: 32, grade: '전설보스', tier: 'p5',   plusCount: 5, weightMult: 5.00 },
+  // GOLDEN MYTHIC (신화보스) — 33+
+  { min: 33, max: Infinity, grade: '신화보스', tier: null, plusCount: 0, weightMult: 1.00 },
 ]);
 
 /* ============================================
    ★ Day 28 — 골든힛 전용 잡기게임 속도 테이블 (대표 결정)
    ============================================
-   일반 모드 등급별 orbDuration (catch-game-config.js CATCH_CONFIG) 과 별도.
-   매칭된 황금 심볼 개수 기준으로 속도 결정 — 보상 큰 미니게임이므로 잡기 쉬움 톤 유지.
+   ★ Day 40 (대표 결정) — 일반 등급 orbDuration 그대로 사용 (옵션 F=a).
+   11구간 → 6구간 (등급 단위) 단순화.
+     중형     700 ms
+     월척     600 ms
+     대물     500 ms
+     보스     400 ms
+     전설보스 350 ms
+     신화보스 300 ms
 
    값이 작을수록 빠름 = 잡기 어려움. 단위: ms.
-   GOLDEN_HIT_GRADE_TABLE 의 11구간 경계와 정확히 일치 (16~20 / 26~30 / 51+).
+   GOLDEN_HIT_GRADE_TABLE 의 6등급 경계와 정확히 일치.
 
    장비 orb_speed 옵션은 일반 모드와 동일하게 catch-game.js 의 applyOrbDuration()
    래퍼를 통해 적용됨 (속도 감소 = 잡기 쉬워짐).
    ============================================ */
 export const GOLDEN_HIT_ORB_DURATION_TABLE = Object.freeze([
-  { min:  3, max:  5,        orbDuration: 600 },  // 대물
-  { min:  6, max: 10,        orbDuration: 550 },  // 보스
-  { min: 11, max: 15,        orbDuration: 500 },  // 보스+
-  { min: 16, max: 20,        orbDuration: 450 },  // 보스++
-  { min: 21, max: 25,        orbDuration: 450 },  // 전설
-  { min: 26, max: 30,        orbDuration: 400 },  // 전설+
-  { min: 31, max: 35,        orbDuration: 350 },  // 전설++
-  { min: 36, max: 40,        orbDuration: 350 },  // 전설+++
-  { min: 41, max: 45,        orbDuration: 350 },  // 전설++++
-  { min: 46, max: 50,        orbDuration: 350 },  // 전설+++++
-  { min: 51, max: Infinity,  orbDuration: 300 },  // 신화
+  { min:  3, max:  6,        orbDuration: 700 },  // GOLDEN MEDIUM (중형 일반 orbDuration)
+  { min:  7, max: 10,        orbDuration: 600 },  // GOLDEN BIG    (월척 일반)
+  { min: 11, max: 14,        orbDuration: 500 },  // GOLDEN HUGE   (대물 일반)
+  { min: 15, max: 20,        orbDuration: 400 },  // GOLDEN BOSS   (보스 일반)
+  { min: 21, max: 32,        orbDuration: 350 },  // GOLDEN LEGEND (전설보스 일반)
+  { min: 33, max: Infinity,  orbDuration: 300 },  // GOLDEN MYTHIC (신화보스 일반)
 ]);
 
 /**

@@ -31,6 +31,8 @@ import {
   ENHANCE_MAX_LEVEL,
   ENHANCE_SUCCESS_RATE,
   ENHANCE_STONE_COST,
+  ENHANCE_OUTCOME_TABLE,   // ★ Day 41 — +6강 이상 3분기 확률표
+  hasDowngradeRisk,        // ★ Day 41 — 하락 적용 단계 판정
 } from './equipment-meta.js';
 
 /* ============================================
@@ -162,28 +164,55 @@ export function tryEnhance(itemId) {
     return { success: false, reason: 'no_stone', oldLevel, newLevel: oldLevel, stoneCost };
   }
 
-  // 강화석 차감 (성공/실패 무관)
+  // 강화석 차감 (성공/유지/하락 무관)
   const consumed = consumeEnhanceStones(inv, stoneCost);
   if (!consumed) {
     // 가드 통과 후 차감 실패 = 데이터 정합성 문제. 안전 가드.
     return { success: false, reason: 'no_stone', oldLevel, newLevel: oldLevel, stoneCost };
   }
 
-  // 성공률 굴림
-  const success = Math.random() < successRate;
-
-  // 성공 시 level++ (옵션 baseValue 는 그대로 — getEnhanceBonus 가 자동 합산)
+  // ★ Day 41 (대표 결정) — +6강 이상은 3분기 추첨 (성공/유지/하락), 이하는 기존 2분기.
+  //   outcome: 'success' = level++ / 'maintain' = level 유지 / 'downgrade' = level-- (최소 0)
+  let outcome;       // 'success' | 'maintain' | 'downgrade'
   let newLevel = oldLevel;
-  if (success) {
-    item.level = nextLevel;
-    newLevel = item.level;
+
+  if (hasDowngradeRisk(nextLevel)) {
+    // +6 ~ +10 강 도전 — 3분기 (success / maintain / downgrade)
+    const table = ENHANCE_OUTCOME_TABLE[nextLevel];
+    const roll  = Math.random();
+    if (roll < table.success) {
+      outcome = 'success';
+      item.level = nextLevel;
+      newLevel = item.level;
+    } else if (roll < table.success + table.maintain) {
+      outcome = 'maintain';
+      // level 그대로
+    } else {
+      outcome = 'downgrade';
+      // 하락 — 최소 0 보장
+      item.level = Math.max(0, oldLevel - 1);
+      newLevel = item.level;
+    }
+  } else {
+    // +1 ~ +5 강 도전 — 기존 2분기 (success / maintain[기존 fail])
+    const success = Math.random() < successRate;
+    if (success) {
+      outcome = 'success';
+      item.level = nextLevel;
+      newLevel = item.level;
+    } else {
+      outcome = 'maintain';
+      // level 그대로
+    }
   }
 
-  // 저장 (성공/실패 무관 — 강화석 차감은 항상 반영)
+  // 저장 (모든 결과에 강화석 차감 반영)
   saveInventory(inv);
 
+  // 호환성 — success 플래그는 outcome === 'success' 와 동일 (기존 호출처가 result.success 만 봐도 동작).
   return {
-    success,
+    success: outcome === 'success',
+    outcome,             // ★ Day 41 — 'success' | 'maintain' | 'downgrade'
     oldLevel,
     newLevel,
     successRate,

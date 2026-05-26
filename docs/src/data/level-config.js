@@ -67,37 +67,37 @@ export const MAX_LEVEL = 50;
  */
 export const EXP_TABLE_DEV = Object.freeze([
   /* 1~5렙 (1지역) — ★ Day 28 (대표 결정) 초반 진입 가속: 700/1200/2000/3500 → 100/300/500/1000 */
-  100, 300, 500, 1000,
+  50, 70, 100, 200,
 
   /* 5~10렙 (2지역) — ★ Day 28 (대표 결정) dip 해소 + 부드러운 단조 증가: 3000/3500/4500/5500/6500 → 2000/3000/4000/5000/6000 */
-  2000, 3000, 4000, 5000, 6000,
+  300, 300, 300, 300, 300,
 
   /* 10~15렙 (3지역) - 약 60분 */
-  6500, 7500, 8500, 10000, 12000,
+  600, 600, 600, 600, 600,
 
   /* 15~20렙 (4지역) - 약 70분 */
-  12000, 14000, 17000, 21000, 25000,
+  1000, 1000, 1000, 1000, 1000,
 
   /* 20~25렙 (5지역) - 약 80분 */
-  22000, 27000, 32000, 40000, 50000,
+  1500, 1500, 1500, 1500, 1500,
 
   /* 25~30렙 (6지역) - 약 90분 */
-  45000, 55000, 65000, 80000, 100000,
+  2000, 2000, 2000, 2000, 2000,
 
   /* 30~35렙 (7지역) - 약 100분 */
-  80000, 100000, 125000, 155000, 185000,
+  2500, 2500, 2500, 2500, 2500,
 
   /* 35~40렙 (8지역) - 약 110분 */
-  180000, 220000, 270000, 340000, 420000,
+  3000, 3000, 3000, 3000, 3000,
 
   /* 40~45렙 (9지역) - 약 130분 */
-  280000, 340000, 410000, 500000, 650000,
+  3500, 3500, 3500, 3500, 3500,
 
   /* 45~50렙 (10지역) - 약 180분 */
-  400000, 550000, 700000, 950000, 1100000,
+  4000, 4000, 4000, 4000, 4000,
 
   /* 50~55렙 (11지역 입문) */
-  2000000, 3000000, 4000000, 5000000, 6000000,
+  1000000, 2000000, 3000000, 4000000, 5000000,
 
   /* 55~60렙 */
   8000000, 10000000, 12000000, 14000000, 16000000,
@@ -136,12 +136,14 @@ export const ACTIVE_EXP_TABLE = EXP_TABLE_DEV;
  * - rock_rate/orb_speed:                % (음수 = 감소)
  * - weight_bonus/combo_bonus:           %
  * - set_drop_rate:                      % (장비 발견 추가 확률)
+ * - critical_rate/lucky_rate/catch_time_bonus: %  (★ Day 34 신규)
  *
  * 49렙 누적 효과 (만렙 = 1렙 + 49회 레벨업):
  * - fish/golden/rainbow/twinkle_rate: +7.35 (정수 가중치)  ★ Day 23: 2.45 → 7.35
  * - rock_rate / orb_speed:    -9.8%
  * - weight_bonus / combo_bonus: +49%
  * - set_drop_rate:            +4.9%
+ * - critical_rate / lucky_rate / catch_time_bonus: +4.9%  ★ Day 34 신규
  *
  * ★ Day 21 (대표 결정): twinkle_rate 추가 — 다른 입질과 동일 0.05 (golden/rainbow 톤).
  *
@@ -149,17 +151,24 @@ export const ACTIVE_EXP_TABLE = EXP_TABLE_DEV;
  *   - 입질 4종 0.05 → 0.15 (3배)
  *   - 만렙 누적 +245 → +735 (UI 표시값) → 신화 낚싯대 한 장의 약 60~80% 가치
  *   - 무게/콤보는 1.0 그대로 유지 (대표 결정 — 충분히 강함)
+ *
+ * ★ Day 34 (대표 결정) ★ — 신규 옵션 3종 레벨업 보상 추가:
+ *   - critical_rate / lucky_rate / catch_time_bonus 각 +0.1% per level
+ *   - 49렙 누적 +4.9% (조용히 누적되는 보조 보상 — 장비 옵션이 메인)
  */
 export const LEVEL_BONUSES_PER_LEVEL = Object.freeze({
-  fish_rate:     0.15,  // ★ Day 23 — 0.05 → 0.15 (밸런스 Phase 1-A)
-  golden_rate:   0.15,  // ★ Day 23 — 0.05 → 0.15
-  rainbow_rate:  0.15,  // ★ Day 23 — 0.05 → 0.15
-  twinkle_rate:  0.15,  // ★ Day 23 — 0.05 → 0.15 (다른 입질과 동일 톤)
-  rock_rate:    -0.2,   // 음수 = X 등장 확률 감소
-  orb_speed:    -0.2,   // 음수 = 잡기 게임 물고기 속도 감소
-  weight_bonus:  1.0,
-  combo_bonus:   1.0,
-  set_drop_rate: 0.1,
+  fish_rate:        0.05,  // ★ Day 41 (대표 결정) — Day 23 의 0.15 → 0.05 로 원복 (×100 표시 시 +5)
+  golden_rate:      0.05,  // ★ Day 41 — 0.15 → 0.05
+  rainbow_rate:     0.05,  // ★ Day 41 — 0.15 → 0.05
+  twinkle_rate:     0.05,  // ★ Day 41 — 0.15 → 0.05
+  rock_rate:       -0.2,   // 음수 = X 등장 확률 감소
+  orb_speed:       -0.2,   // 음수 = 잡기 게임 물고기 속도 감소
+  weight_bonus:     1.0,
+  combo_bonus:      1.0,
+  set_drop_rate:    0.1,
+  critical_rate:    0.1,   // ★ Day 34 — 잡기게임 크리티컬 확률 (기본 3% + 장비 + 레벨 누적)
+  lucky_rate:       0.1,   // ★ Day 34 — 럭키럭키 발동 확률 (기본 5% + 장비 + 레벨 누적)
+  catch_time_bonus: 0.1,   // ★ Day 34 — 잡기시간 증가 (장비 펫 + 레벨 누적)
 });
 
 /**
@@ -168,14 +177,17 @@ export const LEVEL_BONUSES_PER_LEVEL = Object.freeze({
  * ★ Day 21: twinkle_rate 추가.
  */
 export const STAT_DISPLAY_LABELS = Object.freeze({
-  fish_rate:      '검은물고기 입질',
-  golden_rate:    '황금물고기 입질',
-  rainbow_rate:   '분홍물고기 입질',
-  twinkle_rate:   '하얀물고기 입질',  // ★ Day 21
-  rock_rate:      'X 등장 확률',
-  orb_speed:      '물고기 속도',
-  weight_bonus:   '물고기 kg 보너스',
-  combo_bonus:    '콤보 kg 보너스',
-  set_drop_rate:  '장비 발견 추가 확률',
-  kabikabi_bonus: '까비까비 보너스',   // ★ Day 26
+  fish_rate:        '검은물고기 입질',
+  golden_rate:      '황금물고기 입질',
+  rainbow_rate:     '분홍물고기 입질',
+  twinkle_rate:     '하얀물고기 입질',  // ★ Day 21
+  rock_rate:        'X 등장 확률',
+  orb_speed:        '물고기 속도',
+  weight_bonus:     '물고기 kg 보너스',
+  combo_bonus:      '콤보 kg 보너스',
+  set_drop_rate:    '장비 발견 추가 확률',
+  kabikabi_bonus:   '까비까비 보너스',   // ★ Day 26 (Day 30: % 보너스)
+  lucky_rate:       '럭키럭키 발동',     // ★ Day 29
+  critical_rate:    '크리티컬 확률',     // ★ Day 30
+  catch_time_bonus: '잡기시간 증가',     // ★ Day 30
 });

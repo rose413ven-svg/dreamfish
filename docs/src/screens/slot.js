@@ -16,6 +16,7 @@ import { createBagModal } from '../ui/bag-modal.js';
 import { createProfileModal } from '../ui/profile-modal.js';
 import { createBobber, castBobber, biteBobber, hideBobber, syncFloatCosmeticParticles } from '../ui/float-bobber.js';
 import { createBiteAlert, showBiteAlert, hideBiteAlert } from '../ui/bite-alert.js';
+import { showLuckyLuckyEffect, hideLuckyLuckyEffect } from '../ui/lucky-lucky-effect.js';
 import { createFishResult, showFishResult } from '../ui/fish-result.js';
 // Day 18 후속 (대표 결정) — drawGoldenLine 재활성 + startGoldenParticles 추가
 //   황금 매칭 발견 시 발광 + 선 연결 + 화면 전체 입자 → 끝나면 골든힛 진입 팝업
@@ -23,6 +24,8 @@ import { drawGoldenLine, startGoldenParticles } from '../ui/golden-line.js';
 // Day 20: 꿈조각(트윙클) 매칭 연결선 + 입자 — golden-line 의 톤 변경판
 import { drawTwinkleLine, startTwinkleParticles } from '../ui/twinkle-line.js';
 import { createTwinkleIntro, showTwinkleIntro } from '../ui/twinkle-intro.js';
+import { createMythicIntro, showMythicIntro } from '../ui/mythic-intro.js';
+import { createSpecialMythicHitIntro, showSpecialMythicHitIntro, hideSpecialMythicHitIntro } from '../ui/special-mythic-hit-intro.js';
 import { createTwinkleCardGame } from '../ui/twinkle-card-game.js';
 import { createTwinkleRewardPopup } from '../ui/twinkle-reward-popup.js';
 // Day 20 Phase 5: 트윙클 세션 (다른 화면 다녀와도 백그라운드 진행 — module-level, 앱 리로드 시 사라짐)
@@ -41,7 +44,7 @@ import { createSparkleField } from '../ui/sparkle-stars.js';
 
 import { GEAR_SLOTS } from '../data/gear-slots.js';
 import { getStage, clampGradeForStage, rollDropCount } from '../data/stages.js';
-import { pickFishByGrade, pickMythicFish, fishDisplayGrade, GOLDEN_FISH } from '../data/fish-data.js';
+import { pickFishByGrade, pickMythicFish, pickGoldenDreamWhale, GOLDEN_FISH } from '../data/fish-data.js';
 
 // Bag-4: 가방 ↔ 슬롯 장비칸 연동
 // Lucky-2 (Day 9): 드롭 시스템 — tryRollDrop / addEquipment / saveInventory 추가
@@ -79,7 +82,7 @@ import {
 } from '../data/codex-engine.js';
 
 import { generateGrid, emptyGrid } from '../engine/grid.js';
-import { findClusters, findGoldenClusters, findTwinkleClusters, findKabikabiClusters, gradeOf } from '../engine/cluster.js';
+import { findClusters, findGoldenClusters, findTwinkleClusters, findKabikabiClusters, findMaxClusterSizeFromCells, findClustersInCells, gradeOf, GRADE_RANK } from '../engine/cluster.js';
 import { rollWeight } from '../engine/weight.js';
 
 // Day 15: 골든힛 타임 시스템 / ★ Day 27 — 등급 세분화 시스템 마이그레이션
@@ -328,21 +331,12 @@ export default {
 
     content.appendChild(slotWrap);
 
-    // TURN
-    // ★ Day 21 — 글로벌 누적 cast 횟수 (전 스테이지 공통, kgCurrent 변수 폐기)
-    let turnValue = initialTurn;
-    // Day 7: 콤보 카운터 (모듈 변수, 새로고침 시 0부터)
-    let comboCount = 0;
-    const turn = createTurnCounter({ value: turnValue });
-    content.appendChild(turn.root);
-
-    // 장비
-    const actionRow = document.createElement('div');
-    actionRow.className = 'action-row';
-    const leftCol = document.createElement('div');
-    leftCol.className = 'gear-col gear-col--left';
-    const rightCol = document.createElement('div');
-    rightCol.className = 'gear-col gear-col--right';
+    // ★ Day 29 (대표 결정) — 장비 6슬롯 한 줄 배치 (gear-row).
+    //   위치: 슬롯 그리드 바로 아래, 턴 횟수 위.
+    //   순서: GEAR_SLOTS 배열 순서대로 (낚시대→찌→바늘→옷→배→펫).
+    //   6칸 합친 가로 크기 = 슬롯 그리드 가로보다 약간 작게 (CSS 에서 처리).
+    const gearRow = document.createElement('div');
+    gearRow.className = 'gear-row';
 
     // Bag-4: gear-slot 컴포넌트를 slot.id 별로 저장 (인벤토리 동기화용)
     const gearSlotMap = {};
@@ -357,7 +351,15 @@ export default {
         if (eq) {
           openEquipmentContextMenu(eq.id, {
             // parent 는 기본값(#app) 사용
-            onChange: () => syncGearSlots(),
+            // ★ Day 29 v5 (대표 결정) — 장비 변경 (장착/해제) 시 입질스탯 즉시 반영.
+            //   기존: syncGearSlots 만 호출 → gear-slot UI 만 갱신, 입질스탯 그대로 (다른 화면 다녀와야 반영되는 버그)
+            //   수정: statsBar.refresh + hud.refreshImagination + refreshCodexDots 도 같이 (가방 닫힐 때와 동일).
+            onChange: () => {
+              syncGearSlots();
+              statsBar.refresh();
+              hud.refreshImagination();
+              refreshCodexDots();
+            },
             // Day 12 — 슬롯 화면 상단 장착 장비 = 합성/도감 비활성
             //   (장착 중인 장비는 잠긴 상태와 유사 — 함부로 합성/도감 진입 금지)
             disableActions: ['compose', 'codex'],
@@ -367,12 +369,25 @@ export default {
           ensureBagModal().open();
         }
       });
-      if (slot.position.startsWith('left')) {
-        leftCol.appendChild(gs.root);
-      } else {
-        rightCol.appendChild(gs.root);
-      }
+      gearRow.appendChild(gs.root);
     });
+
+    content.appendChild(gearRow);
+
+    // TURN
+    // ★ Day 21 — 글로벌 누적 cast 횟수 (전 스테이지 공통, kgCurrent 변수 폐기)
+    let turnValue = initialTurn;
+    // Day 7: 콤보 카운터 (모듈 변수, 새로고침 시 0부터)
+    let comboCount = 0;
+    const turn = createTurnCounter({ value: turnValue });
+    // ★ Day 38 후속 (대표 결정) — turn 카운터 위치를 cast 버튼 아래로 이동.
+    //   기존: gearRow → turn → cast (turn 이 중간)
+    //   변경: gearRow → cast → turn (cast 가 gearRow 쪽 위로, turn 이 cast 아래)
+    //   실제 content.appendChild(turn.root) 는 actionRow append 직후 (line ~2727 부근).
+
+    // 장비 ★ Day 29 — gear-row 가 위에 따로 배치됨. actionRow 는 cast 만.
+    const actionRow = document.createElement('div');
+    actionRow.className = 'action-row';
 
     /**
      * Bag-4: 인벤토리의 장착 상태를 슬롯 화면 gear-slot 4개에 반영.
@@ -685,6 +700,7 @@ export default {
         savedGridData: savedGrid,
         lockedCells: [],
         rewardCount: 0,
+        goldenWhaleTriggered: false,   // ★ Day 29
       };
 
       // 진입 시점 — 트윙클 트리거 셀 발광 해제 (자동 캐스트는 깨끗한 시작점부터)
@@ -711,6 +727,11 @@ export default {
         grid.root.appendChild(twinkleSparkleField);
       }
 
+      // ★ Day 35 (대표 결정 B-가) — 트윙클 타임 진행 중 트윙클 매칭 셀에 두꺼운 황금 테두리.
+      //   grid 컨테이너에 클래스 부착 → CSS 자식 셀렉터로 .matched-twinkle 셀의 테두리만 황금으로 덮어씀.
+      //   exitTwinkleHitTime 에서 제거.
+      grid.root.classList.add('twinkle-time-active');
+
       // cast 버튼 활성화 — 사용자가 클릭 시점에 자동 회전 시작
       cast.setBusy(false);
       cast.setState('cast');
@@ -729,6 +750,7 @@ export default {
       const reward = twinkleHitState.rewardCount;
       const restoredCombo = twinkleHitState.savedComboCount;
       const savedGrid = twinkleHitState.savedGridData;
+      const wasGoldenWhaleTriggered = twinkleHitState.goldenWhaleTriggered;   // ★ Day 29 — state 초기화 전 캡쳐
 
       // Day 20: 트윙클 별 입자 필드 제거 (가장 먼저 — 시각적 즉시 종료감)
       if (twinkleSparkleField) {
@@ -736,16 +758,50 @@ export default {
         twinkleSparkleField = null;
       }
 
-      // 잠긴 셀 발광 해제
-      twinkleHitState.lockedCells.forEach(({ row, col }) => {
-        const idx = row * grid.cols + col;
-        grid.cells[idx]?.setTwinkleMatched(false);
-      });
+      // ★ Day 35 (대표 결정 B-가) — 트윙클 타임 종료: grid 황금 테두리 클래스 제거
+      // ★ Day 37 후속 (대표 결정) — 황금빛꿈고래 트리거 시 트윙클 시각(황금 테두리) 보존.
+      //   목적: SPECIAL MYTHIC HIT 인트로 배경에 트윙클 마지막 화면 + 황금 테두리 그대로 보여야 함.
+      //   황금 테두리 셀렉터: .slot-grid.twinkle-time-active .matched-twinkle[data-mythic-candidate]
+      //   → 3가지 조건 (class + class + dataset) 모두 유지 필요 → 정리 작업 모두 미룸.
+      //   pendingTwinkleLockedCells 에 좌표 사본 저장 → finishTurn 에서 일괄 정리.
+      if (wasGoldenWhaleTriggered) {
+        // 트리거 발동 — 시각 정리 모두 미룸 (트윙클 마지막 화면 + 황금 테두리 유지)
+        pendingTwinkleLockedCells = twinkleHitState.lockedCells.map(c => ({ ...c }));
+      } else {
+        // 일반 종료 — 기존대로 즉시 정리
+        grid.root.classList.remove('twinkle-time-active');
+
+        // ★ Day 36 — 신화 후보 마킹(data-mythic-candidate) 모두 클리어 (다음 트윙클 타임 위해)
+        // ★ Day 39 — data-mythic-triggered 도 같이 클리어 (size 15+ 황금 배경 dataset)
+        for (const cell of grid.cells) {
+          if (cell?.root?.dataset?.mythicCandidate) {
+            delete cell.root.dataset.mythicCandidate;
+          }
+          if (cell?.root?.dataset?.mythicTriggered) {
+            delete cell.root.dataset.mythicTriggered;
+          }
+        }
+
+        // 잠긴 셀 발광 해제
+        twinkleHitState.lockedCells.forEach(({ row, col }) => {
+          const idx = row * grid.cols + col;
+          grid.cells[idx]?.setTwinkleMatched(false);
+        });
+      }
 
       // 진입 직전 그리드 복원 (시각만, 매칭 효과 발동 X)
+      // ★ Day 37 (대표 결정) — 황금빛꿈고래 트리거 발동 시 그리드 복원 미룸.
+      //   목적: 꿈조각 보상 팝업 → SPECIAL MYTHIC HIT 인트로 표시 시 배경에 트윙클 타임 마지막 화면 보이게.
+      //   savedGrid 는 pendingTwinkleRestoreGrid 에 임시 저장 → 잡기게임 종료 후 finishTurn 에서 복원.
+      //   일반 종료 (트리거 X) 시는 기존대로 즉시 복원.
       if (savedGrid) {
-        fillGrid(grid.cells, savedGrid);
-        lastGridData = savedGrid;
+        if (wasGoldenWhaleTriggered) {
+          // 트리거 발동 — 복원 미룸 (다음 일반 cast 시점에 새 spin 시작하므로 사실상 자동 정리)
+          pendingTwinkleRestoreGrid = savedGrid;
+        } else {
+          fillGrid(grid.cells, savedGrid);
+          lastGridData = savedGrid;
+        }
       }
 
       // Twinkle chance 표시 종료
@@ -768,6 +824,7 @@ export default {
         savedGridData: null,
         lockedCells: [],
         rewardCount: 0,
+        goldenWhaleTriggered: false,   // ★ Day 29
       };
 
       autoMode = false;
@@ -775,7 +832,7 @@ export default {
       cast.setBusy(false);
       cast.setState('cast');
 
-      // 보상 팝업 (꿈조각 +N) — 닫힘 시 가방에 지급
+      // 보상 팝업 (꿈조각 +N) — 닫힘 시 가방에 지급 + 황금빛꿈고래 트리거 발동 시 잡기게임 진입
       twinkleRewardPopup.show({
         rewardCount: reward,
         onClose: () => {
@@ -786,6 +843,17 @@ export default {
             if (added < reward) {
               console.warn('[twinkle] stack cap 으로 일부 보상 미지급:', reward, '→', added);
             }
+          }
+          // ★ Day 29 — 황금빛꿈고래 트리거 발동 시 잡기게임 입장 (대표 결정 (iii)):
+          //   트윙클 타임 정상 종료 + 꿈조각 보상 정산 후 → 황금빛꿈고래 잡기게임 진입.
+          //   handleMythicTriggerHit('goldenwhale', ...) 가 mythic_01 황금빛꿈고래로 분기.
+          if (wasGoldenWhaleTriggered) {
+            const inv = loadInventory();
+            const codexBonuses = getCodexBonuses();
+            const activeOpts = getActiveOptions(inv, codexBonuses);
+            const setGrade = getSetGrade(inv);
+            const setWeightBonusPct = getSetWeightBonus(setGrade);
+            handleMythicTriggerHit('goldenwhale', activeOpts, setWeightBonusPct);
           }
         },
       });
@@ -818,6 +886,65 @@ export default {
           grid.cells[idx]?.setTwinkleMatched(true);
           twinkleHitState.lockedCells.push({ row: r, col: c });
           twinkleHitState.rewardCount += 1;
+        }
+      }
+
+      // ★ Day 29 — 누적 트윙클 셀의 최대 인접 클러스터 size 검사 (15+ → 황금빛꿈고래 트리거).
+      //   한 번 트리거 후엔 재검사 X (idempotent — 발동은 exitTwinkleHitTime 에서 한 번만).
+      //   대표 결정 (가)/(iii): 누적 잠긴 셀 기반 / 트윙클 타임 정상 종료 후 추가 잡기게임.
+      if (!twinkleHitState.goldenWhaleTriggered) {
+        const maxClusterSize = findMaxClusterSizeFromCells(
+          twinkleHitState.lockedCells, rows, cols
+        );
+        if (maxClusterSize >= 15) {
+          twinkleHitState.goldenWhaleTriggered = true;
+          // 시각 알림 — 일단 console 로깅 (추후 정식 연출 추가 예정)
+          console.log('[twinkle] 황금빛꿈고래 트리거 발동! 누적 클러스터 size:', maxClusterSize);
+        }
+      }
+
+      // ★ Day 36 (대표 결정) — 신화 트리거 대상 셀(인접 클러스터 3+)만 황금 테두리 표시.
+      //   - findClustersInCells 로 누적 셀들 중 인접 클러스터(size >= 3) 모두 추출.
+      //   - 클러스터에 속한 셀에만 data-mythic-candidate="true" 부착 → CSS 가 황금 테두리 적용.
+      //   - 흩어진 단독/소수(<3) 트윙클 셀은 dataset X → 일반 트윙클 색(옅은 하늘색) 유지.
+      //   - 매 spin 후 전체 재계산 (셀 추가로 인접 관계 변할 수 있음 — 단순 재마킹).
+      markMythicCandidateCells(rows, cols);
+    }
+
+    /**
+     * ★ Day 36 — 트윙클 타임 누적 셀의 인접 클러스터(3+)에 data-mythic-candidate 마킹.
+     *   매 spin 후 전체 클리어 → 재마킹 (인접 관계 변할 수 있음 — 단순 재계산).
+     *
+     * ★ Day 39 (대표 결정 옵션 A + (가)) — size 분기 추가:
+     *   - cluster.length >= 3  → data-mythic-candidate="true"  (황금 테두리 — Day 36~37 기존 동작 유지)
+     *   - cluster.length >= 15 → 추가로 data-mythic-triggered="true" (황금 배경 — 신화 트리거 도달 덩어리)
+     *   - 매 spin 재계산 — 15+ 덩어리가 더 자라거나 다른 덩어리가 별도 15+ 도달해도 일관 표시.
+     */
+    function markMythicCandidateCells(rows, cols) {
+      const cells = grid.cells;
+      // 1) 기존 마킹 모두 클리어 (candidate + triggered 둘 다)
+      for (const cell of cells) {
+        if (cell?.root?.dataset?.mythicCandidate) {
+          delete cell.root.dataset.mythicCandidate;
+        }
+        if (cell?.root?.dataset?.mythicTriggered) {
+          delete cell.root.dataset.mythicTriggered;
+        }
+      }
+      // 2) 인접 클러스터(3+) 추출
+      const clusters = findClustersInCells(twinkleHitState.lockedCells, rows, cols, 3);
+      // 3) 각 클러스터 셀에 dataset 부착 — size 분기
+      for (const cluster of clusters) {
+        const isTriggered = cluster.length >= 15;
+        for (const { row, col } of cluster) {
+          const idx = row * cols + col;
+          const root = cells[idx]?.root;
+          if (root) {
+            root.dataset.mythicCandidate = 'true';
+            if (isTriggered) {
+              root.dataset.mythicTriggered = 'true';
+            }
+          }
         }
       }
     }
@@ -862,7 +989,17 @@ export default {
         remaining -= 1;
       }
 
-      return { ...state, remaining, lockedCells, rewardCount };
+      // ★ Day 29 — 백그라운드 시뮬레이션 후 누적 클러스터 size 검사 (15+ → 트리거).
+      //   기존 state.goldenWhaleTriggered 가 true 면 그대로 유지 (이미 발동됨).
+      let goldenWhaleTriggered = state.goldenWhaleTriggered || false;
+      if (!goldenWhaleTriggered) {
+        const maxClusterSize = findMaxClusterSizeFromCells(lockedCells, gridSize, gridSize);
+        if (maxClusterSize >= 15) {
+          goldenWhaleTriggered = true;
+        }
+      }
+
+      return { ...state, remaining, lockedCells, rewardCount, goldenWhaleTriggered };
     }
 
     /**
@@ -890,6 +1027,7 @@ export default {
         remaining:    session.remaining,
         lockedCells:  [...session.lockedCells],
         rewardCount:  session.rewardCount,
+        goldenWhaleTriggered: session.goldenWhaleTriggered || false,   // ★ Day 29
       };
       if (session.started) {
         restored = simulateTwinkleCasts(restored, elapsed, stage.gridSize, symbolList);
@@ -904,6 +1042,7 @@ export default {
         savedGridData:   session.savedGridData,
         lockedCells:     restored.lockedCells,
         rewardCount:     restored.rewardCount,
+        goldenWhaleTriggered: restored.goldenWhaleTriggered || false,   // ★ Day 29
       };
       clearTwinkleSession();
 
@@ -1054,15 +1193,20 @@ export default {
     }
 
     /**
-     * ★ Day 27 — 11지역 신화 트리거 매칭 처리 (분홍/황금/하얀 10+).
+     * ★ Day 29 — 신화 트리거 매칭 처리 (전 지역, 일반 슬롯).
      *
-     * 대표 결정 (Q-B / Q-I B안):
-     * - 11지역에서 황금/하얀/분홍 10+ 매칭 시 골든힛/트윙클/히든힛 분기 모두 스킵
-     * - 신화 어종: pickMythicFish(triggerSymbol)
-     *   · 'fish' (검은 25+) → mythic_01 황금빛꿈고래 (엔딩 상징) — ★ 이 함수는 호출되지 않음 (일반 매칭 흐름)
-     *   · 'rainbow'/'golden'/'twinkle' (10+) → mythic_02~04 무작위 (3종 동일 보상)
-     * - 무게: rollWeight(_, '신화보스', stage.weightMultiplier) — 11지역 × 100 배율
-     * - 장비 보상: 전설 50% / 신화 50% 무조건 1개 (LUCKY_DROP_GRADE_POOL['신화보스'] + dropCount=1 강제 — caughtWithDrop 분기)
+     * 대표 결정 (Day 29):
+     * - 11지역 한정 → 전 지역으로 확장 (등급 임계값 변경과 함께 정합성)
+     * - 트리거 4종 (검은 매칭은 일반 매칭 흐름에서 처리됨, 여기는 황금/트윙클/분홍만):
+     *   · 황금 10+   → 골든힛 스킵, 이 함수로
+     *   · 트윙클 10+ → 트윙클 카드 게임 스킵, 이 함수로  (★ Day 29 신규 트리거 처리)
+     *   · 분홍 10+   → HIDDEN HIT 스킵, 이 함수로
+     * - 신화 어종: pickMythicFish() — mythic_02~04 무작위 (3종 동일 보상)
+     *   · 황금빛꿈고래(mythic_01)는 트윙클 타임 중 트윙클 15+ 전용 — 별도 분기 (pickGoldenDreamWhale)
+     *   · 검은 매칭은 일반 매칭 흐름의 신화보스 분기에서 처리됨 (handleMatchFound)
+     * - 무게: rollWeight(_, '신화보스', stage.weightMultiplier)
+     *   ※ Day 29 — 지역 weightMultiplier 폐기 예정 (Phase 3) — 현재 코드는 호환성 위해 유지
+     * - 장비 보상: 전설 50% / 신화 50% 무조건 1개 (LUCKY_DROP_GRADE_POOL['신화보스'] + dropCount=1 강제)
      * - 잡기게임 후 도감 등록 (mythic_02~04 중 잡힌 1종)
      *
      * @param {'golden'|'twinkle'|'rainbow'} triggerSymbol  신화 트리거 심볼
@@ -1071,7 +1215,20 @@ export default {
      */
     function handleMythicTriggerHit(triggerSymbol, activeOpts, setWeightBonusPct) {
       const grade = '신화보스';
-      const mythicFish = pickMythicFish(triggerSymbol);
+      // ★ Day 29 — 트리거별 어종 결정:
+      //   'goldenwhale' (트윙클 타임 중 트윙클 15+ 누적 클러스터) → mythic_01 황금빛꿈고래 (엔딩 상징)
+      //   그 외 ('golden'/'twinkle'/'rainbow' 10+, 검은 10+) → mythic_02~04 무작위
+      const mythicFish = (triggerSymbol === 'goldenwhale')
+        ? pickGoldenDreamWhale()
+        : pickMythicFish();
+
+      // ★ Day 41 (대표 결정) — 골든힛 트리거 (황금 10+) 시 fish.name 만 GOLDEN_FISH[0].name (황금빛꿈잉어) 로 통일.
+      //   - 결과 팝업 표시 이름 = 황금빛꿈잉어
+      //   - 도감 등록 ID = fish.name 기반 → 황금빛꿈잉어로 통합 등록 (mythic_02~04 별도 등록 X)
+      //   - 등급 (신화보스) / baseWeight (mythicFish.baseWeight) / 무게 산정은 그대로 유지
+      const fish = (triggerSymbol === 'golden')
+        ? { ...mythicFish, name: GOLDEN_FISH[0].name }
+        : mythicFish;
 
       // 무게 추첨 (신화보스 1000~3000 × 11지역 multiplier 100 = 100,000~300,000 kg)
       const { weight: rolledWeight, tier } = rollWeight(mythicFish.baseWeight, grade, stage.weightMultiplier);
@@ -1080,36 +1237,79 @@ export default {
       const totalWeightPct = (activeOpts.weight_bonus || 0) + setWeightBonusPct;
       const equipmentBonus = rolledWeight * (totalWeightPct / 100);
 
+      const isGoldenDreamWhale = (triggerSymbol === 'goldenwhale');   // ★ Day 29 — 황금빛꿈고래 식별
+
       const result = {
-        fish: mythicFish,
+        fish,                                 // ★ Day 41 — mythicFish 직접 X. 골든힛 시 name 만 황금빛꿈잉어로 교체된 fish.
         weight, tier, grade,
         baseWeight: rolledWeight,
         equipmentBonus,
         comboBonus,
         comboLevel: comboCount,
-        size: 10,                       // 표시용 (실제 카운트는 10 이상)
+        size: isGoldenDreamWhale ? 15 : 10,   // 표시용 (황금빛꿈고래는 트윙클 15+, 일반 신화는 10+)
         symbol: triggerSymbol,
         clusterIdx: 1,
-        isMythicHit: true,              // ★ Day 27 신화 식별 플래그
+        isMythicHit: true,                    // ★ Day 27 신화 식별 플래그
+        isGoldenDreamWhale,                   // ★ Day 29 — 황금빛꿈고래 전용 플래그 (엔딩 연출 분기용)
         mythicTriggerSymbol: triggerSymbol,
       };
 
       resultQueue = [result];
 
-      // bite-alert: 신화보스 + HIT 표시 (단일 매칭, hasBoss=true)
-      activeBiteInfo = { count: 1, grades: [grade], hasBoss: true, isMythicHit: true };
-      showBiteAlert(biteAlertEl, activeBiteInfo);
-
-      // 일반 매칭과 일관 — cast 'pull' 상태로 전환, 사용자가 당기면 잡기게임 진입
-      cast.setState('pull');
+      // ★ Day 37 (대표 결정) — 신화 트리거 흐름 분기:
+      //   isGoldenDreamWhale = true  (트윙클 타임 중 트윙클 15+ 누적):
+      //     → SPECIAL MYTHIC HIT 인트로 + cast pull + mythic-intro 흐름 (Day 36)
+      //   isGoldenDreamWhale = false (일반 신화 — 검은 10+/분홍 10+/하얀 10+/황금 10+):
+      //     → bite-alert 'MYTHIC HIT' + cast pull → 사용자 cast → 잡기게임 (Day 35 이전 기존 흐름)
+      activeBiteInfo = { count: 1, grades: [grade], hasBoss: true, isMythicHit: true, isGoldenDreamWhale };
       autoMode = false;
+
+      if (isGoldenDreamWhale) {
+        // 황금빛꿈고래 — Day 36 흐름
+        showSpecialMythicHitIntro(specialMythicHitIntro);
+        cast.setBusy(false);
+        cast.setState('pull');
+        awaitingMythicPull = true;
+      } else {
+        // 일반 신화 — Day 35 이전 흐름 (bite-alert MYTHIC HIT + cast pull)
+        showBiteAlert(biteAlertEl, activeBiteInfo);
+        cast.setState('pull');
+      }
     }
 
     /**
-     * 잡기 게임 (Day 3 v2 — 다중 매칭 통합)
-     * @param {Array} results - 한 턴의 매칭 결과 전부
+     * 잡기 게임 (Day 3 v2 — 다중 매칭 통합 / ★ Day 29 — 멀티히트 자동선택)
+     *
+     * ★ Day 29 (대표 결정) ★ — 멀티히트 자동선택:
+     *   배경: 기존엔 사용자가 잡기게임에서 클러스터 선택 → 1마리만 잡기. 나머지는 사라짐.
+     *   변경: 가장 큰 등급의 클러스터 1개를 자동 선택 (선택 UI 제거).
+     *         보상은 기존대로 멀티히트 배수(×N) 유지 (×2/×3/×4 — originalMatchCount).
+     *   같은 등급 멀티히트도 그 등급 1개로 진행.
+     *
+     * @param {Array} results - 한 턴의 매칭 결과 전부 (다중 매칭일 수 있음)
      */
     function openCatchGame(results) {
+      // ★ Day 29 — 잡기게임 진입 시 Lucky Lucky 텍스트 잔영 정리
+      hideLuckyLuckyEffect(biteAlertEl);
+
+      // ★ Day 29 — 멀티히트 자동선택: 가장 큰 등급 1개만 잡기게임으로
+      //   원본 매칭 수는 originalMatchCount 로 catch-game 에 전달 (×N 배수 보상 유지)
+      const originalMatchCount = results.length;
+      let selectedResults = results;
+      if (results.length >= 2) {
+        // 가장 큰 등급의 결과 1개 선택 (동률이면 첫 번째 매칭 우선)
+        let highestRank = -1;
+        let highestResult = results[0];
+        for (const r of results) {
+          const rank = GRADE_RANK[r.grade] ?? -1;
+          if (rank > highestRank) {
+            highestRank = rank;
+            highestResult = r;
+          }
+        }
+        selectedResults = [highestResult];
+      }
+
       // 깜박임 방지 — 잡기 게임이 화면 덮은 상태에서 cast 버튼을 미리 'cast'로
       // (이렇게 하면 잡기 게임 unmount 직후 'pull' 상태가 잠깐 보이지 않음)
       cast.setState('cast');
@@ -1128,7 +1328,8 @@ export default {
       //   골든힛 모드일 때만 sparkle-field 존재. 일반 모드는 null 가드로 안전.
       if (goldenSparkleField) goldenSparkleField.classList.add('sparkle-field--hidden');
       catchGameScreen.mount(overlayLayer, {
-        results,
+        results: selectedResults,
+        originalMatchCount,            // ★ Day 29 — 멀티히트 배수 보존
         hasBoss: pendingHasBoss,
         onClose: ({ caught, missed }) => {
           overlayLayer.classList.remove('show');
@@ -1209,7 +1410,8 @@ export default {
               const slotId    = rollDropSlot();
               const grd       = rollDropGrade(r.grade);
               const catalogId = `${slotId}_${grd}`;
-              const newItem   = makeEquipment(catalogId);
+              // ★ Day 41 (대표 결정) — stage.id 전달 → 3종 옵션(weight/combo/kabikabi)에 지역 multiplier 적용
+              const newItem   = makeEquipment(catalogId, { stageId: stage.id });
               if (!newItem) {
                 console.warn('[lucky-drop] makeEquipment 실패:', catalogId);
                 continue;
@@ -1359,7 +1561,8 @@ export default {
                     //   Epic 기준 1/3/5/7/10/15% — 후반 지역으로 갈수록 영웅 이상 점진 증가
                     const grd       = rollHiddenDropGrade(stage.id);
                     const catalogId = `${slotId}_${grd}`;
-                    const newItem   = makeEquipment(catalogId);
+                    // ★ Day 41 (대표 결정) — stage.id 전달 → 3종 옵션 지역 multiplier 적용
+                    const newItem   = makeEquipment(catalogId, { stageId: stage.id });
                     if (!newItem) {
                       console.warn('[lucky-drop HIDDEN] makeEquipment 실패:', catalogId);
                       continue;
@@ -1473,6 +1676,22 @@ export default {
       },
     });
 
+    // ★ Day 35 (대표 결정 A-가) — 신화 트리거 진입 팝업.
+    //   트윙클 타임 중 트윙클 15+ 누적 → 황금빛꿈고래 발동 시 표시.
+    //   ★ Day 36 변경 — Special Mythic Hit Intro → 사용자 pull → 이 mythic-intro 표시 → 터치 → 잡기게임.
+    //                  onConfirm 안에서 bite-alert hide 호출 제거 (Day 36 에서 bite-alert 자체를 안 띄움).
+    const mythicIntro = createMythicIntro({
+      onConfirm: () => {
+        activeBiteInfo = null;
+        processNextResult();
+      },
+    });
+
+    // ★ Day 36 (대표 결정) — SPECIAL MYTHIC HIT 인트로 (floating UI, backdrop X).
+    //   꿈조각 보상 팝업 닫힘 → handleMythicTriggerHit 안에서 표시.
+    //   사용자 슬롯 cast(pull) 버튼 터치 → handlePull 에서 hide + mythic-intro 표시.
+    const specialMythicHitIntro = createSpecialMythicHitIntro();
+
     // ★ Day 22 Phase 6: HIDDEN HIT 카드뒤집기 (X1/X3/X5 무게 보너스)
     //   onSelect 는 showHiddenCardFlip 호출 시 다이내믹 설정 (openCatchGameHidden onClose 안에서)
     const hiddenCardFlip = createHiddenCardFlip();
@@ -1522,6 +1741,7 @@ export default {
       savedGridData: null,
       lockedCells: [],
       rewardCount: 0,
+      goldenWhaleTriggered: false,   // ★ Day 29 — 트윙클 누적 클러스터 15+ 도달 시 true
     };
     // Day 13 — 세션 복원용 ★: showBiteAlert 호출 시 정보 저장 → unmount 시 saveSlotSession 에 포함
     //   히트 팝업 떠있는 상태에서 강화/합성 다녀와도 그대로 복원 가능.
@@ -1544,6 +1764,22 @@ export default {
     //   ★ Day 26: 까비까비 매칭 클러스터 정보 — Phase 4.2 텍스트 오버레이용 (위치/색/무게 보관).
     //   각 원소: { cells: [{row,col,symbol}], size, colorIdx (1~5), weight (kg, 소수 2자리) }
     let lastKabikabiClusters = [];
+    //   ★ Day 31 — 검은 HIT + 까비까비 동시 발생 시 까비 무게 임시 보관 (잡기 결과에 합산용).
+    //   - 검은 HIT 동시 발생: 즉시 보상 차단 → 여기 저장 → handleMatchFound 에서 resultQueue 각 항목에 분배
+    //   - 골든/히든/트윙클/단독: 0 그대로 (즉시 보상은 위에서 직접 처리)
+    //   - handleMatchFound 종료 시 0 으로 리셋
+    let pendingKabikabiTotalWeight = 0;
+    // ★ Day 36 (대표 결정) — 신화 트리거 흐름: SPECIAL MYTHIC HIT 인트로 표시 후 사용자 pull 대기.
+    //   handlePull 진입부에서 이 플래그 true 면 special intro hide + mythic-intro 표시 + 플래그 reset + return (일반 매칭 처리 건너뜀).
+    let awaitingMythicPull = false;
+    // ★ Day 37 (대표 결정) — 황금빛꿈고래 트리거 시 트윙클 진입 직전 그리드 임시 보관.
+    //   exitTwinkleHitTime 에서 즉시 복원 X (트윙클 마지막 화면 유지) → 잡기게임 종료 후 finishTurn 에서 복원.
+    let pendingTwinkleRestoreGrid = null;
+    // ★ Day 37 (대표 결정 후속) — 황금빛꿈고래 트리거 시 트윙클 시각(황금 테두리) 보존.
+    //   exitTwinkleHitTime 에서 즉시 정리 X: twinkle-time-active 클래스 / data-mythic-candidate / matched-twinkle 모두 유지.
+    //   잡기게임 종료 후 finishTurn 에서 이 좌표들 기준으로 일괄 정리.
+    //   값 = lockedCells 좌표 배열 (사본) | null
+    let pendingTwinkleLockedCells = null;
 
     const SPIN_DURATION = 2000;
     const BITE_BEFORE = 500;
@@ -1674,6 +1910,13 @@ export default {
               newLevel:  expResult.newLevel,
             };
           }
+          // ★ Day 38 후속 (대표 보고 — 1→2 렙업 즉시 반영 누락 버그 수정).
+          //   기존: 1100ms 후 triggerLevelUpFlow(onConfirm) 에서만 statsBar.refresh / hud.refreshImagination
+          //         호출. 다른 렙업은 자연스럽게 동작하지만 첫 렙업(1→2)에서 누락되는 케이스 발생.
+          //   변경: addExp 직후 즉시 호출 → 어떤 흐름에서도 갱신 보장 (onConfirm 시점 중복 호출 무해).
+          //   참고: getActiveOptions 가 이미 getLevelBonuses 자동 합산하므로 refresh 만 호출하면 충분.
+          statsBar.refresh();
+          hud.refreshImagination();
         }
 
         // Lucky-5: 게이지 채움만 (떠오름 텍스트는 onConfirm 시점).
@@ -1763,6 +2006,36 @@ export default {
       // 따라서 resetSlotSession 은 여기서 호출하지 않음. 정리는 unmount disposer 가 알아서.
       // (이전: comboCount === 0 이면 resetSlotSession 호출 → 그리드 심볼도 함께 삭제되는 버그)
       activeBiteInfo = null;
+
+      // ★ Day 37 (대표 결정) — 황금빛꿈고래 트리거 시 미뤘던 트윙클 진입 직전 그리드 복원.
+      //   exitTwinkleHitTime 에서 미뤘던 복원을 잡기게임 종료 후 이 시점에 수행.
+      //   (트윙클 마지막 화면 유지 → 잡기게임 진행 → 종료 후 일반 슬롯 화면으로 복귀)
+      // ★ Day 37 후속 — 트윙클 시각(twinkle-time-active 클래스 / mythic-candidate / matched-twinkle) 도 함께 정리.
+      if (pendingTwinkleLockedCells) {
+        // 1) twinkle-time-active 클래스 제거 (황금 테두리 셀렉터 조건 1)
+        grid.root.classList.remove('twinkle-time-active');
+        // 2) mythic-candidate / mythic-triggered dataset 모두 클리어
+        //    (Day 39 — mythic-triggered = size 15+ 황금 배경 dataset 도 함께 정리)
+        for (const cell of grid.cells) {
+          if (cell?.root?.dataset?.mythicCandidate) {
+            delete cell.root.dataset.mythicCandidate;
+          }
+          if (cell?.root?.dataset?.mythicTriggered) {
+            delete cell.root.dataset.mythicTriggered;
+          }
+        }
+        // 3) matched-twinkle 클래스 제거 (황금 테두리 셀렉터 조건 2)
+        pendingTwinkleLockedCells.forEach(({ row, col }) => {
+          const idx = row * grid.cols + col;
+          grid.cells[idx]?.setTwinkleMatched(false);
+        });
+        pendingTwinkleLockedCells = null;
+      }
+      if (pendingTwinkleRestoreGrid) {
+        fillGrid(grid.cells, pendingTwinkleRestoreGrid);
+        lastGridData = pendingTwinkleRestoreGrid;
+        pendingTwinkleRestoreGrid = null;
+      }
 
       // Day 15: 골든힛 타임 카운트 차감 후 종료 처리.
       //   Day 16 후속 (대표 결정): 차감은 runSpin 시작 시점에서 이미 처리됨 (cast 누르는 순간).
@@ -1970,16 +2243,16 @@ export default {
       const kabikabiClusters = findKabikabiClusters(newGrid, kabikabiExcludeSet, 3);
       const hasKabikabiMatch = kabikabiClusters.length > 0;
 
-      // ★ Day 27 — 11지역 신화 트리거 검출 (대표 결정 Q-B):
+      // ★ Day 29 — 신화 트리거 검출 (전 지역 적용, 대표 결정).
+      //   배경: 등급 임계값 변경(10+=신화) 정합성 + 저렙 도파민 보강
       //   해당 심볼 10개 이상 매칭 → 골든힛/트윙클/히든힛 스킵 → 신화 출현
-      //   - 황금 10+: 골든힛 발동 안 함, 신화로 격상
-      //   - 하얀 10+: 트윙클 발동 안 함, 신화로 격상
-      //   - 분홍 10+: 히든힛 발동 안 함, 신화로 격상
+      //   - 황금 10+   : 골든힛 발동 안 함, 신화로 격상
+      //   - 트윙클 10+ : 트윙클 카드 게임 발동 안 함, 신화로 격상  (★ Day 29 신규: 일반 슬롯 트윙클 10+ 신화 트리거 추가)
+      //   - 분홍 10+   : 히든힛 발동 안 함, 신화로 격상
       //   우선순위: 황금 > 트윙클 > 분홍 (기존 매칭 분기 우선순위와 일관)
-      //   신화 어종: mythic_02~04 무작위 (mythic_01 황금빛꿈고래는 검은 25+ 전용 — 엔딩 상징)
-      const isStage11 = stage.id === 11;
+      //   신화 어종: mythic_02~04 무작위 (mythic_01 황금빛꿈고래는 트윙클 타임 중 트윙클 15+ 전용 — 별도 분기)
       let mythicTriggerSymbol = null;  // 'golden' | 'twinkle' | 'rainbow' | null
-      if (isStage11) {
+      {
         const goldenMaxSize  = goldenClusters.reduce((m, c) => Math.max(m, c.size), 0);
         const twinkleMaxSize = twinkleClusters.reduce((m, c) => Math.max(m, c.size), 0);
         const rainbowMaxSize = rainbowClusters.reduce((m, c) => Math.max(m, c.size), 0);
@@ -1989,6 +2262,24 @@ export default {
       }
 
       if (mythicTriggerSymbol) {
+        // ★ Day 37 (대표 결정 B-가) — 신화 트리거 매칭 셀에 신화 색(마젠타) 시각 효과.
+        //   검은 10+ 신화보스 매칭(.matched[data-grade="신화보스"]) 와 동일 시각 — 통일된 신화 색.
+        //   기존: handleMythicTriggerHit 호출만 → 매칭 셀에 setter 호출 없어서 시각 효과 X (대표 보고)
+        //   변경: setMatched(true, '신화보스', 'fish') 호출 → .matched + data-grade="신화보스"
+        //         → CSS .matched[data-grade="신화보스"] 마젠타 배경 + 글로우 + 펄스 자동 적용.
+        //   symbol 은 'fish' 고정 (rainbow 분기로 빠지면 흰빛 코어 펄스 됨 → 마젠타 통일성 위해 'fish').
+        const triggerClusters =
+          mythicTriggerSymbol === 'golden'  ? goldenClusters  :
+          mythicTriggerSymbol === 'twinkle' ? twinkleClusters :
+          mythicTriggerSymbol === 'rainbow' ? rainbowClusters : [];
+        triggerClusters.forEach(c => {
+          c.cells.forEach(({ row, col }) => {
+            const idx = row * grid.cols + col;
+            grid.cells[idx]?.setMatched(true, '신화보스', 'fish');
+            // Day 13 - 매칭 정보 저장 (화면 다녀와도 복원 가능)
+            lastMatchedCells.push({ row, col, grade: '신화보스', symbol: c.symbol });
+          });
+        });
         handleMythicTriggerHit(mythicTriggerSymbol, activeOpts, setWeightBonusPct);
         return;
       }
@@ -2053,16 +2344,24 @@ export default {
         showBiteAlert(biteAlertEl, activeBiteInfo);
       }
 
-      // ★ Day 26 — 까비까비 시각효과 적용 + 즉시 보상 (대표 Q-바 / Q-자 B).
+      // ★ Day 26 — 까비까비 시각효과 적용 + 보상 처리 (대표 Q-바 / Q-자 B).
       //   - 셀 클래스 부착 (matched-kabikabi + data-kabikabi-color="1~5" 순환)
-      //   - 무게 보상 즉시 처리: cellCount × max(1, kabikabi_bonus)
-      //   - addExp + showGainBurst 즉시 호출 (HIT 잡기게임 결과와 분리 — 별도 버스트)
-      //   - HIT 동시 발동 시 까비까비 시각효과와 HIT 잡기게임 진입이 거의 동시 (Q-자 B)
-      //   - 텍스트 오버레이 (까비까비 + 무게 숫자) 는 Phase 4.2 kabikabi-text.js 에서 처리 예정
+      //   - 텍스트 오버레이 — 클러스터 근처에 "까비까비 +Xkg" 띄움
+      //
+      // ★ Day 30 — 까비까비 식 변경: cellCount × max(1, bonus) → cellCount × (1 + bonus/100)
+      //   (8% → ×1.08배 = 8% 보너스로 의미 변경)
+      //
+      // ★ Day 31 (대표 결정) — 검은 HIT 동시 발생 분기:
+      //   - hasBlackHit (clusters.length > 0) + 까비: 즉시 보상 차단 → pendingKabikabiTotalWeight 저장
+      //     · 큰 황금색 수치 X / 무게바 X / 경험치 X
+      //     · 텍스트 오버레이는 그대로 유지 (시각 효과)
+      //     · handleMatchFound 에서 resultQueue 각 항목에 분배 + 잡기 결과 팝업 산식에 합산
+      //   - 골든/히든/트윙클 + 까비: 까비 먼저 즉시 보상 (현재 동작 유지) → 해당 힛 진행
+      //   - 까비 단독: 즉시 보상 (현재 동작 유지)
       if (hasKabikabiMatch) {
         const colsK = grid.cols;
-        const kabikabiMult = activeOpts.kabikabi_bonus || 0;
-        const effectiveMult = kabikabiMult > 0 ? kabikabiMult : 1;
+        const kabikabiBonusPct = activeOpts.kabikabi_bonus || 0;
+        const effectiveMult = 1 + (kabikabiBonusPct / 100);  // ★ Day 30 — % 보너스로 의미 변경
 
         lastKabikabiClusters = [];
         let kabikabiTotalWeight = 0;
@@ -2073,7 +2372,7 @@ export default {
             const cellIdx = row * colsK + col;
             grid.cells[cellIdx]?.setKabikabiMatched(true, colorIdx);
           });
-          // 클러스터별 무게 = 셀수 × 배수 (소수점 2자리 반올림)
+          // 클러스터별 무게 = 셀수 × (1 + bonus/100) (소수점 2자리 반올림)
           const clusterWeight = Math.round(cluster.size * effectiveMult * 100) / 100;
           kabikabiTotalWeight += clusterWeight;
           // Phase 4.2 텍스트 오버레이용 보관
@@ -2084,14 +2383,21 @@ export default {
             weight:   clusterWeight,
           };
           lastKabikabiClusters.push(clusterInfo);
-          // ★ Day 26 Phase 4.2 — 클러스터 근처에 "까비까비" + 무게 숫자 텍스트 띄우기 (자동 dispose).
+          // 클러스터 근처 "까비까비 +Xkg" 텍스트 오버레이 (시각 효과 — 모든 케이스에서 유지)
           showKabikabiClusterText(grid.root, clusterInfo, grid.cells, grid.rows, grid.cols);
         });
         // 합산 무게 한 번 더 반올림 (개별 반올림 합산 미세 오차 정리)
         kabikabiTotalWeight = Math.round(kabikabiTotalWeight * 100) / 100;
 
-        // 즉시 보상: 경험치 게이지 + 무게바 위 별도 버스트 (HIT 와 분리, 대표 Q-바)
-        if (kabikabiTotalWeight > 0) {
+        // ★ Day 31 — 검은 HIT 동시 발생 여부에 따른 분기
+        const hasBlackHit = clusters.length > 0;
+
+        if (hasBlackHit && kabikabiTotalWeight > 0) {
+          // 검은 HIT + 까비: 즉시 보상 차단 → 잡기 결과에 합산 (handleMatchFound 에서 처리)
+          pendingKabikabiTotalWeight = kabikabiTotalWeight;
+        } else if (kabikabiTotalWeight > 0) {
+          // 골든/히든/트윙클 + 까비 또는 까비 단독: 즉시 보상 (현재 동작 유지)
+          //   - 경험치 적용 + 무게바 버스트 + 큰 황금색 수치 (Day 26 동작)
           const kabikabiExpResult = addExp(kabikabiTotalWeight);
           if (kabikabiExpResult.leveledUp) {
             if (pendingLevelUp) {
@@ -2102,10 +2408,13 @@ export default {
                 newLevel:  kabikabiExpResult.newLevel,
               };
             }
+            // ★ Day 38 후속 — 까비까비 흐름의 렙업도 동일하게 즉시 stats-bar / hud 갱신 보장.
+            //   onAccumulate 흐름과 동일 패턴 (첫 렙업 누락 방지).
+            statsBar.refresh();
+            hud.refreshImagination();
           }
           hud.setLevelProgress();
           hud.showGainBurst(kabikabiTotalWeight);
-          // ★ Day 26 (대표 결정 시안 B) — 까비까비 보상도 슬롯 그리드 가운데 큰 버스트
           showCenterGainBurst(grid.root, kabikabiTotalWeight);
         }
       }
@@ -2229,29 +2538,44 @@ export default {
       // Day 7: 콤보 보너스 = 콤보 단계×10% + 장비 combo_bonus 옵션 (기본 무게 기준 합산)
       // applyWeight 안에서 calcComboBonus 호출되지만, 표시용 comboBonus 분도 별도 저장.
       // Day 10: 세트 무게 보너스 (setWeightBonusPct) 도 weight_bonus 와 같은 단위로 합산.
+      //
+      // ★ Day 31 (대표 결정) — 검은 HIT + 까비까비 동시 발생 시 새 산식:
+      //   적용베이스 = rolledWeight + kabikabiBonus
+      //   물고기무게보너스 = 적용베이스 × (weight_bonus% + setWeightBonusPct%) / 100
+      //   콤보보너스      = 적용베이스 × (콤보단계 × 10% + combo_bonus%) / 100
+      //   finalWeight    = 적용베이스 + 물고기무게보너스 + 콤보보너스
+      //                  = applyWeight(적용베이스, activeOpts, comboCount, setWeightBonusPct)
+      //   ★ kabikabi 무게는 검은 클러스터 N개에 균등 분배 (각 결과 팝업이 산식 표시 일관성).
+      const kabikabiPerCluster = clusters.length > 0
+        ? Math.round((pendingKabikabiTotalWeight / clusters.length) * 100) / 100
+        : 0;
 
       resultQueue = clusters.map((cluster, clusterIdx) => {
-        // ★ Day 24 — 신화보스 11지역 전용 클램프 + rollWeight 에 stage.weightMultiplier 전달
+        // ★ Day 29 — clampGradeForStage 는 통과 함수로 동작 (강등 폐기, 모든 지역 신화 허용)
         const grade = clampGradeForStage(gradeOf(cluster.size), stage.id);
-        // ★ Day 27 — 신화보스 (검은 25+, 11지역) = 황금빛꿈고래 (mythic_01) 고정 — 게임 엔딩 상징
-        //   분홍/황금/하얀 10+ 신화는 handleMythicTriggerHit 분기에서 별도 처리 (mythic_02~04 무작위)
+        // ★ Day 29 — 검은 10+ 매칭 = 신화보스. 일반 신화 트리거와 동일하게 mythic_02~04 무작위 (대표 결정).
+        //   황금빛꿈고래(mythic_01)는 트윙클 타임 중 트윙클 15+ 전용 (별도 분기 — pickGoldenDreamWhale)
         const fish = (grade === '신화보스')
-          ? pickMythicFish('fish')
+          ? pickMythicFish()
           : pickFishByGrade(stage.id, grade);
         // Equipment-4d + Day 7 콤보 + Day 10 세트: 장비 weight_bonus + 세트 weightPct + 콤보 보너스 합쳐 적용
         const { weight: rolledWeight, tier } = rollWeight(fish.baseWeight, grade, stage.weightMultiplier);
-        const weight = applyWeight(rolledWeight, activeOpts, comboCount, setWeightBonusPct);
+        // ★ Day 31 — 적용베이스 = rolledWeight + kabikabiBonus (까비 동시 발생 시)
+        const kabikabiBonus = kabikabiPerCluster;
+        const adjustedBase  = rolledWeight + kabikabiBonus;
+        const weight        = applyWeight(adjustedBase, activeOpts, comboCount, setWeightBonusPct);
         // 콤보 보너스 분 = 무게바 떠오름 옆 표시용 (HUD에서 색상/크기 처리)
-        const comboBonus = calcComboBonus(rolledWeight, activeOpts, comboCount);
+        const comboBonus    = calcComboBonus(adjustedBase, activeOpts, comboCount);
         // Day 7-2 + Day 10: 결과 팝업 무게 분해 표시용 — 장비 weight_bonus 분 + 세트 무게 % 합산
         // (대표 결정: STATS 와 결과팝업 모두 합산 표시 — 사용자 입장에선 둘 다 "장비/세트로 인한 보너스")
         const totalWeightPct = (activeOpts.weight_bonus || 0) + setWeightBonusPct;
-        const equipmentBonus = rolledWeight * (totalWeightPct / 100);
+        const equipmentBonus = adjustedBase * (totalWeightPct / 100);
         return {
           fish, weight, tier, grade,
-          baseWeight: rolledWeight,      // 결과팝업 작은 줄 = 기본 무게 표시
-          equipmentBonus,                // 결과팝업 작은 줄 = 장비+세트 보너스 분 합산
-          comboBonus,                    // 콤보 보너스 분 (kg, mult 적용 전)
+          baseWeight: rolledWeight,      // 결과팝업 작은 줄 = 기본 무게 표시 (까비 미포함)
+          kabikabiBonus,                 // ★ Day 31 신규 — 까비까비 분배 무게 (kg)
+          equipmentBonus,                // 결과팝업 작은 줄 = 장비+세트 보너스 분 (적용베이스 기준 — 까비 포함)
+          comboBonus,                    // 콤보 보너스 분 (적용베이스 기준 — 까비 포함)
           comboLevel: comboCount,        // 결과 시점 콤보 단계 (HUD 색상용, 1~10+)
           size: cluster.size,
           symbol: cluster.symbol,
@@ -2259,14 +2583,19 @@ export default {
         };
       });
 
+      // ★ Day 31 — pending 까비 무게 리셋 (이번 매칭 처리 종료)
+      pendingKabikabiTotalWeight = 0;
+
       // Day 3: bite-alert에 등급 + 보스 정보 전달
       // ★ Day 22 — 분홍 보스 트리거 폐기 (HIDDEN HIT 미니게임 도입):
       //   기존: hasBoss = clusters.some(c => c.symbol === 'rainbow')
       //   변경: hasBoss = false 고정. 분홍 매칭 시 BOSS 텍스트 표시 X.
       //   (Phase 2 에서 분홍 매칭 시 HIDDEN HIT 라벨/팝업으로 별도 분기 추가 예정)
-      // ★ Day 27 — grades 에 변종 + 포함 displayGrade 전달 (예: '치어+++', '보스++')
-      //   fishDisplayGrade(fish.id) 사용 — 신화 4종/히든/황금어는 변종 없음 (그대로)
-      const grades = resultQueue.map(r => fishDisplayGrade(r.fish.id) || r.grade);
+      // ★ Day 29 (대표 결정) — 힛 팝업에는 base 등급만 표시. 변종 + 는 결과팝업에서만 노출.
+      //   배경: 힛 팝업에서 변종 결과가 미리 보이면 결과팝업의 Lucky Lucky 연쇄 연출이 김 빠짐.
+      //   이전 (Day 27): fishDisplayGrade(r.fish.id) — '치어+++' 표시
+      //   신규 (Day 29): r.grade 직접 사용 — '치어' 만 표시
+      const grades = resultQueue.map(r => r.grade);
       const hasBoss = false;
       // ★ Day 27 — 신화 매칭 (검은 25+ 황금빛꿈고래) 포함 여부 → bite-alert 톤 분기
       const isMythicHit = resultQueue.some(r => r.grade === '신화보스');
@@ -2283,10 +2612,153 @@ export default {
       // → 큐 다 비우고 finishTurn 도달 시점에 isProcessing = false로 자연스럽게 해제됨
     }
 
+    /* ============================================
+       ★ Day 29 — Lucky Lucky 등급 럭키 시스템 (대표 결정)
+       ============================================
+       매 pull 1회 럭키 체크. 발동 시 잡기 대상 결과 등급 한 단계 ↑.
+       사용자가 풀 버튼 다시 누르면 또 럭키 체크 → 안 뜰 때까지 연쇄.
+       10매칭(신화보스) = 럭키 비활성 (이미 최상위).
+       확률 = LUCKY_BASE_RATE + activeOpts.lucky_rate (장비 옵션).
+       ============================================ */
+    const LUCKY_BASE_RATE = 0.15;   // ★ 테스트용 (대표 지시) — 정식: 0.05 (5%)
+    const GRADE_ORDER = ['치어', '소형', '중형', '월척', '대물', '보스', '전설보스', '신화보스'];
+    let luckyChainCount = 0;        // 현재 pull 사이클의 연쇄 카운트 (X2, X3 표시용)
+
+    /** 다음 등급 (한 단계 위). 신화보스 = null. */
+    function nextGradeOf(grade) {
+      const idx = GRADE_ORDER.indexOf(grade);
+      if (idx < 0 || idx >= GRADE_ORDER.length - 1) return null;
+      return GRADE_ORDER[idx + 1];
+    }
+
+    /** resultQueue 에서 가장 높은 등급의 인덱스 (멀티히트 자동선택 기준). */
+    function findHighestResultIdx(results) {
+      let highIdx = 0;
+      let highRank = -1;
+      results.forEach((r, idx) => {
+        const rank = GRADE_RANK[r.grade] ?? -1;
+        if (rank > highRank) { highRank = rank; highIdx = idx; }
+      });
+      return highIdx;
+    }
+
+    /**
+     * 결과 객체 한 단계 등급 업그레이드 (어종/무게 재계산).
+     * 럭키 발동 시 호출.
+     *
+     * @param {object} result        resultQueue 의 한 원소 (mutate)
+     * @param {string} newGrade      업그레이드 후 등급
+     * @param {object} activeOpts    장비 옵션
+     * @param {number} setWeightBonusPct  세트 무게 보너스
+     */
+    function upgradeResultGrade(result, newGrade, activeOpts, setWeightBonusPct) {
+      // 어종 재추첨 — 신화면 mythic_02~04 무작위, 일반이면 지역 변종 분포 기반
+      const newFish = (newGrade === '신화보스')
+        ? pickMythicFish()
+        : pickFishByGrade(stage.id, newGrade);
+
+      // 무게 재계산 (Phase 3-C D-i 공식 + 지역 배율 — 현재 모두 1.0)
+      const { weight: rolledWeight, tier } = rollWeight(newFish.baseWeight, newGrade, stage.weightMultiplier);
+      const weight = applyWeight(rolledWeight, activeOpts, comboCount, setWeightBonusPct);
+      const comboBonus = calcComboBonus(rolledWeight, activeOpts, comboCount);
+      const totalWeightPct = (activeOpts.weight_bonus || 0) + (setWeightBonusPct || 0);
+      const equipmentBonus = rolledWeight * (totalWeightPct / 100);
+
+      // mutate (resultQueue 안의 객체)
+      result.grade = newGrade;
+      result.fish = newFish;
+      result.weight = weight;
+      result.tier = tier;
+      result.baseWeight = rolledWeight;
+      result.equipmentBonus = equipmentBonus;
+      result.comboBonus = comboBonus;
+      // size/symbol/clusterIdx 는 원래 매칭 정보라 그대로 유지 (시각 흔적)
+      // 신화 도달 시 신화 플래그 표시 (멀티힛 X — 단일 잡기)
+      if (newGrade === '신화보스') {
+        result.isMythicHit = true;
+      }
+    }
+
+    /**
+     * 럭키 체크 + 발동 시 등급 업그레이드.
+     *
+     * @returns {boolean}  true = 발동됨 (등급 ↑), false = 미발동
+     */
+    function tryLuckyLuckyUpgrade(activeOpts, setWeightBonusPct) {
+      if (resultQueue.length === 0) return false;
+
+      // 멀티히트 자동선택 기준 — 가장 큰 등급 1개 대상
+      const highIdx = findHighestResultIdx(resultQueue);
+      const target = resultQueue[highIdx];
+
+      // 신화보스 도달 — 럭키 비활성 (대표 결정)
+      if (target.grade === '신화보스') return false;
+
+      // 럭키 확률 (기본 + 장비)
+      const luckyRate = LUCKY_BASE_RATE + ((activeOpts.lucky_rate || 0) / 100);
+      if (Math.random() >= luckyRate) return false;
+
+      const next = nextGradeOf(target.grade);
+      if (!next) return false;
+
+      upgradeResultGrade(target, next, activeOpts, setWeightBonusPct);
+      return true;
+    }
+
     function handlePull() {
       if (resultQueue.length === 0) return;
+
+      // ★ Day 36 (대표 결정) — 신화 트리거 흐름: SPECIAL MYTHIC HIT 인트로 → 사용자 pull → 황금빛꿈고래 인트로.
+      //   awaitingMythicPull = true 면 일반 매칭 처리(럭키 체크 등) 건너뛰고 mythic-intro 표시 후 return.
+      //   처리 흐름: special intro hide → mythic-intro show → 인트로 터치 시 잡기게임 진입 (mythic-intro onConfirm).
+      if (awaitingMythicPull) {
+        awaitingMythicPull = false;
+        hideSpecialMythicHitIntro(specialMythicHitIntro);
+        cast.setState('wait');  // 인트로 표시 동안 cast 비활성 (인트로 onConfirm 에서 잡기게임 진입)
+        showMythicIntro(mythicIntro);
+        return;
+      }
+
+      // ★ Day 29 v2 (대표 결정) — 다음 pull 누른 순간 이전 Lucky Lucky 텍스트 즉시 사라짐.
+      //   (Lucky 발동 시 안 사라지고 유지 → 사용자가 또 풀 누르면 사라짐 → 또 발동 시 새로 등장)
+      hideLuckyLuckyEffect(biteAlertEl);
+
+      // ★ Day 29 — Lucky Lucky 등급 럭키 체크 (매 pull 1회)
+      const inv = loadInventory();
+      const codexBonuses = getCodexBonuses();
+      const activeOpts = getActiveOptions(inv, codexBonuses);
+      const setGrade = getSetGrade(inv);
+      const setWeightBonusPct = getSetWeightBonus(setGrade);
+
+      if (tryLuckyLuckyUpgrade(activeOpts, setWeightBonusPct)) {
+        // 럭키 발동 — bite-alert 등급 텍스트 갱신 + Lucky Lucky 텍스트 연출
+        luckyChainCount += 1;
+        if (activeBiteInfo) {
+          activeBiteInfo.grades = resultQueue.map(r => r.grade);
+          // 신화 도달 시 isMythicHit 플래그 (bite-alert 톤 변경)
+          if (resultQueue.some(r => r.grade === '신화보스')) {
+            activeBiteInfo.isMythicHit = true;
+          }
+          showBiteAlert(biteAlertEl, activeBiteInfo);
+          // ★ Day 29 v2 (대표 결정) — 등급 텍스트가 바뀔 때 순간 크게 → 작아지는 pop 연출
+          //   showBiteAlert 가 등급 텍스트 갱신 직후 .grade-pop 클래스 추가 → animation 자동.
+          //   재발동 시 reflow 트릭으로 animation 재시작.
+          const gradeEl = biteAlertEl.querySelector('.bite-alert__grade');
+          if (gradeEl) {
+            gradeEl.classList.remove('grade-pop');
+            void gradeEl.offsetWidth;
+            gradeEl.classList.add('grade-pop');
+          }
+        }
+        showLuckyLuckyEffect(biteAlertEl, luckyChainCount);
+        // cast 는 그대로 'pull' 상태 — 사용자가 또 누르면 또 럭키 체크
+        return;
+      }
+
+      // 미발동 → 잡기게임 진입 (기존 흐름)
+      luckyChainCount = 0;   // 다음 사이클 위해 리셋
       hideBiteAlert(biteAlertEl);
-      activeBiteInfo = null;  // Day 13 — 당기기 누른 시점 = 히트 팝업 종료
+      activeBiteInfo = null;
       processNextResult();
     }
 
@@ -2296,11 +2768,11 @@ export default {
     });
     disposers.push(() => cast.dispose());
 
-    actionRow.appendChild(leftCol);
     actionRow.appendChild(cast.root);
-    actionRow.appendChild(rightCol);
 
     content.appendChild(actionRow);
+    // ★ Day 38 후속 (대표 결정) — turn 카운터를 cast 아래로 배치 (위 createTurnCounter 호출 위치 참고).
+    content.appendChild(turn.root);
     root.appendChild(content);
 
     root.appendChild(menuPanel.root);
@@ -2309,6 +2781,8 @@ export default {
     root.appendChild(twinkleIntro);   // Day 20
     root.appendChild(twinkleRewardPopup.root);   // Day 20
     root.appendChild(hiddenIntro);    // ★ Day 22 — HIDDEN BOSS 진입 팝업
+    root.appendChild(mythicIntro);    // ★ Day 35 — 신화 트리거 (황금빛꿈고래) 진입 팝업
+    root.appendChild(specialMythicHitIntro);  // ★ Day 36 — SPECIAL MYTHIC HIT 인트로 (floating)
     root.appendChild(hiddenCardFlip); // ★ Day 22 Phase 6 — HIDDEN HIT 카드뒤집기
     root.appendChild(overlayLayer);
 
@@ -2492,6 +2966,7 @@ export default {
           savedGridData:   twinkleHitState.savedGridData,
           lockedCells:     twinkleHitState.lockedCells,
           rewardCount:     twinkleHitState.rewardCount,
+          goldenWhaleTriggered: twinkleHitState.goldenWhaleTriggered,   // ★ Day 29
           leftAt:          Date.now(),
         });
       }

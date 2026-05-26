@@ -438,6 +438,38 @@
   letter-spacing: 0.18em;
 }
 
+/* ★ Day 37 (대표 결정 A — (가)+(나) 조합) — 황금빛꿈고래 SPECIAL MYTHIC 특별 연출.
+   - 글로우 펄스 (text-shadow 강약 반복)
+   - 크기 약간 강조 (1.5 → 1.8rem) + lowercase 무시 (대문자 통일)
+   - color/base text-shadow 는 JS 인라인 스타일 (#FFD700) */
+.catch-fish-item__grade-label--special-mythic {
+  font-size: 1.8rem;
+  letter-spacing: 0.18em;
+  text-transform: none;                  /* lowercase 무시 — "SPECIAL MYTHIC" 대문자 유지 */
+  animation: catch-special-mythic-pulse 1.6s ease-in-out infinite;
+}
+.catch-results--multi .catch-fish-item__grade-label--special-mythic {
+  font-size: 1.5rem;                     /* 다중일 땐 살짝 축소하지만 일반 라벨보다 큼 */
+}
+
+@keyframes catch-special-mythic-pulse {
+  0%, 100% {
+    text-shadow:
+      0 0 10px rgba(255, 215, 0, 0.8),
+      0 0 5px rgba(255, 215, 0, 0.4),
+      0 1px 3px rgba(0, 0, 0, 0.85);
+    transform: scale(1);
+  }
+  50% {
+    text-shadow:
+      0 0 22px rgba(255, 215, 0, 1),
+      0 0 14px rgba(255, 215, 0, 0.85),
+      0 0 8px rgba(255, 200, 80, 0.55),
+      0 1px 3px rgba(0, 0, 0, 0.85);
+    transform: scale(1.06);
+  }
+}
+
 /* 다중 매칭 — 선택 가능 상태 (탭 가능) */
 .catch-fish-item--selectable {
   cursor: pointer;
@@ -571,7 +603,7 @@
 .catch-fish-item__hp {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;                /* ★ Day 40 (대표 결정) — 줄 사이 세로 간격 4px → 2px */
   align-items: center;
   max-width: 32rem;
 }
@@ -580,7 +612,7 @@
 .catch-fish-item__hp-row {
   display: flex;
   flex-direction: row;
-  gap: 4px;
+  gap: 2px;                /* ★ Day 40 (대표 결정) — 한 줄 안 셀 사이 가로 간격 4px → 2px */
   justify-content: center;
 }
 
@@ -599,8 +631,8 @@
 }
 
 .catch-fish-item__hp-cell {
-  width: 2.2rem;
-  height: 1.4rem;
+  width: 2.4rem;           /* ★ Day 40 (대표 결정) — 셀 가로 2.2rem → 2.4rem (가로 늘림) */
+  height: 1.2rem;          /* ★ Day 40 (대표 결정) — 셀 세로 1.4rem → 1.2rem (세로 줄임) */
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(0, 0, 0, 0.4);
   border-radius: 2px;
@@ -609,39 +641,13 @@
               opacity 0.3s var(--fade-easing);
 }
 
-/* Day 4: 등급별 셀 크기 — 칸 수 많을수록 작게 (전체 폭 비슷하게 유지) */
-.catch-fish-item__hp[data-grade="소형"]    .catch-fish-item__hp-cell {
-  width: 2.2rem; height: 1.4rem;
-}
-.catch-fish-item__hp[data-grade="중형"]    .catch-fish-item__hp-cell {
-  width: 1.8rem; height: 1.3rem;
-}
-.catch-fish-item__hp[data-grade="월척"]    .catch-fish-item__hp-cell {
-  width: 1.4rem; height: 1.1rem;
-}
-/* Day 17 후속 v2 (대표 결정 A안): 대물 24 HP (12+12) — 한 줄 12칸 화면 폭 맞춤 */
-.catch-fish-item__hp[data-grade="대물"]    .catch-fish-item__hp-cell {
-  width: 1.25rem; height: 1.0rem;
-}
-.catch-fish-item__hp[data-grade="보스"]    .catch-fish-item__hp-cell {
-  width: 1.4rem; height: 1.1rem;
-}
-.catch-fish-item__hp[data-grade="전설보스"] .catch-fish-item__hp-cell {
-  width: 1.1rem; height: 1rem;
-  gap: 3px;
-}
-/* Day 16 — 신화보스 (3줄 15칸 = 45 HP, 가장 작은 cell) */
-.catch-fish-item__hp[data-grade="신화보스"] .catch-fish-item__hp-cell {
-  width: 1.0rem; height: 0.9rem;
-  gap: 2px;
-}
-/* 줄 사이 간격도 등급별로 살짝 조정 */
-.catch-fish-item__hp[data-rows="3"] {
-  gap: 3px;
-}
-.catch-fish-item__hp[data-rows="3"] .catch-fish-item__hp-row {
-  gap: 3px;
-}
+/* ★ Day 40 (대표 결정) — 셀 크기 + gap 미세 조정 (Day 39 통일 유지).
+ *   셀 width 2.4rem / height 1.2rem / gap 2px (셀+줄 동일).
+ *   분배는 catch-game-config.js hpRows 에서 줄 수로 조절:
+ *     치어 [4,4] / 소형 [5,5] / 중형 [7,7] / 월척 [7,7,7] / 대물 [8,8,8]
+ *     보스 [8,8,8,8] / 전설보스 [8,8,8,8,8] / 신화보스 [9,9,9,9,9]
+ *   모든 등급 한 줄 ≤ 9칸 → 한 줄 가로 = 9 × 2.4 + 8 × 0.2 = 23.2rem (24rem 폰 안전).
+ *   이전 등급별 셀 크기 차등(.catch-fish-item__hp[data-grade="..."] cell width/height) 제거 상태 유지. */
 
 .catch-fish-item__hp-cell[data-filled="true"] {
   background: linear-gradient(180deg,
@@ -697,6 +703,12 @@
   inset: 0;
   border-radius: 50%;
   will-change: transform, opacity;  /* Day 17 후속 v2 폰 최적화 — orb 매 프레임 이동 시 GPU 합성 비용 ↓ */
+
+  /* ★ Day 38 (대표 결정) — 등급별 물고기원 크기 축소 (--orb-scale).
+   *  잡기존 축소와 동일 비율. catch-game.js selectFish 에서 적용.
+   *  caught/miss-fade keyframes 도 이 변수 기반 calc() 으로 보정됨 (충돌 방지). */
+  transform: scale(var(--orb-scale, 1));
+  transform-origin: center center;
 
   /* 배경 = 클러스터 색 (다층 그라디언트) */
   background:
@@ -754,11 +766,18 @@
 }
 
 /* 원 안 검은 물고기 심볼 — 등급별 크기 차이 */
+/* ★ Day 40 (대표 결정) — 부모 .catch-orb 의 --orb-scale (등급↑ = 큰 값) 영향 무효화.
+ *   심볼은 원래 크기 그대로 유지 → 잡기존/심볼 크기는 그대로, orb 외곽만 등급↑ 커지는 효과.
+ *   판정도 심볼 반지름 기준 (catch-game.js currentSymbolHalfPx).
+ *   transform 의 scale 은 translate, rotate 와 같이 적용 (bob animation 도 역 scale 포함).
+ * ★ Day 40 후속 (대표 결정) — 심볼이 잡기존(--zone-scale) 따라 같이 작아져야 직관적.
+ *   scale = zone-scale / orb-scale (역 scale 에 zone-scale 곱). 부모 orb-scale 합치면 시각 = symbolSize × zone-scale.
+ *   즉 화면상 심볼 = "원본 심볼 × 잡기존 축소율" — 등급↑ = 잡기존 ↓ = 심볼 ↓ (시각 일관). */
 .catch-orb__symbol {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(calc(var(--zone-scale, 1) / var(--orb-scale, 1)));
   pointer-events: none;
   will-change: transform;  /* Day 17 후속 v2 폰 최적화 — bob 애니메이션 GPU 가속 */
   filter:
@@ -769,8 +788,26 @@
 }
 
 @keyframes catch-orb-symbol-bob {
-  0%, 100% { transform: translate(-50%, calc(-50% - 0.5px)) rotate(-1deg); }
-  50%      { transform: translate(-50%, calc(-50% + 0.5px)) rotate(1deg); }
+  0%, 100% { transform: translate(-50%, calc(-50% - 0.5px)) rotate(-1deg) scale(calc(var(--zone-scale, 1) / var(--orb-scale, 1))); }
+  50%      { transform: translate(-50%, calc(-50% + 0.5px)) rotate(1deg)  scale(calc(var(--zone-scale, 1) / var(--orb-scale, 1))); }
+}
+
+/* ★ Day 40 (대표 결정) — 가이드 원 (catch-orb__guide).
+ *   심볼과 같은 위치/크기, 흰 배경 + 살짝 어두운 외곽선 (★ Day 40 후속 — 흰 외곽선만으로는 묻혀서 변경).
+ *   유저에게 "이 흰 원을 잡기존 안에 맞춰서 잡는다" 를 직관적으로 표시.
+ *   검은 심볼이 흰 배경 위에 올라가서 강한 대비 → 시각 명확.
+ *   심볼과 동일하게 zone-scale/orb-scale 적용해서 잡기존 축소 따라 같이 작아짐.
+ *   판정 영역(currentSymbolHalfPx) 과 시각 일치. */
+.catch-orb__guide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(calc(var(--zone-scale, 1) / var(--orb-scale, 1)));
+  pointer-events: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 1);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
 }
 
 /* @keyframes catch-orb-shine 제거 — Day 21 C안 (참조 X) */
@@ -781,15 +818,17 @@
 }
 
 @keyframes catch-orb-caught {
-  0%   { transform: scale(1);    opacity: 1; }
+  /* ★ Day 38 — --orb-scale (등급별 축소) 와 caught scale 합성.
+   *  base scale × N 곱셈으로 모든 등급에서 동일한 시각 효과 + 축소 유지. */
+  0%   { transform: scale(var(--orb-scale, 1));               opacity: 1; }
   45%  {
-    transform: scale(1.45);
+    transform: scale(calc(var(--orb-scale, 1) * 1.45));
     opacity: 1;
     box-shadow:
       0 0 32px rgba(255, 255, 255, 1),
       0 0 56px var(--orb-grade-glow, rgba(255, 255, 255, 0.95));
   }
-  100% { transform: scale(0.4);  opacity: 0; }
+  100% { transform: scale(calc(var(--orb-scale, 1) * 0.4));   opacity: 0; }
 }
 
 /* MISS 시 그 자리에 멈춤 + 페이드아웃 (Day 3 추가)
@@ -799,9 +838,10 @@
 }
 
 @keyframes catch-orb-miss-fade {
-  0%   { transform: scale(1);    opacity: 1; }
-  20%  { transform: scale(1.05); opacity: 0.95; }
-  100% { transform: scale(0.85); opacity: 0; filter: blur(2px); }
+  /* ★ Day 38 — --orb-scale (등급별 축소) 와 miss-fade scale 합성. */
+  0%   { transform: scale(var(--orb-scale, 1));                opacity: 1; }
+  20%  { transform: scale(calc(var(--orb-scale, 1) * 1.05));   opacity: 0.95; }
+  100% { transform: scale(calc(var(--orb-scale, 1) * 0.85));   opacity: 0; filter: blur(2px); }
 }
 
 
@@ -868,16 +908,39 @@
   position: absolute;
   top: 50%;
   left: 50%;
+  /* ★ Day 38 후속5 (대표 보고 — 신화/전설 잡기존 그물 안 보이는 버그 수정).
+   *  기존: transform: translate(-50%, -50%) scale(var(--zone-scale, 1))
+   *        → 비정수 scale 시 ring-metal 의 background-image linear-gradient(0.6px 그물 라인)
+   *          이 sub-pixel(0.18px 등) 로 줄어들어 화면에 표현 불가능. 터치 시 catch-zone-*
+   *          애니메이션 repaint 트리거되면 잠깐 보였다 사라지는 "번쩍" 현상 발생.
+   *  변경: scale 제거. 잡기존 크기는 .catch-game__button 의 width/height 에 직접 적용.
+   *        → ring-metal background-image % 기반 → 실제 button 픽셀에 맞춰 정확히 그려짐. */
   transform: translate(-50%, -50%);
   z-index: 10;
   pointer-events: none; /* 화면 전체 클릭이 컨테이너에 가닿게 */
   transition: opacity 0.4s var(--fade-easing);
 }
 
+/* ★ Day 38 (대표 결정) — 잡기존 숨김 (변종 +++(p3) 이상 또는 황금빛꿈고래 mythic_01).
+ *  히든보스 기믹과 동일: 시각만 opacity 0 페이드 / pointer-events 유지
+ *  (어디든 터치하면 그 위치에서 잡기 판정 — 자연스럽게 +++ 이상임을 눈치챌 수 있는 부수효과).
+ *
+ *  히든모드와 별개 dataset 으로 동작 (히든모드는 별도 컨셉, 일반 등급 +++ 와 독립). */
+.catch-game[data-zone-hidden="true"] .catch-game__button-wrap {
+  opacity: 0;
+  transition: opacity 1s ease-out;
+  /* pointer-events 그대로 유지 — button 안쪽은 pointer-events: auto, button 위치 영역 클릭은 계속 가능.
+     (위쪽 .catch-game__button-wrap 의 pointer-events: none 은 wrap 자체 영역만 통과시킴) */
+}
+
 .catch-game__button {
   position: relative;
-  width: 9rem;            /* 80 → 90 (네모) */
-  height: 9rem;
+  /* ★ Day 38 후속5 (대표 결정) — 등급별 잡기존 크기 축소 (--zone-scale 직접 적용).
+   *  기존: 9rem 고정 + button-wrap 에 transform: scale → sub-pixel 그물 사라짐 버그.
+   *  변경: width/height 직접 calc → ring-metal background-image % 기반이 항상 정수 픽셀에 정렬.
+   *  치어 1.0 → 9rem / 소형 0.9 → 8.1rem / ... / 신화 0.3 → 2.7rem. */
+  width: calc(9rem * var(--zone-scale, 1));
+  height: calc(9rem * var(--zone-scale, 1));
   border-radius: 6px;     /* 살짝 둥근 네모 */
   border: none;
   padding: 0;
@@ -1049,30 +1112,32 @@
   100% { opacity: 0; transform: translate(-50%, calc(-50% - 80px)) scale(0.95); }
 }
 
-/* PERFECT — 노란색 가장 크게 */
+/* PERFECT — 흰색 가장 크게 (★ Day 40 — 크리티컬 #E8C870 황금과 명확히 구분 위해 황금 노랑 → 흰색 변경) */
+/* ★ Day 39 (대표 결정) — 판정 텍스트 절반 크기로 축소
+ * ★ Day 40 후속 (대표 결정) — PERFECT 만 임팩트 강조 위해 3.2rem → 4.8rem (1.5배). NICE/BAD/MISS 는 그대로. */
 .catch-judge--perfect {
-  font-size: 6.4rem;
-  color: #FFD93D;
+  font-size: 4.8rem;
+  color: #FFFFFF;                                 /* ★ Day 40 — #FFD93D → #FFFFFF (크리티컬과 색 차별) */
   text-shadow:
-    0 0 22px rgba(255, 217, 61, 1),
-    0 0 44px rgba(255, 217, 61, 0.8),
-    0 0 70px rgba(255, 200, 60, 0.55),
+    0 0 22px rgba(255, 255, 255, 1),              /* ★ Day 40 — 황금 글로우 → 흰 글로우 */
+    0 0 44px rgba(255, 255, 255, 0.8),
+    0 0 70px rgba(220, 230, 255, 0.55),           /* 살짝 푸른 hint 로 차가운 톤 */
     0 3px 6px rgba(0, 0, 0, 0.7);
 }
 
-/* NICE — 분홍색 중간 크기 */
+/* NICE — 연한 파란색 중간 크기 (★ Day 40 — 분홍 #FF9DCB → 연한 파랑 #A8C8E8, 잡기존 색 매칭) */
 .catch-judge--nice {
-  font-size: 4.6rem;
-  color: #FF9DCB;
+  font-size: 2.3rem;
+  color: #A8C8E8;
   text-shadow:
-    0 0 18px rgba(255, 157, 203, 1),
-    0 0 36px rgba(255, 157, 203, 0.75),
+    0 0 18px rgba(168, 200, 232, 1),
+    0 0 36px rgba(168, 200, 232, 0.75),
     0 3px 6px rgba(0, 0, 0, 0.7);
 }
 
 /* MISS — 빨간색 */
 .catch-judge--miss {
-  font-size: 3.8rem;
+  font-size: 1.9rem;
   color: #FF4646;
   text-shadow:
     0 0 16px rgba(255, 70, 70, 0.95),
@@ -1083,7 +1148,7 @@
 /* Day 4: BAD — 검정색 텍스트, 빨간 글로우로 가독성 확보.
    ★ Day 25 (대표 결정): 흰색 테두리 + 흰색 글로우 삭제 (가독성 X — 흐릿하게 보임 픽스). */
 .catch-judge--bad {
-  font-size: 5.6rem;
+  font-size: 2.8rem;
   color: #1a1a1a;
   text-shadow:
     0 0 14px rgba(255, 70, 70, 0.85),
@@ -1115,6 +1180,60 @@
     0 0 10px rgba(255, 77, 77, 0.95),
     0 0 18px rgba(255, 77, 77, 0.7),
     0 2px 3px rgba(0, 0, 0, 0.9);
+}
+
+
+/* ============================================
+   ★ Day 32 (대표 결정) — CRITICAL ×2 텍스트 표시
+   ============================================
+   잡기게임 크리티컬 발동 시 펑 팝업으로 표시.
+   - 색: #E8C870 (황금) + 황금 글로우
+   - 위치: top/left 인라인 스타일 (showCriticalText 에서 30~55% / 15~85% 랜덤)
+           → 물고기 체력바와 잡기존 사이 영역 안 좌우상하 랜덤
+   - 애니메이션: scale 0 → 1.3 → 1, rotate -8° → 3° → 0° (오버슈트 펑 팝업, 타격감 ↑)
+   - 자동 제거: 0.8s 후 (catch-game.js setTimeout)
+   ============================================ */
+.catch-critical {
+  position: absolute;
+  /* top / left 는 인라인 스타일에서 랜덤 설정 */
+  transform: translate(-50%, -50%);
+  z-index: 12;                              /* catch-judge(11) 보다 위 */
+  font-family: var(--font-impact);
+  font-weight: 900;
+  font-size: 4.8rem;
+  letter-spacing: 0.08em;
+  color: #E8C870;
+  text-shadow:
+    0 0 16px rgba(232, 200, 112, 1),
+    0 0 32px rgba(232, 200, 112, 0.65),
+    0 0 56px rgba(232, 200, 112, 0.35),
+    0 3px 6px rgba(0, 0, 0, 0.75);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: catch-critical-pop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes catch-critical-pop {
+  0%   {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0) rotate(-8deg);
+  }
+  18%  {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.3) rotate(3deg);
+  }
+  35%  {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+  72%  {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95) rotate(0deg);
+  }
 }
 
 
@@ -1172,7 +1291,8 @@
   top: 0;              /* Day 4: bottom: 0 → top: 0 */
   left: 0;
   right: 0;
-  height: 1.8rem;        /* Day 4: 12px → 18px (더 잘 보이게) */
+  /* ★ Day 38 후속E (대표 결정) — 안쪽 남은 시간 텍스트 표시 위해 높이 살짝 ↑ */
+  height: 2.2rem;
   background: rgba(0, 0, 0, 0.6);
   overflow: hidden;
   z-index: 8;
@@ -1189,6 +1309,32 @@
     0 0 12px rgba(165, 210, 240, 0.7),
     inset 0 -1px 0 rgba(255, 255, 255, 0.4);
   transition: width 0.05s linear, background 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ★ Day 38 후속E (대표 결정) — 시간 바 안쪽 남은 시간 텍스트.
+ *   absolute 로 시간 바 채우기(fill) 위에 표시 (fill width 변동과 무관하게 중앙 고정).
+ *   흰색, 굵게, 큰 폰트 — 장비 catch_time_bonus 효과 체감용. */
+.catch-game__time-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-impact);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.85),
+    0 0 4px rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;  /* 1 → 10 → 30 자릿수 변동 시 흔들림 방지 */
+  pointer-events: none;
+  z-index: 1;  /* fill 위에 표시 */
+  user-select: none;
 }
 
 /* Day 4: 시간 20% 이하 — 빨간색 + 번쩍번쩍 */
@@ -1474,7 +1620,12 @@
 .catch-hidden-countdown {
   position: absolute;
   left: 50%;
-  top: 20rem;                /* ★ Day 26 — 잡기존 위쪽 물고기체력바와 잡기존 사이 위치 */
+  /* ★ Day 39 (대표 결정) — 잡기존 위쪽 → 잡기존 아래 & 하단 텍스트(catch-game__hint bottom:10rem) 사이로 이동.
+   *   기존: top: 20rem (물고기체력바와 잡기존 사이, 화면 위쪽).
+   *   변경: top: calc(100% - 14rem) → 컨테이너 하단에서 14rem 위 (hint 위 4rem).
+   *         transform translate(-50%, -50%) 그대로 → element 중심이 calc(100% - 14rem) 자리.
+   *         결과: 잡기존(50% 가운데) 아래 ~ hint(bottom 10rem) 사이에 자연스럽게 위치. */
+  top: calc(100% - 14rem);
   transform: translate(-50%, -50%);
   z-index: 50;
   font-family: var(--font-impact);

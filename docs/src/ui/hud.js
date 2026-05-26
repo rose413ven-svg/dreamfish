@@ -26,6 +26,9 @@ import { createMenuButton } from './menu-button.js';
 import { getExpProgress } from '../data/level-engine.js';
 // ★ Day 25 Phase 3 — 상상력 시스템
 import { getCurrentImagination } from '../data/imagination.js';
+// ★ Day 38 — 상상력 변동 팝업 + 직전값 저장
+import { loadPreviousImagination, savePreviousImagination } from '../core/storage.js';
+import { showImaginationChangePopup } from './imagination-change-popup.js';
 
 /**
  * @param {object} [opts]
@@ -189,19 +192,66 @@ export function createHud(opts = {}) {
   }
 
   /**
-   * ★ Day 25 Phase 3 — 상상력 박스 갱신.
+   * ★ Day 25 Phase 3 / ★ Day 38 확장 (대표 결정) — 상상력 박스 갱신 + 변동 팝업.
+   *
    * 호출 시점: 강화/렙업/장비장착/합성/도감 등록 등 스탯 변동 후 즉시.
    * (내정보 모달은 열릴 때마다 새로 계산 → 별도 트리거 불필요)
+   *
+   * Day 38 추가 + ★ Day 38 후속 (버그 수정):
+   * - 직전값 (storage) 과 비교해 diff !== 0 이면 상상력 변동 팝업 표시.
+   * - 첫 변동 (저장값 없음) 은 팝업 X, 값만 저장 → 두 번째 변동부터 표시 (대표 결정).
+   * - 호출자가 팝업 억제하고 싶을 때 { suppressPopup: true } 옵션 전달
+   *   (예: 레벨업 케이스 — slot.js 가 레벨업 팝업 닫힘 후 직접 표시 처리).
+   *
+   * ★ Day 38 후속 버그 수정 (대표 보고):
+   * 시나리오: 가방 → 장비 클릭 → 강화 화면 → 강화 → 가방 복귀(자동) → 가방 닫기 → 슬롯 복귀
+   *         → 변동 팝업이 안 뜸.
+   * 원인: 강화 완료 시 slot 재mount → createHud → 초기 자동 호출에서 storage 가 갱신되어
+   *       다음 명시적 트리거(가방 닫기) 시 diff=0 발생.
+   * 해결: { suppressStorageUpdate: true } 신설 — storage 갱신도 안 함.
+   *       slot 초기 mount 자동 호출은 박스 텍스트만 갱신하고 previous 그대로 유지 →
+   *       다음 명시 트리거에서 정확히 diff 계산.
+   *
+   * @param {object} [opts]
+   * @param {boolean} [opts.suppressPopup=false]         - true 면 팝업 표시 안 함 (값만 갱신 + 저장)
+   * @param {boolean} [opts.suppressStorageUpdate=false] - true 면 storage previousImagination 도 갱신 안 함
+   * @returns {{ current: number, previous: number | null, diff: number }} 갱신 결과
    */
-  function refreshImagination() {
-    const value = getCurrentImagination();
-    imaginationBox.textContent = value.toLocaleString();
-    imaginationBox.dataset.value = String(value);
+  function refreshImagination(opts = {}) {
+    const { suppressPopup = false, suppressStorageUpdate = false } = opts;
+    const current = getCurrentImagination();
+
+    // 박스 텍스트 갱신 (항상 — 표시값 동기화)
+    imaginationBox.textContent = current.toLocaleString();
+    imaginationBox.dataset.value = String(current);
+
+    // ★ Day 38 — 직전값과 비교
+    const previous = loadPreviousImagination();  // null = 첫 변동
+    const diff = previous === null ? 0 : (current - previous);
+
+    // 팝업 표시 조건:
+    //   - previous !== null  (첫 변동 무시)
+    //   - diff !== 0         (변동 없으면 표시 X)
+    //   - suppressPopup X    (호출자 억제 요청)
+    if (previous !== null && diff !== 0 && !suppressPopup) {
+      showImaginationChangePopup(current, diff);
+    }
+
+    // ★ Day 38 후속 — storage 갱신은 suppressStorageUpdate 가 false 일 때만.
+    //   slot 초기 mount 의 자동 호출은 true → previous 보존 → 다음 명시 트리거에서 diff 계산.
+    if (!suppressStorageUpdate) {
+      savePreviousImagination(current);
+    }
+
+    return { current, previous, diff };
   }
 
-  /* 초기 진행도 + 상상력 반영 */
+  /* 초기 진행도 + 상상력 반영
+   * ★ Day 38 후속 (버그 수정) — 초기 mount 자동 호출은 팝업 + storage 둘 다 억제.
+   *    storage 가 미리 갱신되면 강화 후 slot 재mount 시 diff=0 되어 다음 명시 트리거에서 팝업 누락.
+   *    → 박스 텍스트만 갱신하고 previous 보존 → 가방 닫기 시 정확히 비교됨. */
   setLevelProgress();
-  refreshImagination();
+  refreshImagination({ suppressPopup: true, suppressStorageUpdate: true });
 
   return {
     root,

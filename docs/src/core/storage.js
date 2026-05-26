@@ -19,11 +19,13 @@ const KEY = Object.freeze({
   FISH_CODEX:          'nangman.fishCodex',           // 물고기 도감 (Day 16) — { [name]: { registeredAt, bestWeightKg } }
   EQUIPMENT_CODEX:     'nangman.equipmentCodex',      // 장비 도감 (Day 16) — { [codexKey]: { registeredAt } }
   CODEX_NEW_FISH:      'nangman.codexNewFish',        // 미확인 신규 등록 물고기 이름들 (Day 16) — Array<string>
+  CODEX_NEW_BEST_FISH: 'nangman.codexNewBestFish',    // ★ Day 39 — 미확인 새 최고무게기록 갱신된 물고기 이름들 — Array<string>
   BAG_NEW_ITEMS:       'nangman.bagNewItems',         // 미확인 신규 가방 장비 id들 (Day 16 후속) — Array<string>
   TOTAL_EXP:           'nangman.totalExp',            // 누적 경험치 = 누적 무게 (Day 18 — 레벨 시스템)
   TOTAL_TURN_COUNT:    'nangman.totalTurnCount',      // ★ Day 21 — 누적 cast 횟수 (전 스테이지 공통 글로벌 카운트, 대표 결정)
   SLOT_LAST_STAGE_ID:  'nangman.lastSlotStageId',     // ★ Day 21 — 마지막 진입 슬롯 stageId (메뉴→가방등 후 재진입 시 복원)
   SEEN_STAGE_IDS:      'nangman.seenStageIds',        // ★ Day 22 Phase 7 후속 — 사용자가 stage-map 에서 본 stage id 목록 (햄버거 빨간점용)
+  PREVIOUS_IMAGINATION: 'nangman.previousImagination', // ★ Day 38 — 직전 상상력 점수 (변동 팝업 diff 계산용, 첫 변동 무시 위함)
 });
 
 /** 안전한 읽기: 예외/미지원 환경에서 null 반환 */
@@ -623,6 +625,86 @@ export function clearCodexNewFishNames() {
   }
 }
 
+/* ★ Day 39 — 부분 clear: 도감 9개 서브 탭 진입 시 그 탭에 속한 이름만 NEW 해제 */
+/** 지정된 이름들만 미확인 신규에서 제거. */
+export function clearCodexNewFishNamesByList(namesToClear) {
+  if (!Array.isArray(namesToClear) || namesToClear.length === 0) return;
+  const current = loadCodexNewFishNames();
+  if (current.length === 0) return;
+  const removeSet = new Set(namesToClear);
+  const filtered = current.filter(n => !removeSet.has(n));
+  if (filtered.length === current.length) return;  // 변경 없으면 skip
+  if (filtered.length === 0) {
+    clearCodexNewFishNames();
+  } else {
+    saveCodexNewFishNames(filtered);
+  }
+}
+
+
+/* ============================================
+   ★ Day 39 — 도감 — 미확인 새 최고무게기록 갱신
+   ============================================
+   잡기 성공 시 bestUpdated=true 가 된 (이번 잡기로 최고기록 갱신된) 물고기 이름 누적.
+   사용자가 도감 9개 서브 탭 진입 시 그 탭에 속한 이름만 부분 clear → 빨간점 그 탭만 사라짐.
+   ============================================ */
+
+/** 미확인 새 최고기록 물고기 이름 배열 로드. */
+export function loadCodexNewBestFishNames() {
+  const raw = readRaw(KEY.CODEX_NEW_BEST_FISH);
+  if (!raw) return [];
+  try {
+    const data = JSON.parse(raw);
+    if (!Array.isArray(data)) return [];
+    return data.filter(s => typeof s === 'string');
+  } catch (e) {
+    console.warn('[storage] codex new best fish parse 실패:', e);
+    return [];
+  }
+}
+
+/** 미확인 새 최고기록 물고기 이름 배열 저장 (전체 덮어쓰기). */
+export function saveCodexNewBestFishNames(names) {
+  if (!Array.isArray(names)) {
+    console.warn('[storage] invalid codex new best fish names:', names);
+    return false;
+  }
+  return writeRaw(KEY.CODEX_NEW_BEST_FISH, JSON.stringify(names));
+}
+
+/** 단일 이름 추가 (중복 방지). */
+export function addCodexNewBestFishName(name) {
+  if (!name || typeof name !== 'string') return false;
+  const list = loadCodexNewBestFishNames();
+  if (list.includes(name)) return false;
+  list.push(name);
+  return saveCodexNewBestFishNames(list);
+}
+
+/** 미확인 새 최고기록 모두 clear. */
+export function clearCodexNewBestFishNames() {
+  try {
+    localStorage.removeItem(KEY.CODEX_NEW_BEST_FISH);
+  } catch (e) {
+    console.warn('[storage] codex new best fish clear 실패:', e);
+  }
+}
+
+/** 지정된 이름들만 미확인 새 최고기록에서 제거 (서브 탭 부분 clear 용). */
+export function clearCodexNewBestFishNamesByList(namesToClear) {
+  if (!Array.isArray(namesToClear) || namesToClear.length === 0) return;
+  const current = loadCodexNewBestFishNames();
+  if (current.length === 0) return;
+  const removeSet = new Set(namesToClear);
+  const filtered = current.filter(n => !removeSet.has(n));
+  if (filtered.length === current.length) return;
+  if (filtered.length === 0) {
+    clearCodexNewBestFishNames();
+  } else {
+    saveCodexNewBestFishNames(filtered);
+  }
+}
+
 
 /* ============================================
    가방 — 미확인 신규 장비 (Day 16 후속)
@@ -698,5 +780,43 @@ export function resetTotalExp() {
     localStorage.removeItem(KEY.TOTAL_EXP);
   } catch (e) {
     console.warn('[storage] totalExp reset 실패:', e);
+  }
+}
+
+/* ============================================
+   ★ Day 38 (대표 결정) — 상상력 변동 팝업용 직전값 영속 저장
+   ============================================
+   상상력 점수 변동 팝업을 위해 직전 점수를 저장 / 로드 / 갱신한다.
+   - 첫 변동 시점 (저장값 없음): 팝업 X, 현재 점수만 저장 → 두번째 변동부터 표시
+   - diff = currentImagination - previousImagination
+   - diff !== 0 일 때만 팝업 표시
+   ============================================ */
+
+/**
+ * 직전 상상력 점수 로드. 저장 없으면 null (= 첫 변동).
+ * @returns {number | null}
+ */
+export function loadPreviousImagination() {
+  const raw = readRaw(KEY.PREVIOUS_IMAGINATION);
+  if (raw === null || raw === undefined || raw === '') return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * 직전 상상력 점수 저장. 음수도 그대로 (산식상 발생 안 하지만 안전망).
+ * @param {number} value
+ */
+export function savePreviousImagination(value) {
+  if (!Number.isFinite(value)) return;
+  writeRaw(KEY.PREVIOUS_IMAGINATION, String(Math.round(value)));
+}
+
+/** 직전 상상력 점수 리셋 (개발/디버그 — 자동 호출 X) */
+export function resetPreviousImagination() {
+  try {
+    localStorage.removeItem(KEY.PREVIOUS_IMAGINATION);
+  } catch (e) {
+    console.warn('[storage] previousImagination reset 실패:', e);
   }
 }

@@ -22,7 +22,7 @@ import { loadInventory, saveInventory } from '../core/storage.js';
 import { findEquipmentById, equipItem, toggleLock, getEquippedBySlot } from '../data/inventory.js';
 import { getCatalogEntry } from '../data/equipment-catalog.js';
 import { GEAR_GRADES } from '../data/gear-grades.js';
-import { OPTIONS } from '../data/equipment-options.js';
+import { OPTIONS, getFixedOptionCount } from '../data/equipment-options.js';
 import { getEnhanceBonus } from '../data/equipment-meta.js';
 // Day 10 — 세트 효과 (C-1): 클릭 장비 등급 기준 세트 영역 (희귀+ 만)
 import { getContextMenuSetInfo } from '../data/set-effects.js';
@@ -153,13 +153,14 @@ export function openEquipmentContextMenu(itemId, opts = {}) {
   // ───────────────────────────────────────
   // Day 10 (C-1) — 세트 영역 (희귀 이상 등급 장비만)
   // ───────────────────────────────────────
+  // ★ Day 38 후속 (대표 결정) — 4 → 6 통일 (getSetGrade 와 일관성).
   // 결정:
   // - 클릭 장비 등급 기준 (그 장비가 속할 세트 정보)
-  // - 진행도 = 4부위 중 그 등급으로 장착된 부위 수 / 4
-  // - 발동 = 4/4 → 등급 색 / 미발동 = 0~3/4 → 회색
+  // - 진행도 = 6부위 중 그 등급으로 장착된 부위 수 / 6
+  // - 발동 = 6/6 → 등급 색 / 미발동 = 0~5/6 → 회색
   // - 라벨 / 진행도 / 두 스탯 수치 모두 같이 색 분기 (대표 결정)
   // - 일반/고급 = 영역 자체 X (getContextMenuSetInfo 가 null 반환)
-  // - 4부위에 같은 영역 표시 (효과는 1번만 적용 — 코드상 보장됨)
+  // - 6부위에 같은 영역 표시 (효과는 1번만 적용 — 코드상 보장됨)
   let csetArea = null;
   const setInfo = getContextMenuSetInfo(inv, entry.grade);
   if (setInfo) {
@@ -174,7 +175,7 @@ export function openEquipmentContextMenu(itemId, opts = {}) {
     csetn.textContent = setInfo.name;
     const csetp = document.createElement('span');
     csetp.className = 'bag-context__set-progress';
-    csetp.textContent = `${setInfo.count}/4`;
+    csetp.textContent = `${setInfo.count}/6`;
     cseth.appendChild(csetn);
     cseth.appendChild(csetp);
 
@@ -257,13 +258,36 @@ export function openEquipmentContextMenu(itemId, opts = {}) {
     const level = it.level || 0;
     const totals = {};
     if (Array.isArray(it.options)) {
+      // ★ Day 30 — 같은 옵션 키 중복 시: 옵션값은 합산 / 강화 보너스는 키별 1회만 적용.
+      const keyValueSums = Object.create(null);
       for (const o of it.options) {
         if (!o || !o.key) continue;
-        const eb = getEnhanceBonus(o.key, e.slotId, e.grade, level);
-        totals[o.key] = (o.value || 0) + eb;
+        keyValueSums[o.key] = (keyValueSums[o.key] || 0) + (o.value || 0);
+      }
+      for (const key of Object.keys(keyValueSums)) {
+        const eb = getEnhanceBonus(key, e.slotId, e.grade, level);
+        totals[key] = keyValueSums[key] + eb;
       }
     }
     return totals;
+  }
+
+  /** ★ Day 30 — options 배열을 fixed/random 그룹으로 나누고 키별 인스턴스 그룹화.
+   *  인덱스 < fixedCount = fixed (일반 표시), 그 이후 = random (황금색).
+   *  옷의 weight_bonus 가 fixed 와 random 양쪽에 있을 수 있음 (같은 키 다른 그룹). */
+  function buildOptionInstancesByGroup(it, slotId, grade) {
+    const fixedCount = getFixedOptionCount(slotId, grade);
+    const fixedByKey = Object.create(null);
+    const randomByKey = Object.create(null);
+    if (Array.isArray(it.options)) {
+      it.options.forEach((o, idx) => {
+        if (!o || !o.key) return;
+        const target = (idx < fixedCount) ? fixedByKey : randomByKey;
+        if (!target[o.key]) target[o.key] = [];
+        target[o.key].push(o);
+      });
+    }
+    return { fixed: fixedByKey, random: randomByKey };
   }
 
   // 같은 부위 장착 장비 — 자기 자신이면 비교 X
@@ -274,71 +298,138 @@ export function openEquipmentContextMenu(itemId, opts = {}) {
   const itemTotals = buildOptionTotals(item);
   const equippedTotals = hasComparison ? buildOptionTotals(equippedSibling) : {};
 
-  // 표시할 키 목록 (OPTIONS 정의 순서로 정렬 — 보트도 일관된 순서)
-  const displayKeys = hasComparison
-    ? Object.keys(OPTIONS).filter(k => k in itemTotals || k in equippedTotals)
-    : Object.keys(OPTIONS).filter(k => k in itemTotals);
+  // 클릭 장비 entry 의 등급/슬롯 (강화 보너스 계산용)
+  const itemEntry = entry;  // 위에서 getCatalogEntry(item.catalogId) 로 가져옴
+  const itemLevel = item.level || 0;
+  const equippedEntry = hasComparison ? getCatalogEntry(equippedSibling.catalogId) : null;
+  const equippedLevel = hasComparison ? (equippedSibling.level || 0) : 0;
+
+  // ★ Day 30 — fixed/random 그룹 분리 (인덱스 기반).
+  const itemGroups = buildOptionInstancesByGroup(item, itemEntry.slotId, itemEntry.grade);
+  const equippedGroups = (hasComparison && equippedEntry)
+    ? buildOptionInstancesByGroup(equippedSibling, equippedEntry.slotId, equippedEntry.grade)
+    : { fixed: {}, random: {} };
 
   const coptions = document.createElement('div');
   coptions.className = 'bag-context__options';
 
-  for (const key of displayKeys) {
-    const def = OPTIONS[key];
-    if (!def) continue;
-    const inItem = key in itemTotals;
-    const inEquipped = key in equippedTotals;
-    const itemVal = itemTotals[key] || 0;
-    const equippedVal = equippedTotals[key] || 0;
-    const unit = NO_PERCENT_KEYS.has(key) ? '' : '%';
+  /**
+   * ★ Day 30 — 그룹별 옵션 줄 렌더링 헬퍼.
+   *
+   * @param {Record<string, any[]>} itemByKey
+   * @param {Record<string, any[]>} equippedByKey
+   * @param {boolean} isRandomGroup  true 면 황금색 클래스 추가 + 강화 보너스는 fixed 에 없는 키에만 합산
+   */
+  function renderOptionGroup(itemByKey, equippedByKey, isRandomGroup) {
+    const displayKeys = hasComparison
+      ? Object.keys(OPTIONS).filter(k => k in itemByKey || k in equippedByKey)
+      : Object.keys(OPTIONS).filter(k => k in itemByKey);
 
-    const row = document.createElement('div');
-    row.className = 'bag-context__option';
+    for (const key of displayKeys) {
+      const def = OPTIONS[key];
+      if (!def) continue;
+      const unit = NO_PERCENT_KEYS.has(key) ? '' : '%';
 
-    const nameEl = document.createElement('span');
-    nameEl.className = 'bag-context__option-name';
-    nameEl.textContent = def.displayName;
+      const itemInsts = itemByKey[key] || [];
+      const equippedInsts = equippedByKey[key] || [];
+      const maxRows = Math.max(itemInsts.length, equippedInsts.length);
 
-    const valEl = document.createElement('span');
-    valEl.className = 'bag-context__option-value';
+      // ★ Day 38 후속 (대표 결정 — 강화 효과 인스턴스마다 적용) ★
+      //   강화 보너스 키 정의되어 있으면 모든 인스턴스에 그대로 적용.
+      //   fixed/random 그룹 상관없이 같은 키 강화 보너스 적용 (이전의 fixedHasKey 가드 제거).
+      //   equipment-effects.js getActiveOptions 의 인스턴스마다 적용과 일관.
+      const itemEnh = (itemInsts.length > 0 && itemEntry)
+        ? getEnhanceBonus(key, itemEntry.slotId, itemEntry.grade, itemLevel) : 0;
+      const equippedEnh = (equippedInsts.length > 0 && equippedEntry)
+        ? getEnhanceBonus(key, equippedEntry.slotId, equippedEntry.grade, equippedLevel) : 0;
 
-    const diffEl = document.createElement('span');
-    diffEl.className = 'bag-context__option-diff';
+      // ★ Day 38 후속 — 비교는 random 그룹에서도 모든 인스턴스 행에 표시.
+      //   fixed 그룹에 같은 키가 있는 경우만 random 행에 비교 X (중복 방지).
+      const showCompareHere = !isRandomGroup
+        ? true
+        : !(key in itemGroups.fixed) && !(key in equippedGroups.fixed);
 
-    if (inItem) {
-      // 클릭 장비가 가진 옵션 — 메인값 = 클릭 value (Day 10: sign='-' 면 음수 표시)
-      valEl.textContent = `${signed(itemVal, def.sign, key)}${unit}`;
+      for (let r = 0; r < maxRows; r++) {
+        const itemOpt = itemInsts[r] || null;
+        const equippedOpt = equippedInsts[r] || null;
+        const inItem = !!itemOpt;
+        const inEquipped = !!equippedOpt;
+        // ★ Day 38 후속 — 각 인스턴스 행에 강화 보너스 그대로 적용 (분배 X).
+        const itemRowVal = itemOpt ? (itemOpt.value || 0) + itemEnh : 0;
+        const equippedRowVal = equippedOpt ? (equippedOpt.value || 0) + equippedEnh : 0;
 
-      if (hasComparison) {
-        if (!inEquipped) {
-          // 클릭만 가진 옵션 — NEW
-          diffEl.textContent = 'NEW';
-          diffEl.classList.add('bag-context__option-diff--new');
-        } else {
-          const diff = itemVal - equippedVal;
-          if (Math.abs(diff) < 0.0005) {
-            // 동일 — 차이 칸 비움 (시각적 단정)
-          } else if (diff > 0) {
-            diffEl.textContent = `▲${fmtNum(diff, key)}${unit}`;
-            diffEl.classList.add('bag-context__option-diff--up');
-          } else {
-            diffEl.textContent = `▼${fmtNum(-diff, key)}${unit}`;
-            diffEl.classList.add('bag-context__option-diff--down');
-          }
+        const row = document.createElement('div');
+        row.className = 'bag-context__option';
+        if (isRandomGroup) {
+          // ★ Day 30 — 랜덤 풀 옵션 = 황금색 클래스
+          row.classList.add('bag-context__option--random');
         }
-      }
-    } else {
-      // 장착만 가진 옵션 — 잃을 옵션 (메인값=장착 value, 차이=▼만)
-      row.classList.add('bag-context__option--lost');
-      valEl.textContent = `${signed(equippedVal, def.sign, key)}${unit}`;
-      diffEl.textContent = '▼';
-      diffEl.classList.add('bag-context__option-diff--down');
-    }
 
-    row.appendChild(nameEl);
-    row.appendChild(valEl);
-    row.appendChild(diffEl);
-    coptions.appendChild(row);
+        const nameEl = document.createElement('span');
+        nameEl.className = 'bag-context__option-name';
+        nameEl.textContent = def.displayName;
+
+        const valEl = document.createElement('span');
+        valEl.className = 'bag-context__option-value';
+
+        const diffEl = document.createElement('span');
+        diffEl.className = 'bag-context__option-diff';
+
+        // ★ Day 38 후속 (대표 결정) — 비교 인스턴스 행 단위로 표시 (isFirstRow 제거).
+        //   매칭 규칙: 같은 인덱스 r 끼리 비교
+        //     - inItem & inEquipped → ▲/▼/동일 (인스턴스 행 단위 차이)
+        //     - inItem only → NEW
+        //     - inEquipped only → 잃을 옵션 (▼)
+        //   동일하거나 비교 미적용 → '-' (작업 6 — 어두운 회색 빈 표시).
+        if (inItem) {
+          valEl.textContent = `${signed(itemRowVal, def.sign, key)}${unit}`;
+
+          if (hasComparison && showCompareHere) {
+            if (!inEquipped) {
+              diffEl.textContent = 'NEW';
+              diffEl.classList.add('bag-context__option-diff--new');
+            } else {
+              const diff = itemRowVal - equippedRowVal;
+              if (Math.abs(diff) < 0.0005) {
+                // 동일 → '-' 표시 (작업 6)
+                diffEl.textContent = '-';
+                diffEl.classList.add('bag-context__option-diff--empty');
+              } else if (diff > 0) {
+                diffEl.textContent = `▲${fmtNum(diff, key)}${unit}`;
+                diffEl.classList.add('bag-context__option-diff--up');
+              } else {
+                diffEl.textContent = `▼${fmtNum(-diff, key)}${unit}`;
+                diffEl.classList.add('bag-context__option-diff--down');
+              }
+            }
+          } else {
+            // 비교 자체가 없는 케이스 (자기 자신 장착 등) → '-'
+            diffEl.textContent = '-';
+            diffEl.classList.add('bag-context__option-diff--empty');
+          }
+        } else {
+          // 클릭 장비에 없고 장착에만 있는 옵션/인스턴스 (잃을 옵션)
+          row.classList.add('bag-context__option--lost');
+          valEl.textContent = `${signed(equippedRowVal, def.sign, key)}${unit}`;
+          // ★ Day 38 후속I (대표 결정) — 잃을 옵션은 showCompareHere 무관 항상 ▼ 빨강 표시.
+          //   기존: random 그룹 + fixed 에 같은 키 있는 케이스에서 showCompareHere=false →
+          //         '-' 옅은 회색 표시 (사용자 손실 인지 X)
+          //   변경: 잃을 옵션 자체가 명확히 알려야 할 정보 → 항상 ▼ 빨강 표시 (강조).
+          diffEl.textContent = '▼';
+          diffEl.classList.add('bag-context__option-diff--down');
+        }
+
+        row.appendChild(nameEl);
+        row.appendChild(valEl);
+        row.appendChild(diffEl);
+        coptions.appendChild(row);
+      }
+    }
   }
+
+  // ★ Day 30 (대표 결정) — fixed 그룹 위쪽 / random 그룹 아래쪽 (황금색).
+  renderOptionGroup(itemGroups.fixed, equippedGroups.fixed, false);
+  renderOptionGroup(itemGroups.random, equippedGroups.random, true);
 
   // ───────────────────────────────────────
   // Day 13 — 합성 추가 옵션 (extraOptions) 별도 분홍 줄 표시 (대표 결정).

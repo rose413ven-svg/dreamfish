@@ -21,7 +21,11 @@ const NS = 'http://www.w3.org/2000/svg';
 
 const PNG_BASE = 'assets/images/equipment';
 const VALID_GRADES = new Set(['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic']);
-const VALID_SLOTS  = new Set(['rod', 'float', 'clothes', 'boat']);
+// ★ Day 29 — hook, pet 추가 (장비 6부위)
+const VALID_SLOTS  = new Set(['rod', 'float', 'clothes', 'boat', 'hook', 'pet']);
+/** ★ Day 29 — PNG 카툰 아이콘 준비된 부위 (나머지는 SVG fallback 사용).
+ *  hook/pet 은 PNG 미준비 → 항상 SVG. 추후 PNG 작업 후 이 set 에 추가. */
+const PNG_READY_SLOTS = new Set(['rod', 'float', 'clothes', 'boat']);
 
 function buildPngPath(slotId, grade) {
   return `${PNG_BASE}/${slotId}_${grade}.png`;
@@ -122,7 +126,46 @@ function boatSvg() {
   return svg;
 }
 
-const SVG_FACTORIES = { rod: rodSvg, float: floatSvg, clothes: clothesSvg, boat: boatSvg };
+/** ★ Day 29 — 낚시바늘 (J자 + 끝 미늘) */
+function hookSvg() {
+  const svg = makeSvg({ 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+  // 매듭(고리) — 상단
+  appendCircle(svg, 12, 3.2, 1.0);
+  // 줄 — 위에서 아래로
+  appendPath(svg, 'M12 4.2 L12 12');
+  // J자 곡선 — 아래로 내려가 좌측으로 휘어 위로
+  appendPath(svg, 'M12 12 Q12 19 8 19 Q4.5 19 4.5 15');
+  // 끝 미늘 — 안쪽 작은 가시
+  appendPath(svg, 'M4.5 15 L6.2 15.8');
+  return svg;
+}
+
+/** ★ Day 29 — 펫 (귀여운 동물 얼굴 — 머리 + 귀 + 눈) */
+function petSvg() {
+  const svg = makeSvg({ 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+  // 머리 (얼굴 큰 원)
+  appendCircle(svg, 12, 13.5, 6);
+  // 귀 (양쪽 삼각형)
+  appendPath(svg, 'M7.2 9 L5.8 5.2 L9.5 7.8 Z');
+  appendPath(svg, 'M16.8 9 L18.2 5.2 L14.5 7.8 Z');
+  // 눈 (양쪽 점)
+  appendDot(svg, 9.8, 13, 0.7);
+  appendDot(svg, 14.2, 13, 0.7);
+  // 코 (작은 점)
+  appendDot(svg, 12, 15, 0.6);
+  // 입 (작은 곡선)
+  appendPath(svg, 'M10.8 16.4 Q12 17.4 13.2 16.4');
+  return svg;
+}
+
+const SVG_FACTORIES = {
+  rod:     rodSvg,
+  float:   floatSvg,
+  clothes: clothesSvg,
+  boat:    boatSvg,
+  hook:    hookSvg,    // ★ Day 29
+  pet:     petSvg,     // ★ Day 29
+};
 
 /**
  * 장비 부위 아이콘 생성.
@@ -139,7 +182,9 @@ export function createGearIcon(slotId, grade = null) {
   if (!VALID_SLOTS.has(slotId)) {
     throw new Error(`[gear-icons] unknown slotId: ${slotId}`);
   }
-  if (grade && VALID_GRADES.has(grade)) {
+  // ★ Day 29 — hook/pet 은 PNG 미준비 → 항상 SVG fallback.
+  //   추후 PNG 작업 후 PNG_READY_SLOTS 에 추가하면 자동으로 PNG 분기.
+  if (grade && VALID_GRADES.has(grade) && PNG_READY_SLOTS.has(slotId)) {
     return createPngIcon(slotId, grade);
   }
   const factory = SVG_FACTORIES[slotId];

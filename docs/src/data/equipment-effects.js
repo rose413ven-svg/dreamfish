@@ -29,6 +29,19 @@ import { getEnhanceBonus } from './equipment-meta.js';
 //   (codexBonuses 와 동일 패턴 — 모든 호출처가 자동 반영됨)
 import { getLevelBonuses } from './level-engine.js';
 import { SYMBOL_LIST } from './symbols.js';
+// ★ Day 30 — 6부위 동적 순회용 (hook + pet 포함)
+import { GEAR_SLOTS } from './gear-slots.js';
+
+/** ★ Day 32 — 크리티컬 기본 확률 (대표 결정).
+ *
+ *  잡기게임 PERFECT/NICE 입력 시 활성. 발동하면 데미지 ×2 (PERFECT 2→4 / NICE 1→2).
+ *  장비 critical_rate 옵션 (hook + pet) 과 합산해서 사용. 단위는 % (3 = 3%).
+ *
+ *  사용처:
+ *    - catch-game.js: 크리티컬 체크 + CRITICAL ×2 텍스트 표시
+ *    - profile-modal.js: 스탯 표시 (장비 옵션 + 기본 합산)
+ */
+export const CRITICAL_BASE_RATE = 3;
 
 /**
  * 장착된 4부위의 모든 옵션을 옵션 키별로 합산해서 반환.
@@ -43,13 +56,17 @@ import { SYMBOL_LIST } from './symbols.js';
  * - getEnhanceBonus(optionKey, slotId, grade, level) 가 가속 패턴 + ENHANCE_BONUS_TOTAL 매트릭스 참조
  *
  * Day 16 추가 ★ — 장비 도감 보너스 통합:
- * - codexBonuses.fishWeightPct  → totals.weight_bonus 에 합산  (물고기 kg 보너스 %)
- * - codexBonuses.comboWeightPct → totals.combo_bonus  에 합산  (콤보 kg 보너스 %)
- * - codexBonuses.dropRatePct    는 totals 에 합산 X — 호출 측이 tryRollDrop bonusRate 로 별도 전달
- * - 호출 측이 codex-engine.getCodexBonuses() 결과를 전달하면 STATS / applyWeight / calcComboBonus 가 자동 반영
+ * - codexBonuses.fishWeightPct    → totals.weight_bonus    에 합산  (물고기 kg 보너스 %)
+ * - codexBonuses.comboWeightPct   → totals.combo_bonus     에 합산  (콤보 kg 보너스 %)
+ * - codexBonuses.kabikabiBonusPct → totals.kabikabi_bonus  에 합산  (★ Day 41 신규 — 까비까비 보너스 %)
+ * - 호출 측이 codex-engine.getCodexBonuses() 결과를 전달하면 STATS / applyWeight / calcComboBonus / 까비까비 무게 계산이 자동 반영
+ *
+ * ★ Day 41 (대표 결정) — 도감 cosmetic 카테고리 보상 변경: dropRatePct → kabikabiBonusPct
+ *   이전: codexBonuses.dropRatePct 는 totals 에 합산 X (tryRollDrop bonusRate 로 별도 전달)
+ *   변경: codexBonuses.kabikabiBonusPct 를 totals.kabikabi_bonus 에 합산 (장비 옵션과 동일 단위)
  *
  * @param {object} inv — 인벤토리 객체 (loadInventory 결과)
- * @param {{ fishWeightPct?: number, comboWeightPct?: number, dropRatePct?: number }} [codexBonuses]
+ * @param {{ fishWeightPct?: number, comboWeightPct?: number, kabikabiBonusPct?: number }} [codexBonuses]
  *        - Day 16 — 장비 도감 누적 보너스 (codex-engine.getCodexBonuses 결과).
  *          전달 없으면 도감 보너스 미반영 (기존 동작과 동일 — 호환성 유지).
  * @returns {Record<string, number>} — { fish_rate: 5.7, golden_rate: 3.1, ... }
@@ -61,8 +78,9 @@ export function getActiveOptions(inv, codexBonuses = null) {
     // null inv 라도 codexBonuses 가 있으면 0 베이스 + 도감 분만 반영
     for (const key of Object.keys(OPTIONS)) totals[key] = 0;
     if (codexBonuses) {
-      totals.weight_bonus = (totals.weight_bonus || 0) + (codexBonuses.fishWeightPct  || 0);
-      totals.combo_bonus  = (totals.combo_bonus  || 0) + (codexBonuses.comboWeightPct || 0);
+      totals.weight_bonus    = (totals.weight_bonus    || 0) + (codexBonuses.fishWeightPct    || 0);
+      totals.combo_bonus     = (totals.combo_bonus     || 0) + (codexBonuses.comboWeightPct   || 0);
+      totals.kabikabi_bonus  = (totals.kabikabi_bonus  || 0) + (codexBonuses.kabikabiBonusPct || 0);  // ★ Day 41
     }
     return totals;
   }
@@ -70,20 +88,36 @@ export function getActiveOptions(inv, codexBonuses = null) {
   // 모든 옵션 키 0 으로 초기화 (호출 측에서 ?? 0 안 써도 됨)
   for (const key of Object.keys(OPTIONS)) totals[key] = 0;
 
-  // 4부위 순회 — 각 부위에서 장착된 장비의 옵션 합산
-  for (const slotId of ['rod', 'float', 'clothes', 'boat']) {
+  // ★ Day 30 — 모든 GEAR_SLOTS 순회 (rod / float / hook / clothes / boat / pet 6부위 자동 처리).
+  //   각 부위에서 장착된 장비의 옵션 합산.
+  //   ★ Day 38 후속 (대표 결정 — 강화 효과 인스턴스마다 적용 변경) ★
+  //     이전: 강화 보너스 키당 1회만 적용 (옷 weight 3개여도 강화 +12 한 번)
+  //     변경: 강화 보너스 × 인스턴스 수 (옷 weight 3개 + 강화 +12 → +36 합산)
+  //          → 옵션이 많이 붙을수록 강화 효과 증폭 (옷 풀세트 강함 ↑).
+  for (const slot of GEAR_SLOTS) {
+    const slotId = slot.id;
     const item = getEquippedBySlot(inv, slotId);
     if (!item || !Array.isArray(item.options)) continue;
     const entry = getCatalogEntry(item.catalogId);
     if (!entry) continue;
     const level = item.level || 0;
+
+    // 같은 키 옵션값 + 인스턴스 수 카운트 (강화 제외)
+    const keyValueSums = Object.create(null);
+    const keyInstanceCounts = Object.create(null);
     for (const opt of item.options) {
       if (!opt || !opt.key) continue;
-      // Day 11: 옵션별로 강화 누적이 다름 (옵션 × 부위 × 등급 매트릭스)
-      const enhanceBonus = getEnhanceBonus(opt.key, slotId, entry.grade, level);
-      const value = (opt.value || 0) + enhanceBonus;
-      totals[opt.key] = (totals[opt.key] || 0) + value;
+      keyValueSums[opt.key] = (keyValueSums[opt.key] || 0) + (opt.value || 0);
+      keyInstanceCounts[opt.key] = (keyInstanceCounts[opt.key] || 0) + 1;
     }
+    // ★ Day 38 후속 — 강화 보너스 × 인스턴스 수 합산.
+    //   예: 옷 weight_bonus 3개 + 강화 +12 → 3 × base + 12 × 3 = 3 × base + 36
+    for (const key of Object.keys(keyValueSums)) {
+      const enhanceBonus = getEnhanceBonus(key, slotId, entry.grade, level);
+      const instCount = keyInstanceCounts[key];
+      totals[key] = (totals[key] || 0) + keyValueSums[key] + enhanceBonus * instCount;
+    }
+
     // Day 12: 합성 추가 옵션 (extraOptions) 합산
     // - 기존 옵션과 동일 효과 (예: weight_bonus 는 weight.js 결과 무게 곱셈)
     // - 강화 누적은 적용 X (합성 추가 옵션은 고정값 — 강화 매트릭스 외부)
@@ -96,9 +130,11 @@ export function getActiveOptions(inv, codexBonuses = null) {
   }
 
   // Day 16: 장비 도감 보너스 합산 — 장비 옵션과 동일 단위 (%) 로 누적
+  // ★ Day 41 — kabikabiBonusPct 합산 추가 (cosmetic 카테고리 보상 변경: dropRatePct → kabikabiBonusPct)
   if (codexBonuses) {
-    totals.weight_bonus = (totals.weight_bonus || 0) + (codexBonuses.fishWeightPct  || 0);
-    totals.combo_bonus  = (totals.combo_bonus  || 0) + (codexBonuses.comboWeightPct || 0);
+    totals.weight_bonus    = (totals.weight_bonus    || 0) + (codexBonuses.fishWeightPct    || 0);
+    totals.combo_bonus     = (totals.combo_bonus     || 0) + (codexBonuses.comboWeightPct   || 0);
+    totals.kabikabi_bonus  = (totals.kabikabi_bonus  || 0) + (codexBonuses.kabikabiBonusPct || 0);  // ★ Day 41
   }
 
   // Day 18 — 레벨 누적 보너스 자동 합산 (모든 호출처 자동 반영).
@@ -179,25 +215,48 @@ export function applyOrbDuration(baseDuration, active) {
   return Math.round(baseDuration * (1 + slowdown));
 }
 
+/** ★ Day 38 (대표 결정) — 콤보 단계 보너스 캡.
+ *
+ *  콤보 카운트가 이 값에 도달하면 stageBonus 가 캡됨 (= MAX COMBO BONUS 상태).
+ *  콤보 카운트 자체는 무한 누적 가능 (예: 80콤보까지 셈) — 보너스만 30에서 멈춤.
+ *
+ *  사용처:
+ *    - calcComboBonus (이 파일) — 무게 보너스 캡 적용
+ *    - profile-modal.js — 내정보 콤보 단계 보너스 표시 캡
+ *    - combo-text.js — "MAX COMBO BONUS" 텍스트 분기 기준
+ */
+export const COMBO_STAGE_CAP = 30;
+
+/** ★ Day 38 — 콤보 1단계당 무게 보너스 비율 (5% = 0.05).
+ *
+ *  이전 (Day 7): 0.1 (10%)
+ *  변경 (Day 38): 0.05 (5%)  — 30콤보 캡과 함께 도입.
+ *                              30 × 0.05 = 150% 상한.
+ *  장비 combo_bonus 는 이 캡과 별개로 동작 (캡 위에 더해짐). */
+export const COMBO_STAGE_PER_HIT = 0.05;
+
 /**
  * 콤보 보너스 수치 계산 (표시용 + applyWeight 내부 사용).
  *
- * Day 7 룰:
- *   콤보 단계 보너스 = 기본무게 × (콤보단계 × 0.1)   [매 콤보마다 +10%]
- *   장비 combo_bonus = 기본무게 × (combo_bonus / 100) [장비 옵션 % 만큼]
- *   콤보 보너스      = 콤보 단계 보너스 + 장비 combo_bonus 보너스 (합산)
+ * Day 38 룰 (대표 결정) — 콤보 시스템 변경:
+ *   콤보 단계 보너스 = 기본무게 × (min(콤보단계, 30) × 0.05)   [매 콤보마다 +5%, 30콤보 캡 = +150%]
+ *   장비 combo_bonus = 기본무게 × (combo_bonus / 100)          [장비 옵션 % 만큼, 캡 X]
+ *   콤보 보너스      = 콤보 단계 보너스 + 장비 combo_bonus      (합산, 장비분은 캡 위에 그대로)
+ *
+ *   예) 80콤보 + 장비 combo_bonus 45% → baseWeight × (1.50 + 0.45) = baseWeight × 1.95
  *
  * 콤보 끊김 (comboCount < 1) → 0 반환.
  * 장비 combo_bonus도 콤보 발동 중일 때만 작용 (콤보 X면 효과 0).
  *
  * @param {number} baseWeight — 콤보 보너스를 계산할 기준 무게 (kg)
  * @param {Record<string, number>} active — getActiveOptions 결과
- * @param {number} comboCount — 현재 콤보 카운트 (0 이면 비활성)
+ * @param {number} comboCount — 현재 콤보 카운트 (0 이면 비활성, 무한 누적 가능)
  * @returns {number} — 콤보 보너스로 추가된 무게 (kg)
  */
 export function calcComboBonus(baseWeight, active, comboCount) {
   if (!comboCount || comboCount < 1) return 0;
-  const stageBonus = comboCount * 0.1;
+  // ★ Day 38 — stageBonus 캡 적용 (30콤보 = +150% 상한). 장비 combo_bonus 는 캡 무관.
+  const stageBonus      = Math.min(comboCount, COMBO_STAGE_CAP) * COMBO_STAGE_PER_HIT;
   const equipComboBonus = (active.combo_bonus || 0) / 100;
   return baseWeight * (stageBonus + equipComboBonus);
 }
@@ -271,8 +330,14 @@ export function getAdjustedSymbolList(active, baseList = SYMBOL_LIST, gridSize) 
 
   // ★ Day 21 — A1 그리드 보정 계수 (25 / 셀수)
   // gridSize 미전달 시 25 가정 → modifier = 1 (보정 없음, 후방호환)
+  // ★ Day 40 — 보정 완만하게 (min cap 0.8). 후반 매칭률 유지, 장비 fish_rate 효과 살림. 단 후반 신화 폭주 부작용.
+  // ★ Day 41 (대표 결정) — 부드러운 곡선 (sqrt) 으로 변경. 1지역=1.0 기준점 회복 + 후반은 자연 감쇠.
+  //   기존(Day 40): 5x5=1.0 / 6x6=0.8 / 7x7=0.8 / ... / 11x11=0.8 (균일)
+  //   변경(Day 41): sqrt(25/cells)
+  //     5x5=1.000 / 6x6=0.833 / 7x7=0.714 / 8x8=0.625 / 9x9=0.556 / 10x10=0.500 / 11x11=0.455
+  //   목적: 후반 지역의 매칭 빈도/등급 자연 감쇠 → 후반 신화 폭주 완화 (대표 시뮬 검토 후 채택).
   const cells = gridSize && gridSize > 0 ? gridSize * gridSize : 25;
-  const stageModifier = 25 / cells;
+  const stageModifier = Math.sqrt(25 / cells);
 
   // 헬퍼: 베이스 심볼 가중치 찾기 (id로)
   const baseWeightOf = (id) => {

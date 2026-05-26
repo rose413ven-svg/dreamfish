@@ -29,10 +29,16 @@
    1. 등급 제한 X — 모든 지역에서 치어~보스 등급은 다 출현 가능
    2. 무게 배율 (weightMultiplier) — 같은 등급도 후반 지역이 훨씬 무거움
       기획서 34-2 원안 복원 (Day 16에 단순화로 폐기됐던 시스템 부활).
-      1: ×1.0 / 2: ×1.8 / 3: ×3.0 / 4: ×5.0 / 5: ×8.5 / 6: ×15
-      7: ×25  / 8: ×50  / 9: ×65  / 10: ×80 / 11: ×100
+      [Day 24 원안 — ×100 곡선] 1: ×1.0 / 2: ×1.8 / 3: ×3.0 / 4: ×5.0 / 5: ×8.5 / 6: ×15
+                                  7: ×25  / 8: ×50  / 9: ×65  / 10: ×80 / 11: ×100
    3. 신화보스 (황금빛꿈고래) 만 11지역 전용 — clampGradeForStage 로 다른 지역에서는 전설보스로 다운.
       트리거 조건 (검은 25+ / 황금 10+) 은 그대로 유지 (대표 결정 — 추후 수정 예정).
+
+   ★ Day 40 후속 (대표 결정) ★ — weightMultiplier 실제 활성화 (직전까지 모든 지역 1.0 통일 = 미적용 상태였음).
+      옵션 B-1 완만 곡선 채택 (Day 24 원안 ×100 은 너무 극단적 → 게임 균형 위해 완화):
+      1: ×1.0 / 2: ×1.2 / 3: ×1.5 / 4: ×2.0  / 5: ×2.7 / 6: ×3.5
+      7: ×4.5 / 8: ×5.5 / 9: ×6.5 / 10: ×7.5 / 11: ×8.5
+      변종 시스템 차이(약 6배) + 지역 차이(8.5배) = 최대 약 50배 차이 — "후반 = 무거움" 동기 부여.
 
    ★ Day 25 (대표 결정) ★ — 드롭 시프트 시스템 제거:
    4. 장비 드롭 등급 확률은 지역 관계없이 모든 지역 동일 (dropShift 폐기).
@@ -76,7 +82,7 @@ export const STAGES = Object.freeze([
     mode: 'normal',
     targetKg: 200,
     requiredLevel: 5,
-    weightMultiplier: 1.8,    // ★ Day 24
+    weightMultiplier: 1.2,    // ★ Day 24
     dropCountWeights: [[1, 0.65], [2, 0.35]],  // ★ Day 25 — 1~2개
   },
   {
@@ -89,7 +95,7 @@ export const STAGES = Object.freeze([
     mode: 'normal',
     targetKg: 300,
     requiredLevel: 10,
-    weightMultiplier: 3.0,    // ★ Day 24
+    weightMultiplier: 1.5,    // ★ Day 24
     dropCountWeights: [[1, 0.55], [2, 0.30], [3, 0.15]],  // ★ Day 25 — 1~3개
   },
   {
@@ -102,7 +108,7 @@ export const STAGES = Object.freeze([
     mode: 'normal',
     targetKg: 500,
     requiredLevel: 15,
-    weightMultiplier: 5.0,    // ★ Day 24
+    weightMultiplier: 2.0,    // ★ Day 24
     dropCountWeights: [[1, 0.50], [2, 0.33], [3, 0.17]],  // ★ Day 25 — 1~3개
   },
   {
@@ -115,7 +121,7 @@ export const STAGES = Object.freeze([
     mode: 'normal',
     targetKg: 700,
     requiredLevel: 20,
-    weightMultiplier: 8.5,    // ★ Day 24
+    weightMultiplier: 2.7,    // ★ Day 24
     dropCountWeights: [[1, 0.45], [2, 0.30], [3, 0.17], [4, 0.08]],  // ★ Day 25 — 1~4개
   },
   {
@@ -128,7 +134,7 @@ export const STAGES = Object.freeze([
     mode: 'normal',
     targetKg: 1_000,
     requiredLevel: 25,
-    weightMultiplier: 15,     // ★ Day 24
+    weightMultiplier: 3.5,     // ★ Day 24
     dropCountWeights: [[1, 0.40], [2, 0.27], [3, 0.18], [4, 0.10], [5, 0.05]],  // ★ Day 25 — 1~5개
   },
   {
@@ -141,7 +147,7 @@ export const STAGES = Object.freeze([
     mode: 'normal',
     targetKg: 1_500,
     requiredLevel: 30,
-    weightMultiplier: 25,     // ★ Day 24
+    weightMultiplier: 4.5,     // ★ Day 24
     dropCountWeights: [[1, 0.40], [2, 0.27], [3, 0.18], [4, 0.10], [5, 0.05]],  // ★ Day 25 — 1~5개
   },
   {
@@ -154,7 +160,7 @@ export const STAGES = Object.freeze([
     mode: 'normal',
     targetKg: 2_000,
     requiredLevel: 35,
-    weightMultiplier: 50,     // ★ Day 24
+    weightMultiplier: 5.5,     // ★ Day 24
     dropCountWeights: [[1, 0.40], [2, 0.27], [3, 0.18], [4, 0.10], [5, 0.05]],  // ★ Day 25 — 1~5개
   },
   {
@@ -167,7 +173,7 @@ export const STAGES = Object.freeze([
     mode: 'normal',
     targetKg: 2_500,          // ⚠️ Day 18 신규 — 기존 infinite 폐기 후 추정값 (밸런싱 시 조정)
     requiredLevel: 40,
-    weightMultiplier: 65,     // ★ Day 24
+    weightMultiplier: 6.5,     // ★ Day 24
     dropCountWeights: [[1, 0.40], [2, 0.27], [3, 0.18], [4, 0.10], [5, 0.05]],  // ★ Day 25 — 1~5개
   },
   {
@@ -180,7 +186,7 @@ export const STAGES = Object.freeze([
     mode: 'normal',
     targetKg: 3_000,          // ⚠️ Day 18 신규 — 기존 infinite 폐기 후 추정값 (밸런싱 시 조정)
     requiredLevel: 45,
-    weightMultiplier: 80,     // ★ Day 24
+    weightMultiplier: 7.5,     // ★ Day 24
     dropCountWeights: [[1, 0.40], [2, 0.27], [3, 0.18], [4, 0.10], [5, 0.05]],  // ★ Day 25 — 1~5개
   },
   {
@@ -193,7 +199,7 @@ export const STAGES = Object.freeze([
     mode: 'infinite',
     targetKg: null,
     requiredLevel: 50,
-    weightMultiplier: 100,    // ★ Day 24 — 엔드게임. 황금빛꿈고래 = 신화보스 추첨 시 100,000~300,000kg
+    weightMultiplier: 8.5,    // ★ Day 24 — 엔드게임. 황금빛꿈고래 = 신화보스 추첨 시 100,000~300,000kg
     dropCountWeights: [[1, 0.40], [2, 0.27], [3, 0.18], [4, 0.10], [5, 0.05]],  // ★ Day 25 — 1~5개
   },
 ]);
@@ -289,24 +295,99 @@ export function rollDropCount(stageId) {
 }
 
 /**
- * 지역 룰에 맞춰 등급 클램프.
+ * 지역 룰에 맞춰 등급 클램프 (호환성 유지 — Day 29부터 통과 함수로 동작).
  *
- * 현재 룰 (대표 결정 Day 24):
- * - 신화보스 = 11지역 전용 → 다른 지역에서 신화 트리거 (검은 25+ / 황금 10+) 발생 시
- *   전설보스로 강제 다운.
- * - 그 외 등급은 모든 지역 공통 (등급 제한 X).
- *
- * 호출 측 (slot.js / golden-hit-engine 사용처):
- *   let grade = gradeOf(cluster.size);
- *   grade = clampGradeForStage(grade, stageId);
+ * ★ Day 29 (대표 결정) ★ — 신화 11지역 한정 강등 로직 폐기:
+ *   배경: 등급 임계값 변경으로 검은 10+ = 신화보스가 모든 지역에서 등장 가능 (gradeOf)
+ *         + 황금/트윙클/분홍 10+ 신화 트리거도 모든 지역으로 확장 (slot.js)
+ *   효과: clampGradeForStage 는 더 이상 등급을 변경하지 않음 (그대로 반환)
+ *   유지 이유: slot.js 호출처 3군데 (셀 색용, lastMatchedCells, resultQueue) 안전 유지.
+ *             추후 완전 폐기 가능하지만 일단 통과 함수로 두어 호환성 ↑.
  *
  * @param {string} grade '치어' | '소형' | '중형' | '월척' | '대물' | '보스' | '전설보스' | '신화보스'
  * @param {number} stageId
- * @returns {string} 클램프 적용된 등급
+ * @returns {string} grade 그대로 반환 (Day 29 — 강등 폐기)
  */
 export function clampGradeForStage(grade, stageId) {
-  if (grade === '신화보스' && stageId !== 11) {
-    return '전설보스';   // 11지역 외에서는 황금빛꿈고래 등장 X → 전설보스로 다운
-  }
+  // ★ Day 29 — 강등 로직 폐기. 모든 등급 그대로 통과.
   return grade;
+}
+
+/* ============================================
+   ★ Day 29 — 지역별 변종 확률 분포 (시스템 A — 대표 결정)
+   ============================================
+   변경 배경:
+   - 기존 (Day 27): 지역마다 변종 1개 고정 매핑 (1~2지역=base, 3~4=p1, ..., 11=p5)
+   - 신규 (Day 29): 모든 지역에서 모든 (해금된) 변종 가능 — 지역별 확률 분포 추첨
+
+   누적 해금 단계 (대표 결정):
+   - 1~2지역  : base, p1
+   - 3~4지역  : base, p1, p2
+   - 5~6지역  : base, p1, p2, p3
+   - 7~8지역  : base, p1, p2, p3, p4
+   - 9~10지역 : base, p1, p2, p3, p4, p5
+   - 11지역   : base, p1, p2, p3, p4, p5 (p5 비중 ↑)
+
+   확률 표 (대표 검토 후 결정):
+   | 지역 | base | + | ++ | +++ | ++++ | +++++ |
+   | 1    | 92%  | 8%  | -   | -   | -   | -   |
+   | 2    | 85%  | 15% | -   | -   | -   | -   |
+   | 3    | 70%  | 22% | 8%  | -   | -   | -   |
+   | 4    | 60%  | 25% | 15% | -   | -   | -   |
+   | 5    | 48%  | 25% | 19% | 8%  | -   | -   |
+   | 6    | 38%  | 25% | 22% | 15% | -   | -   |
+   | 7    | 30%  | 22% | 23% | 18% | 7%  | -   |
+   | 8    | 23%  | 20% | 22% | 22% | 13% | -   |
+   | 9    | 18%  | 18% | 22% | 22% | 15% | 5%  |
+   | 10   | 13%  | 15% | 22% | 22% | 18% | 10% |
+   | 11   | 8%   | 12% | 18% | 22% | 22% | 18% |
+   ============================================ */
+
+/**
+ * 지역별 변종 확률 분포 (각 행 합 = 1.0).
+ * @type {Readonly<Record<number, Readonly<Record<string, number>>>>}
+ */
+const STAGE_VARIANT_DIST = Object.freeze({
+  1:  Object.freeze({ base: 0.90, p1: 0.10 }),
+  2:  Object.freeze({ base: 0.80, p1: 0.20 }),
+  3:  Object.freeze({ base: 0.65, p1: 0.25, p2: 0.10 }),
+  4:  Object.freeze({ base: 0.55, p1: 0.25, p2: 0.20 }),
+  5:  Object.freeze({ base: 0.45, p1: 0.25, p2: 0.20, p3: 0.10 }),
+  6:  Object.freeze({ base: 0.38, p1: 0.25, p2: 0.22, p3: 0.15 }),
+  7:  Object.freeze({ base: 0.30, p1: 0.22, p2: 0.20, p3: 0.18, p4: 0.10 }),
+  8:  Object.freeze({ base: 0.23, p1: 0.20, p2: 0.22, p3: 0.22, p4: 0.13 }),
+  9:  Object.freeze({ base: 0.18, p1: 0.18, p2: 0.22, p3: 0.22, p4: 0.15, p5: 0.05 }),
+  10: Object.freeze({ base: 0.13, p1: 0.15, p2: 0.22, p3: 0.22, p4: 0.18, p5: 0.10 }),
+  11: Object.freeze({ base: 0.08, p1: 0.12, p2: 0.18, p3: 0.22, p4: 0.22, p5: 0.18 }),
+});
+
+/**
+ * 지역별 변종 확률 분포 반환 (외부 노출 — 결과팝업 Lucky Lucky 연출 등에서 활용 가능).
+ *
+ * @param {number} stageId  1~11
+ * @returns {Readonly<Record<string, number>>}  변종 → 확률 매핑
+ */
+export function getStageVariantDistribution(stageId) {
+  return STAGE_VARIANT_DIST[stageId] || { base: 1.0 };
+}
+
+/**
+ * 지역별 변종 추첨 (시스템 A — 누적 확률 합산 방식).
+ *
+ * 예: 1지역 (base 92% / p1 8%) → 92% 확률로 'base' / 8% 확률로 'p1'
+ *
+ * 합 1.0 가정 (위 STAGE_VARIANT_DIST 검증됨). 부동소수 오차로 인한
+ * 마지막 안전망: 'base' 반환.
+ *
+ * @param {number} stageId  1~11
+ * @returns {'base'|'p1'|'p2'|'p3'|'p4'|'p5'}
+ */
+export function pickStageVariant(stageId) {
+  const dist = STAGE_VARIANT_DIST[stageId] || { base: 1.0 };
+  let r = Math.random();
+  for (const [tier, prob] of Object.entries(dist)) {
+    r -= prob;
+    if (r < 0) return tier;
+  }
+  return 'base';  // 안전망 (부동소수 오차)
 }

@@ -43,6 +43,11 @@ export const KABIKABI_ENHANCE_STEP = 0.5;
  * 강화 단계별 성공률 (실패 시 유지, 강화석은 소모).
  * Day 11: 10강 확장. 1~5강 평균 82% (안정), 6~10강 평균 35% (도전).
  * 10강 1회 시도 기댓값 ≈ 강화석 22개.
+ *
+ * ★ Day 41 (대표 결정) — 하락 시스템 도입:
+ *   +5 이하: 기존 그대로 (성공/실패 2분기 — 실패 = 유지)
+ *   +6~+10: ENHANCE_OUTCOME_TABLE 의 success/maintain/downgrade 3분기 사용
+ *   성공률 자체는 그대로 유지 (1.00 - maintain - downgrade = success).
  */
 export const ENHANCE_SUCCESS_RATE = Object.freeze({
   1:  0.95,
@@ -56,6 +61,31 @@ export const ENHANCE_SUCCESS_RATE = Object.freeze({
   9:  0.25,
   10: 0.15,
 });
+
+/**
+ * ★ Day 41 (대표 결정) — 강화 결과 3분기 확률표 (+6강 도전부터 하락 도입).
+ * 각 단계 합 = 1.00 (성공 + 유지 + 하락).
+ *
+ * +5 이하는 이 테이블에 없음 → enhance-engine.tryEnhance 가 기존 단순 성공/실패 분기로 처리.
+ *
+ * 하락 시: item.level 이 1 감소 (최소 0). +6 강화 시도 → 하락 → level 5 가 됨.
+ */
+export const ENHANCE_OUTCOME_TABLE = Object.freeze({
+  6:  { success: 0.55, maintain: 0.40, downgrade: 0.05 },
+  7:  { success: 0.45, maintain: 0.40, downgrade: 0.15 },
+  8:  { success: 0.35, maintain: 0.40, downgrade: 0.25 },
+  9:  { success: 0.25, maintain: 0.40, downgrade: 0.35 },
+  10: { success: 0.15, maintain: 0.45, downgrade: 0.40 },
+});
+
+/**
+ * 해당 강화 단계가 하락 시스템 적용 대상인지 (+6강 이상).
+ * @param {number} nextLevel — 시도할 다음 레벨
+ * @returns {boolean}
+ */
+export function hasDowngradeRisk(nextLevel) {
+  return ENHANCE_OUTCOME_TABLE[nextLevel] != null;
+}
 
 /**
  * 등급별 강화석 소모량.
@@ -118,23 +148,16 @@ export const ENHANCE_BONUS_TOTAL = Object.freeze({
     boat: { common: 0.20, uncommon: 0.50, rare: 5.0, epic: 7.0, legendary: 10.0, mythic: 15.0 }, // ★ Day 23 — ×2
   },
   golden_rate: {
-    // Day 21 — common/uncommon 신규 (rare 0.3 의 약 30% / 60% 톤)
-    // ★ Day 23 — 일반~희귀만 소폭 상향 (영웅+ 그대로) — 옵션 추첨 상향과 동일 톤
-    rod:  { common: 0.15, uncommon: 0.30, rare: 0.45, epic: 0.5, legendary: 0.8, mythic: 1.2 },  // ★ Day 23
-    boat: { common: 0.04, uncommon: 0.08, rare: 0.75, epic: 0.75, legendary: 1.0, mythic: 1.5 }, // ★ Day 23
+    rod:  { common: 0.15, uncommon: 0.30, rare: 0.45, epic: 0.5, legendary: 0.8, mythic: 1.2 },
+    boat: { common: 0.04, uncommon: 0.08, rare: 0.75, epic: 0.75, legendary: 1.0, mythic: 1.5 },
   },
   rainbow_rate: {
-    // Day 21 — common/uncommon/rare 신규 (epic 0.5 의 약 20% / 30% / 60% 톤)
-    // ★ Day 23 — 일반~희귀만 소폭 상향 (다른 입질과 동일 톤으로 정리)
-    rod:  { common: 0.15, uncommon: 0.25, rare: 0.45, epic: 0.5, legendary: 0.9, mythic: 1.5 },  // ★ Day 23
-    boat: { common: 0.04, uncommon: 0.08, rare: 0.75, epic: 0.75, legendary: 1.0, mythic: 1.5 }, // ★ Day 23
+    rod:  { common: 0.15, uncommon: 0.25, rare: 0.45, epic: 0.5, legendary: 0.9, mythic: 1.5 },
+    boat: { common: 0.04, uncommon: 0.08, rare: 0.75, epic: 0.75, legendary: 1.0, mythic: 1.5 },
   },
-
-  // ★ Day 21 신규 ★ 하얀물고기 입질(트윙클) — golden_rate 와 동일 톤 (D1 안)
-  // ★ Day 23 — 일반~희귀만 소폭 상향 (golden_rate 와 동일)
   twinkle_rate: {
-    rod:  { common: 0.15, uncommon: 0.30, rare: 0.45, epic: 0.5, legendary: 0.8, mythic: 1.2 },  // ★ Day 23
-    boat: { common: 0.04, uncommon: 0.08, rare: 0.75, epic: 0.75, legendary: 1.0, mythic: 1.5 }, // ★ Day 23
+    rod:  { common: 0.15, uncommon: 0.30, rare: 0.45, epic: 0.5, legendary: 0.8, mythic: 1.2 },
+    boat: { common: 0.04, uncommon: 0.08, rare: 0.75, epic: 0.75, legendary: 1.0, mythic: 1.5 },
   },
 
   // 감소량 옵션 (양수로 저장; sign='-' 로 적용 — equipment-options.js 참조)
@@ -148,20 +171,64 @@ export const ENHANCE_BONUS_TOTAL = Object.freeze({
   },
 
   // 무한 +% 옵션 (cap 없음)
+  // ★ Day 30 (대표 결정) — rod/float/hook/pet 신규 부위 추가. 옵션 추첨 70% : 강화 30% 비율 기준.
+  //   신규 부위 mythic 옵션 15~20 → 강화 +6 (약 30%) → 풀강 합계 약 21~26%.
+  //   옷은 기존 수치 그대로 유지 (대표 결정 Q10 (나)).
   weight_bonus: {
     clothes: { common: 1, uncommon: 2, rare: 3, epic: 6, legendary: 8, mythic: 12 },
     boat:    { common: 0.15, uncommon: 0.35, rare: 1.5, epic: 5, legendary: 10, mythic: 15 },
+    // ★ Day 30 신규 ★ (모든 신규 부위 동일 — 옵션 추첨 70:30 비율)
+    rod:     { common: 0.4, uncommon: 1.2, rare: 2.0, epic: 2.8, legendary: 3.6, mythic: 6.0 },
+    float:   { common: 0.4, uncommon: 1.2, rare: 2.0, epic: 2.8, legendary: 3.6, mythic: 6.0 },
+    hook:    { common: 0.4, uncommon: 1.2, rare: 2.0, epic: 2.8, legendary: 3.6, mythic: 6.0 },
+    pet:     { common: 0.4, uncommon: 1.2, rare: 2.0, epic: 2.8, legendary: 3.6, mythic: 6.0 },
   },
   combo_bonus: {
-    clothes: { rare: 5, epic: 8, legendary: 12, mythic: 17 },  // 희귀+ 만
+    // ★ Day 30 — clothes common/uncommon 신규 (옷 일반부터 combo 2개 고정으로 변경, 대표 결정 Q1).
+    clothes: { common: 0.4, uncommon: 1.2, rare: 5, epic: 8, legendary: 12, mythic: 17 },
     boat:    { common: 0.30, uncommon: 0.75, rare: 3, epic: 10, legendary: 20, mythic: 35 },
+    // ★ Day 30 신규 ★ (weight_bonus 와 동일 톤)
+    rod:     { common: 0.4, uncommon: 1.2, rare: 2.0, epic: 2.8, legendary: 3.6, mythic: 6.0 },
+    float:   { common: 0.4, uncommon: 1.2, rare: 2.0, epic: 2.8, legendary: 3.6, mythic: 6.0 },
+    hook:    { common: 0.4, uncommon: 1.2, rare: 2.0, epic: 2.8, legendary: 3.6, mythic: 6.0 },
+    pet:     { common: 0.4, uncommon: 1.2, rare: 2.0, epic: 2.8, legendary: 3.6, mythic: 6.0 },
   },
 
-  // ★ Day 26 신규 ★ 까비까비 보너스 — 찌 희귀+ 전용, 풀강 = 5.0 (선형 +0.5 × 10)
-  //   ⚠️ 실제 계산은 getEnhanceBonus 안 선형 분기로 처리 (가속 패턴 미사용).
-  //   이 값은 풀강 표시/참조용 (다른 옵션과 인터페이스 일관성 유지).
+  // ★ Day 26 / ★ Day 30 전면 재설계 ★ 까비까비 보너스
+  //   Day 26 (이전): 찌 전용, KABIKABI_ENHANCE_STEP 선형 +0.5/단계 (풀강 +5)
+  //   Day 30 (대표 결정): %보너스로 의미 변경 + 모든 부위 적용 + 가속 패턴 표준화.
+  //   옵션 추첨 mythic 80~100 → 강화 풀강 약 35 → 합계 약 115~135% (까비는 늘어나도 밸런스 OK, 대표 결정).
+  //   ⚠️ getEnhanceBonus 의 선형 분기 제거 (Day 30) — 일반 가속 패턴으로 통일.
   kabikabi_bonus: {
-    float: { rare: 5.0, epic: 5.0, legendary: 5.0, mythic: 5.0 },  // 등급 무관 풀강 +5.0
+    rod:     { common: 3, uncommon: 5, rare: 9, epic: 15, legendary: 22, mythic: 35 },
+    float:   { common: 3, uncommon: 5, rare: 9, epic: 15, legendary: 22, mythic: 35 },
+    clothes: { common: 3, uncommon: 5, rare: 9, epic: 15, legendary: 22, mythic: 35 },
+    hook:    { common: 3, uncommon: 5, rare: 9, epic: 15, legendary: 22, mythic: 35 },
+    pet:     { common: 3, uncommon: 5, rare: 9, epic: 15, legendary: 22, mythic: 35 },
+  },
+
+  // ★ Day 29 신규 ★ 럭키럭키 발동 — 낚시바늘 + 펫 전용 (Phase 5)
+  //   ★ Day 30 — 그대로 유지 (대표 결정 Q11-b). hook+pet 풀강 합산 약 41%.
+  //   ★ Day 41 (대표 결정) ★ — 강화 누적 1/3 감소 (옵션 추첨값과 함께 ×1/3, 후반 럭키 폭주 완화):
+  //     mythic 9.0 → 3.0, legendary 7.0 → 2.3, epic 5.0 → 1.7, rare 3.5 → 1.2, uncommon 2.0 → 0.7, common 1.0 → 0.3
+  //     풀강 hook+pet 약 18% → 약 6% (옵션 추첨 ×1/3 과 합쳐서 장비 총 38% → 약 11%)
+  lucky_rate: {
+    hook: { common: 0.3, uncommon: 0.7, rare: 1.2, epic: 1.7, legendary: 2.3, mythic: 3.0 },  // ★ Day 41 — ×1/3
+    pet:  { common: 0.3, uncommon: 0.7, rare: 1.2, epic: 1.7, legendary: 2.3, mythic: 3.0 },  // ★ Day 41 — ×1/3
+  },
+
+  // ★ Day 30 신규 ★ 크리티컬 확률 — 낚시바늘 + 펫
+  //   럭키와 동일 톤 (옵션 A) — 풀강 합산 약 30~36%.
+  critical_rate: {
+    hook: { common: 1.0, uncommon: 2.0, rare: 3.5, epic: 5.0, legendary: 7.0, mythic: 9.0 },
+    pet:  { common: 1.0, uncommon: 2.0, rare: 3.5, epic: 5.0, legendary: 7.0, mythic: 9.0 },
+  },
+
+  // ★ Day 30 신규 ★ 잡기시간 증가 — 펫 전용
+  //   다른 옵션과 달리 풀강 최종 천장 기준 (대표 결정 Q12).
+  //   common 옵션 3~5 + 강화 2 = 풀강 5~7% / ... / mythic 옵션 11~14 + 강화 6 = 풀강 17~20%.
+  catch_time_bonus: {
+    pet: { common: 2, uncommon: 3, rare: 3, epic: 4, legendary: 5, mythic: 6 },
   },
 });
 
@@ -195,15 +262,8 @@ export function accumEnhancePct(level) {
 export function getEnhanceBonus(optionKey, slotId, grade, level) {
   if (!level || level <= 0) return 0;
 
-  // ★ Day 26 — 까비까비 보너스만 선형 +0.5/단계 (가속 패턴 미사용, 대표 결정).
-  //   찌 희귀+ 등급에서만 옵션이 추첨되므로 다른 부위/등급에서는 자연스럽게 0 반환.
-  if (optionKey === 'kabikabi_bonus') {
-    // 옵션이 추첨되는 부위/등급에서만 강화 누적 적용 (옵션 부재 시 0).
-    const hasOption = ENHANCE_BONUS_TOTAL.kabikabi_bonus?.[slotId]?.[grade];
-    if (!hasOption) return 0;
-    const capped = Math.min(level, ENHANCE_MAX_LEVEL);
-    return capped * KABIKABI_ENHANCE_STEP;
-  }
+  // ★ Day 30 — 까비까비도 표준 가속 패턴으로 통일 (Day 26 선형 분기 제거).
+  //   의미가 배수 → %보너스로 변경되면서 다른 옵션과 동일 시스템으로 통합.
 
   const total = ENHANCE_BONUS_TOTAL[optionKey]?.[slotId]?.[grade];
   if (!total) return 0;
@@ -352,8 +412,8 @@ export const LUCKY_DROP_GRADE_POOL = Object.freeze({
   '신화보스': [['legendary', 0.50], ['mythic',   0.50]],                               // ★ Day 27 — 무조건 1개, 전설 50% / 신화 50% (대표 결정 Q-G)
 });
 
-/** 부위 균등 랜덤 풀 */
-const DROP_SLOT_POOL = Object.freeze(['rod', 'float', 'clothes', 'boat']);
+/** 부위 균등 랜덤 풀 (★ Day 29 — hook + pet 추가, 6부위 균등) */
+const DROP_SLOT_POOL = Object.freeze(['rod', 'float', 'clothes', 'boat', 'hook', 'pet']);
 
 /**
  * 물고기 등급 → 드롭 장비 등급 가중 추첨.
@@ -471,3 +531,46 @@ export function rollCosmeticColor(grade) {
  * 호환성 위해 남겨둠 — 외부 import 없으면 다음 정리에서 제거 가능.
  */
 export const COSMETIC_COLOR_POOL = COSMETIC_COLOR_BY_GRADE;
+/* ============================================
+   ★ Day 41 (대표 결정) — 지역별 옵션 수치 multiplier
+   ============================================
+   목적: 후반 지역에서 얻는 장비의 보너스 스탯이 더 강하게 굴려지도록 →
+         파밍 동기 유지 + 후반 지역 진입 보상.
+
+   적용 범위 (밸런스 안전 우선 — 대표 결정):
+     - weight_bonus  (물고기 보너스)
+     - combo_bonus   (콤보 보너스)
+     - kabikabi_bonus (까비까비 보너스)
+   → 자원 획득 보너스 3종만. lucky/critical/입질/rock/orb/catch_time 은
+     게임 핵심 시스템이라 stage 영향 X (기존 그대로 추첨).
+
+   패턴 (가-3): 1지역 ×1.0 → 11지역 ×3.0 선형 (step +0.2).
+     "초반 영웅 ≈ 후반 일반" 곡선 (대표 예시 정합).
+
+   합성 추가 옵션 (extraOptions = weight_bonus) 도 동일 적용 (대표 결정 A).
+   합성 시점의 stageId = getMaxUnlockedStageId(currentLevel) (최고 도달 지역).
+
+   기존 보유 장비 = 변경 X (옵션값 인스턴스에 저장됨 → 그대로).
+   ============================================ */
+export const STAGE_OPTION_MULTIPLIER = Object.freeze({
+  1:  1.0,
+  2:  1.2,
+  3:  1.4,
+  4:  1.6,
+  5:  1.8,
+  6:  2.0,
+  7:  2.2,
+  8:  2.4,
+  9:  2.6,
+  10: 2.8,
+  11: 3.0,
+});
+
+/**
+ * stageId → 옵션 multiplier 조회. 미지정/범위 외 = 1.0 (안전 가드).
+ * @param {number} stageId
+ * @returns {number}
+ */
+export function getStageOptionMultiplier(stageId) {
+  return STAGE_OPTION_MULTIPLIER[stageId] ?? 1.0;
+}

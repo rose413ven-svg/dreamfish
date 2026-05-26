@@ -66,33 +66,60 @@ export function rollWeightTier() {
 }
 
 /**
- * 실제 무게 계산 (Day 17 — 등급별 단순 균등 랜덤 / ★ Day 24 — 지역 배율 적용).
+ * ★ Day 29 — 등급별 base 변종 4종 평균 baseWeight (변종 무게 가중치 계산용).
  *
- * ★ Day 24 (대표 결정) ★ — 지역별 무게 배율 도입 (밸런스 Phase 2):
- *   - 시그니처에 stageMultiplier 인자 추가 (기본값 1.0 — 후방호환)
- *   - 호출 측 (slot.js / catch-game.js) 에서 stages.getStageWeightMultiplier(stageId) 전달
- *   - 같은 등급이라도 1지역 ×1.0 / 11지역 ×100 → 후반 갈수록 무게 ↑
- *   - 골든힛 / HIDDEN HIT 도 동일 패턴 (등급은 그대로, 무게만 배율 적용)
+ * 용도: rollWeight 에서 fish.baseWeight 를 활용한 변종 차등 무게 계산.
+ *       공식: 최종 무게 = 등급 [min~max] × (fish.baseWeight / BASE_WEIGHT_AVG[grade]) × stageMultiplier
  *
- *   데이터-엔진 분리:
- *   - weight.js 는 stages.js 를 import 하지 않음 (호출 측이 multiplier 전달)
- *   - 단일 진입점 유지 (모든 무게 추첨이 이 함수 거침)
+ * 예시 (치어 base 평균 0.110):
+ *   tiny_base_01 (0.10) → 비율 0.909 → 등급 무게 × 0.909
+ *   tiny_p5_04   (0.70) → 비율 6.364 → 등급 무게 × 6.364
+ *   즉 같은 등급 내에서 base ×1.0 ~ p5 ×5.0 변종 차등 자연 적용 (대표 결정 옵션 나).
  *
- * @param {number} _baseWeight     종별 기본 무게 (Day 17부터 무게 계산에선 미사용 — 데이터 보존)
- * @param {string} grade           '치어' | '소형' | '중형' | '월척' | '대물' | '보스' | '전설보스' | '신화보스'
- * @param {number} [stageMultiplier=1.0]  ★ Day 24 — 지역 배율 (1지역 1.0 ~ 11지역 100)
- * @returns {{ weight: number, tier: object }}
- *          weight: 등급 범위 [min, max] 안 균등 랜덤 × stageMultiplier (콤보/장비/멀티히트 보너스 적용 전)
- *          tier:   '평범' 더미 객체 (호환성 — 색 흰색 고정)
+ * 신화/히든/황금어는 변종 없음 → 이 매핑에 없음 (rollWeight 안 분기에서 ratio=1.0 처리).
  */
-export function rollWeight(_baseWeight, grade, stageMultiplier = 1.0) {
+export const BASE_WEIGHT_AVG = Object.freeze({
+  '치어':     0.110,   // (0.10 + 0.12 + 0.08 + 0.14) / 4
+  '소형':     0.390,   // (0.32 + 0.42 + 0.36 + 0.46) / 4
+  '중형':    12.750,   // (6 + 9 + 14 + 22) / 4
+  '월척':    75.000,   // (35 + 55 + 80 + 130) / 4
+  '대물':   162.500,   // (70 + 120 + 180 + 280) / 4
+  '보스':   305.000,   // (140 + 220 + 340 + 520) / 4
+  '전설보스':9125.000, // (4000 + 6500 + 10000 + 16000) / 4
+});
+
+/**
+ * 실제 무게 계산 (Day 17 — 등급별 단순 균등 랜덤 / ★ Day 24 — 지역 배율 / ★ Day 29 — 변종 가중치 D-i 부활).
+ *
+ * ★ Day 29 (대표 결정) ★ — 변종 무게 가중치 부활 (D-i 공식):
+ *   - 기존 (Day 17): _baseWeight 인자 무시, 등급 [min~max] 균등 랜덤만 사용
+ *   - 신규 (Day 29): baseWeight 활용 부활 — 변종 단계별 ×1.0(base) ~ ×5.0(p5) 차등 자동 적용
+ *
+ *   공식: weight = [min~max] 균등 랜덤 × (baseWeight / BASE_WEIGHT_AVG[grade]) × stageMultiplier
+ *
+ *   적용 대상: 변종 있는 등급 (치어 ~ 전설보스)
+ *   미적용: 신화/히든/황금어 — BASE_WEIGHT_AVG 에 없음 → ratio=1.0 (기존 등급 [min~max] 그대로)
+ *
+ * @param {number} baseWeight     ★ Day 29 — 종별 기본 무게 (변종 단계 표현). 0 또는 falsy 면 ratio=1.0
+ * @param {string} grade           '치어' | '소형' | '중형' | '월척' | '대물' | '보스' | '전설보스' | '신화보스'
+ * @param {number} [stageMultiplier=1.0]  지역 배율 (Day 29 — 모든 지역 1.0 으로 통일됨, 호환성 위해 인자 유지)
+ * @returns {{ weight: number, tier: object }}
+ */
+export function rollWeight(baseWeight, grade, stageMultiplier = 1.0) {
   const range = GRADE_WEIGHT_RANGE[grade];
   if (!range) {
     console.warn('[weight] unknown grade:', grade, '— fallback to 1.0kg');
     return { weight: 1 * stageMultiplier, tier: WEIGHT_TIERS[0] };
   }
   const rolled = range.min + Math.random() * (range.max - range.min);
-  const weight = rolled * stageMultiplier;
+
+  // ★ Day 29 — 변종 무게 가중치 (D-i): baseWeight / 등급 base 평균
+  //   변종 있는 등급(치어~전설보스): ratio = baseWeight / BASE_WEIGHT_AVG[grade]
+  //   변종 없는 등급(신화/히든/황금어): ratio = 1.0 (BASE_WEIGHT_AVG 매핑 없음 → 안전망)
+  const baseAvg = BASE_WEIGHT_AVG[grade];
+  const variantRatio = (baseAvg && baseWeight > 0) ? (baseWeight / baseAvg) : 1.0;
+
+  const weight = rolled * variantRatio * stageMultiplier;
   return { weight, tier: WEIGHT_TIERS[0] };
 }
 

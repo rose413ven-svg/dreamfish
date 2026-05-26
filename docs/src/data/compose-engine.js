@@ -47,9 +47,26 @@ import {
   COMPOSE_PRELIM_GOLD_RATE,
   COMPOSE_BONUS_INFO,
   getLastSlotGoldRate,
+  getStageOptionMultiplier,   // ★ Day 41 — 합성 추가 옵션 stage multiplier
 } from './equipment-meta.js';
 import { getCatalogEntry } from './equipment-catalog.js';
 import { findEquipmentById, makeEquipment } from './inventory.js';
+// ★ Day 41 (대표 결정 B) — 합성 시 최고 도달 지역 자동 사용
+import { getCurrentLevel } from './level-engine.js';
+import { getUnlockedStageIds } from './stages.js';
+
+/**
+ * 합성 시점의 stage multiplier 결정 — 최고 도달 지역 기준.
+ * 호출처가 명시적으로 전달하지 않으면 (대부분 케이스) 자동으로 최고 unlock 지역 사용.
+ *
+ * @param {number} [stageId] — 명시 전달 시 그대로 사용
+ * @returns {number} stageId (1~11)
+ */
+function resolveComposeStageId(stageId) {
+  if (typeof stageId === 'number' && stageId > 0) return stageId;
+  const unlocked = getUnlockedStageIds(getCurrentLevel());
+  return unlocked.length ? Math.max(...unlocked) : 1;
+}
 
 /* ============================================
    1. 재료 검증 — canCompose
@@ -227,16 +244,23 @@ export function rollSlotResults(fromGrade) {
 /**
  * 합성 추가 옵션 추첨 — 성공시 호출.
  *
+ * ★ Day 41 (대표 결정) — stageId 인자 추가 (옵션 2번째).
+ *   합성 추가 옵션 (weight_bonus 1종) 도 지역 multiplier 적용 — 본 옵션과 일관성.
+ *   호출처 (tryCompose) 가 currentStageId (최고 도달 지역) 전달.
+ *
  * @param {string} toGrade — 결과 등급
+ * @param {number} [stageId] — 합성 시 지역 multiplier (미지정 시 ×1.0)
  * @returns {{ key, value, source }|null} — 추첨 안 됨 / 등급 X = null
  */
-export function rollExtraOption(toGrade) {
+export function rollExtraOption(toGrade, stageId) {
   const range = COMPOSE_BONUS_INFO.ranges[toGrade];
   if (!range) return null;  // 일반 등급 등 = 옵션 X
   if (Math.random() >= COMPOSE_BONUS_INFO.appearRate) return null;  // 80% 미추첨
 
   // 등급별 % 범위 내 랜덤 추첨 (소수 1자리)
-  const raw = range.min + Math.random() * (range.max - range.min);
+  let raw = range.min + Math.random() * (range.max - range.min);
+  // ★ Day 41 — stageId 기반 multiplier (key = weight_bonus 이므로 항상 적용)
+  raw *= getStageOptionMultiplier(stageId);
   const value = Math.round(raw * 10) / 10;
   return {
     key:    COMPOSE_BONUS_INFO.optionKey,
@@ -262,31 +286,39 @@ export function rollExtraOption(toGrade) {
 /**
  * 합성 시도. 결과만 결정 — 인벤토리 갱신 X (호출측 책임).
  *
+ * ★ Day 41 (대표 결정) — stageId 인자 추가 (옵션 3번째).
+ *   합성 시 지역 multiplier — 결과 장비의 본 옵션 + 합성 추가 옵션 모두 적용.
+ *   호출처 (compose.js) 가 currentStageId (최고 도달 지역) 전달.
+ *
  * @param {object}   inv         — 인벤토리
  * @param {string[]} materialIds — 재료 장비 id 배열
+ * @param {number}   [stageId]   — 합성 시점의 지역 (최고 도달 지역). 미지정 시 ×1.0.
  * @returns {object} 결과 객체 또는 가드 실패 시 { ok: false, reason }
  */
-export function tryCompose(inv, materialIds) {
+export function tryCompose(inv, materialIds, stageId) {
   // 1. 가드 검증
   const check = canCompose(inv, materialIds);
   if (!check.ok) return { ok: false, reason: check.reason };
 
+  // ★ Day 41 — stageId 미지정 시 최고 도달 지역 자동 사용 (대표 결정 B)
+  const effectiveStageId = resolveComposeStageId(stageId);
+
   // 2. 슬롯머신 결과 → 성공/실패 확정
   const slotResult = rollSlotResults(check.fromGrade);
 
-  // 3. 결과 장비 생성
+  // 3. 결과 장비 생성 — ★ Day 41: stageId 전달 (본 옵션 multiplier)
   const resultGrade = slotResult.success ? check.toGrade : check.fromGrade;
   const resultCatalogId = `${check.slotId}_${resultGrade}`;
-  const resultItem = makeEquipment(resultCatalogId);
+  const resultItem = makeEquipment(resultCatalogId, { stageId: effectiveStageId });
   if (!resultItem) {
     // 카탈로그 없음 (예외 — 카탈로그 빌드 정합 깨짐)
     return { ok: false, reason: 'cannot_make_result' };
   }
 
-  // 4. 합성 추가 옵션 추첨 (성공시만)
+  // 4. 합성 추가 옵션 추첨 (성공시만) — ★ Day 41: stageId 전달
   let extraOption = null;
   if (slotResult.success) {
-    extraOption = rollExtraOption(resultGrade);
+    extraOption = rollExtraOption(resultGrade, effectiveStageId);
     if (extraOption) {
       resultItem.extraOptions = [extraOption];
     }

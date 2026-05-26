@@ -682,26 +682,41 @@ function handleStartClick() {
   //     · prelim 회색 발생 시 (3번째 슬롯 3% 확률) → 카드 일부 성공이라도 시각상 회색
   //       (드문 케이스이지만 시각/카드 미세 불일치 가능 — 카드 결과가 진실값)
   //   - 이전 Day 25 "단순 비율 분배" 방식 폐기 (시각상 회색 너무 많이 나옴 문제 — 대표 보고)
-  const hasAnySuccess = results.some(r => r.success);
-  const lastIdx       = N - 1;
-  const unifiedSlots  = [];
-  let prelimAllGold   = true;
+  //
+  // ★ Day 38 후속F (대표 결정 — 버그 수정) ★
+  //   기존 버그: 단일 합성 (composeCount === 1) 도 unifiedSlots 를 별도 random 으로 다시 추첨 →
+  //             tryCompose 안의 slotResult.success 와 시각 슬롯이 불일치할 수 있음.
+  //             (예: tryCompose 내부 4슬롯 모두 황금 → success=true, 그러나 unifiedSlots 의
+  //              3번째 슬롯 97% 별도 추첨에서 3% 회색 발생 → 시각: 회색 있음 + 결과: 성공)
+  //   수정: 단일 합성은 tryCompose 결과의 slotResults 를 그대로 사용 → 시각/판정 완전 일치.
+  //         다중 합성 (composeCount >= 2) 은 기존 통합 산식 유지.
+  let unifiedSlots;
+  if (composeCount === 1) {
+    // 단일 합성 — tryCompose 슬롯 결과 그대로 사용 (시각/판정 일치 보장)
+    unifiedSlots = results[0].slotResults.slice();
+  } else {
+    // 다중 합성 — N 회 결과 통합 산식
+    const hasAnySuccess = results.some(r => r.success);
+    const lastIdx       = N - 1;
+    unifiedSlots        = [];
+    let prelimAllGold   = true;
 
-  for (let i = 0; i < lastIdx; i++) {
-    let isGold;
-    if (i < 2) {
-      isGold = true;  // 1, 2번째 강제 황금
-    } else {
-      // 3번째 이후 (4슬롯에서만) — 97% 추첨
-      isGold = Math.random() < COMPOSE_PRELIM_GOLD_RATE;
+    for (let i = 0; i < lastIdx; i++) {
+      let isGold;
+      if (i < 2) {
+        isGold = true;  // 1, 2번째 강제 황금
+      } else {
+        // 3번째 이후 (4슬롯에서만) — 97% 추첨
+        isGold = Math.random() < COMPOSE_PRELIM_GOLD_RATE;
+      }
+      unifiedSlots.push(isGold ? 'gold' : 'gray');
+      if (!isGold) prelimAllGold = false;
     }
-    unifiedSlots.push(isGold ? 'gold' : 'gray');
-    if (!isGold) prelimAllGold = false;
-  }
 
-  // 마지막 슬롯: prelim 모두 황금 + N회 중 1회라도 성공 → 황금
-  const lastIsGold = prelimAllGold && hasAnySuccess;
-  unifiedSlots.push(lastIsGold ? 'gold' : 'gray');
+    // 마지막 슬롯: prelim 모두 황금 + N회 중 1회라도 성공 → 황금
+    const lastIsGold = prelimAllGold && hasAnySuccess;
+    unifiedSlots.push(lastIsGold ? 'gold' : 'gray');
+  }
 
   // ★ Day 25 — 반전 효과 (Q3 — 다중합성에서도 발동):
   //   마지막 슬롯이 'gold' 일 때 25% 확률로 발동 (시각 연출만).
@@ -999,7 +1014,11 @@ function fillResultOptions(container, resultItem) {
       const value = document.createElement('span');
       value.className = 'compose-result-options__value';
       const sign = def.sign === '-' ? '-' : '+';
-      value.textContent = `${sign}${formatValue(opt.value)}`;
+      // ★ Day 38 후속F (대표 결정) — 입질 옵션 displayScale 적용 + % 안 붙임 (다른 화면들과 통일).
+      //   기존: formatValue(0.55) → '0.55' + 추가 단위 X → 소수점 2자리 + 단위 표시 불일치
+      //   변경: formatValue(opt.value, opt.key) → displayScale×100 정수 + NO_PERCENT_KEYS 단위 제어
+      const unit = NO_PERCENT_KEYS.has(opt.key) ? '' : '%';
+      value.textContent = `${sign}${formatValue(opt.value, opt.key)}${unit}`;
       row.appendChild(value);
 
       container.appendChild(row);
@@ -1026,7 +1045,9 @@ function fillResultOptions(container, resultItem) {
 
       const value = document.createElement('span');
       value.className = 'compose-result-options__value';
-      value.textContent = `+${formatValue(opt.value)}%`;
+      // ★ Day 38 후속F — extraOptions 도 동일 처리 (입질이면 displayScale + % 제거)
+      const unit = NO_PERCENT_KEYS.has(opt.key) ? '' : '%';
+      value.textContent = `+${formatValue(opt.value, opt.key)}${unit}`;
       row.appendChild(value);
 
       container.appendChild(row);
@@ -1034,10 +1055,18 @@ function fillResultOptions(container, resultItem) {
   }
 }
 
-/** 값 표시 정리 — 정수면 정수, 소수면 최대 2자리 (Day 11 누적 규칙 37 패턴) */
-function formatValue(v) {
+/** ★ Day 38 후속F (대표 결정) — 입질 옵션 단위 % 안 붙음 (profile-modal / enhance / 가방 컨텍스트 패턴 통일) */
+const NO_PERCENT_KEYS = new Set(['fish_rate', 'golden_rate', 'rainbow_rate', 'twinkle_rate']);
+
+/** 값 표시 정리 — 정수면 정수, 소수면 최대 2자리 (Day 11 누적 규칙 37 패턴).
+ *  ★ Day 38 후속F — key 전달 시 displayScale 적용 (입질 4종 ×100 정수 표시). */
+function formatValue(v, key) {
   if (typeof v !== 'number') return String(v ?? 0);
-  return String(Number(v.toFixed(2)));
+  // displayScale 적용 (입질 옵션은 100 ×, raw 0.55 → 55)
+  const scale = (key && OPTIONS[key]?.displayScale) || 1;
+  const scaled = v * scale;
+  // 정수면 정수, 소수면 최대 2자리 trailing 0 자동 제거
+  return String(Number(scaled.toFixed(2)));
 }
 
 /**

@@ -119,10 +119,13 @@
   transform: translateY(0);
 }
 
-/* drop-bagfull 메시지 톤 — 흐림 (못 받았다는 정서) */
+/* drop-bagfull 메시지 톤 — 못 받았다는 경고 (★ Day 40 — 흐린 회청 → 선명한 빨강 + 폰트 축소).
+ *   기존: color #b5c7e8 (옅은 회청), opacity 0.85, font-size 1.4rem(상속) → 카드 25rem 에서 줄바꿈 발생
+ *   변경: color #FF5050 (선명 경고 빨강), opacity 1, font-size 0.9rem (한 줄 fit) */
 .fish-result[data-drop-phase="drop-bagfull"] .fish-result__drop-message {
-  color: #b5c7e8;
-  opacity: 0.85;
+  font-size: 0.9rem;
+  color: #FF5050;
+  opacity: 1;
 }
 
 /* drop-equip 메시지 톤 — 따뜻한 안내 */

@@ -48,9 +48,9 @@ export const SYMBOL_TYPES = {
 };
 
 export const SYMBOL_LIST = [
-  { id: 'empty',   weight: 67, matchable: false },  // ★ Day 23 — 62 → 59 (황·분·하얀 +1씩 보충)
-  { id: 'fish',    weight: 18, matchable: true  },  // 그대로 (검 우월 컨셉)
-  { id: 'golden',  weight: 5,  matchable: true  },  // ★ Day 23 — 7 → 8 (밸런스 Phase 1-F)
-  { id: 'rainbow', weight: 5,  matchable: true  },  // ★ Day 23 — 7 → 8
-  { id: 'twinkle', weight: 5,  matchable: true  },  // ★ Day 23 — 7 → 8
+  { id: 'empty',   weight: 59, matchable: false },  // ★ Day 41 후속 (대표 결정) — 70 → 72 (후반 신화 폭주 완화 / sqrt 보정과 함께 적용)
+  { id: 'fish',    weight: 24, matchable: true  },  // ★ Day 41 후속 (대표 결정) — 19 → 17
+  { id: 'golden',  weight: 5,  matchable: true  },  // Day 40 후속 — 6 → 5 → 3 (Day 41 유지)
+  { id: 'rainbow', weight: 5,  matchable: true  },  // Day 40 후속 — 6 → 5 → 3 (Day 41 유지)
+  { id: 'twinkle', weight: 7,  matchable: true  },  // Day 40 후속 — 8 → 7 → 5 (Day 41 유지)
 ];

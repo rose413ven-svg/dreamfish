@@ -132,12 +132,20 @@ export function showBiteAlert(el, opts = {}) {
     isTwinkleHit = false,
     isHiddenHit = false,
     isMythicHit = false,
+    isGoldenDreamWhale = false,  // ★ Day 37 — 황금빛꿈고래(mythic_01) 식별 — SPECIAL MYTHIC 황금 톤
   } = opts;
 
   const prefixEl = el.querySelector('.bite-alert__prefix');
   const mainEl = el.querySelector('.bite-alert__main');
 
-  if (isHiddenHit) {
+  if (isMythicHit && hasBoss) {
+    // ★ Day 37 (대표 결정) — 신화 트리거 매칭 분기:
+    //   isGoldenDreamWhale=true  → grade = "SPECIAL MYTHIC" (황금 #FFD700, 특별 연출 — slot.js Day 36 흐름에선 안 띄움)
+    //   isGoldenDreamWhale=false → grade = "MYTHIC"          (마젠타 #FF49A6, Day 27 기존 정책 — 일반 신화 트리거)
+    //   main = "HIT" 통일.
+    prefixEl.textContent = '';
+    mainEl.textContent = 'HIT';
+  } else if (isHiddenHit) {
     // ★ Day 22 — HIDDEN HIT 매칭 (분홍): 골든힛/트윙클힛과 동일 2단 구성
     //   grade 자리 = "HIDDEN" (작게) / main 자리 = "HIT" (크게) — 일반 매칭과 같은 크기/방식
     //   prefix 비움. CSS data-hidden-hit="true" 가 연한 핑크 색 + 글로우 처리.
@@ -156,9 +164,18 @@ export function showBiteAlert(el, opts = {}) {
 
   // grade label (BOSS HIT 일 때는 CSS가 자동 hide / HIDDEN HIT 일 때는 "HIDDEN" 표시)
   const gradeEl = el.querySelector('.bite-alert__grade');
-  if (isHiddenHit) {
+  if (isMythicHit && hasBoss) {
+    // ★ Day 37 (대표 결정) — 황금빛꿈고래만 "SPECIAL MYTHIC", 그 외 일반 신화는 "MYTHIC".
+    gradeEl.textContent = isGoldenDreamWhale ? 'SPECIAL MYTHIC' : 'MYTHIC';
+  } else if (isHiddenHit) {
     // ★ Day 22 — 골든/트윙클과 같은 2단 구성: grade 자리에 "HIDDEN" (작은 글자)
     gradeEl.textContent = 'HIDDEN';
+  } else if (isGoldenHit) {
+    // ★ Day 40 (대표 결정) — 골든힛 매칭 시 'GOLDEN ' 접두 + base 등급만 (변종 + 표시 X).
+    //   변종 + 노출은 결과팝업의 사이즈 업그레이드 펑 연쇄에서만 (일반힛과 일관).
+    const topBaseKr = topGradeKorean(grades);
+    const baseEn = GRADE_LABEL[topBaseKr] ?? '';
+    gradeEl.textContent = baseEn ? 'GOLDEN ' + baseEn : topGradeLabel(grades);
   } else {
     const gradeLabel = topGradeLabel(grades);
     gradeEl.textContent = gradeLabel;
@@ -193,12 +210,17 @@ export function showBiteAlert(el, opts = {}) {
   } else {
     delete el.dataset.hiddenHit;
   }
-  // ★ Day 27: 신화 매칭 식별 — CSS 가 게임 최고 보상 톤 처리 (황금/무지개/은하/새벽빛 등 신화 4종)
-  //   bite-alert UI: BOSS HIT 처럼 main = 'MYTHIC HIT' 또는 grade='MYTHIC'(변종 X) + HIT
+  // ★ Day 27: 신화 매칭 식별 — CSS 가 게임 최고 보상 톤 처리.
   if (isMythicHit) {
     el.dataset.mythicHit = 'true';
   } else {
     delete el.dataset.mythicHit;
+  }
+  // ★ Day 37: 황금빛꿈고래 식별 — CSS 가 SPECIAL MYTHIC 황금 톤 처리 (일반 신화는 마젠타)
+  if (isGoldenDreamWhale) {
+    el.dataset.goldenDreamWhale = 'true';
+  } else {
+    delete el.dataset.goldenDreamWhale;
   }
 
   el.classList.remove('hide');

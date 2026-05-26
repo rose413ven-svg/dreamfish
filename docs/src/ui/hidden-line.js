@@ -34,10 +34,14 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
  */
 export function drawHiddenLine(gridEl, hiddenCells) {
   return new Promise(resolve => {
-    if (!hiddenCells || hiddenCells.length < 2 || !gridEl) {
-      resolve();
-      return;
-    }
+    // ★ Day 41 (대표 보고 — 선 연출 간헐적 미표시 버그) — 매칭 직후 호출 시 grid reflow 중이라
+    //   getBoundingClientRect 가 width=0/height=0 반환 → 조용히 early return 되는 케이스 방지.
+    //   한 프레임 기다린 후 측정 → 정확한 좌표 확보.
+    requestAnimationFrame(() => {
+      if (!hiddenCells || hiddenCells.length < 2 || !gridEl) {
+        resolve();
+        return;
+      }
 
     const cellEls = gridEl.querySelectorAll('.slot-cell');
     if (cellEls.length === 0) {
@@ -186,6 +190,7 @@ export function drawHiddenLine(gridEl, hiddenCells) {
         setTimeout(() => overlay.remove(), LINE_FADE);
       }, LINE_DURATION);
     });
+    });   // ★ Day 41 — 외곽 requestAnimationFrame 닫기
   });
 }
 

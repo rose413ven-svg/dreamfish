@@ -208,10 +208,18 @@
   font-weight: 500;
   letter-spacing: 0.12em;
   cursor: pointer;
+  position: relative;   /* ★ Day 39 — .codex-dot absolute 기준점 (우상단 빨간점) */
   transition:
     background 180ms ease,
     border-color 180ms ease,
     color 180ms ease;
+}
+
+/* ★ Day 39 — 서브 탭 우상단 빨간점 (해당 탭 영역에 신규 물고기 OR 새 최고기록 있을 때) */
+.codex-sub-tab > .codex-dot {
+  position: absolute;
+  top: 0.18rem;
+  right: 0.22rem;
 }
 
 .codex-sub-tab:hover {
@@ -572,6 +580,26 @@
 @keyframes codex-new-pop {
   0%   { transform: scale(0) rotate(-8deg); opacity: 0; }
   100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* ★ Day 39 — NEW BEST 배지 — 셀 우측 하단 (새 최고무게기록 갱신 시).
+   잡기결과팝업의 NEW RECORD 배지(.fish-result__record-badge)와 동일 초록 그래디언트.
+   우상단 NEW 배지(신규 등록)와 동시 표시 가능 (Q2-D). */
+.codex-fish-cell__newbest-badge {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.6rem;
+  padding: 0.18rem 0.5rem;
+  font-family: var(--font-impact);
+  font-size: 0.95rem;
+  letter-spacing: 0.16em;
+  color: #fff;
+  background: linear-gradient(135deg, #9DE36B, #4FC76E);
+  border-radius: 3px;
+  box-shadow:
+    0 0 8px rgba(157, 227, 107, 0.55),
+    0 0 14px rgba(79, 199, 110, 0.28);
+  animation: codex-new-pop 360ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 /* ============================================
@@ -970,6 +998,21 @@
   font-size: 0.72rem;        /* Day 17 후속 v2: 1.0rem → 0.72rem (한 줄 확보) */
   letter-spacing: 0.04em;    /* Day 17 후속 v2: 0.10em → 0.04em */
   color: var(--line-soft);
+  /* ★ Day 41 (대표 결정) — 스크롤 내려도 상단 고정 (sticky).
+     codex-list 스크롤 컨테이너 기준 top:0. 배경/그라데이션 으로 그리드 셀과 시각 구분. */
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: linear-gradient(
+    to bottom,
+    rgba(8, 14, 28, 0.96) 0%,
+    rgba(8, 14, 28, 0.92) 80%,
+    rgba(8, 14, 28, 0.0) 100%
+  );
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding-top: 0.6rem;        /* sticky 영역 살짝 위로 — 상단 잘림 방지 */
+  padding-bottom: 1.0rem;     /* 그라데이션 페이드용 여유 */
 }
 .codex-reward-summary__item {
   display: inline-flex;
@@ -1166,48 +1209,66 @@
      - 0.8 페이드인 → 0.4 유지 → 0.6 페이드아웃 (총 1.8s)
    ============================================ */
 
+/* ★ Day 41 (대표 결정) — 도감 등록 보상 토스트를 상상력 변동 팝업처럼 흰색 가로띠 박스로 변경.
+   이전: 가운데 노란 큰 숫자 (스케일 트랜지션)
+   변경: 화면 가로 100% 흰색 띠, 검은 텍스트, 페이드/슬라이드 진입 (imagination-change-popup 톤). */
 .codex-register-toast {
+  /* 화면 모달 위에 떠야 함 → fixed + 매우 높은 z-index */
   position: fixed;
   top: 50%;
-  left: 50%;
-  transform: translate(-50%, -60%) scale(0.85);
-  z-index: 1200;             /* 확인 팝업(1100)보다 위 — 닫힌 후에도 잔영 가능 */
-  text-align: center;
-  pointer-events: none;
+  left: 0;
+  right: 0;
+  z-index: 99998;             /* 상상력 팝업(99999)보다 살짝 아래 — 동시 발생 시 상상력 먼저 보이게 */
+  /* 가로띠 — 화면 가로폭 100% */
+  width: 100%;
+  background: #FFFFFF;
+  padding: 1.2rem 1.5rem;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 -2px 8px rgba(0, 0, 0, 0.08);
+
+  /* 진입 애니메이션 — 살짝 슬라이드 + 페이드 */
+  transform: translateY(calc(-50% + 12px));
   opacity: 0;
   transition:
     opacity 800ms cubic-bezier(0.4, 0, 0.2, 1),
     transform 800ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* 터치 차단 — 정보 표시용이므로 클릭 통과 */
+  pointer-events: none;
+  user-select: none;
+  text-align: center;
 }
 .codex-register-toast--show {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
+  transform: translateY(-50%);
 }
 .codex-register-toast--out {
   opacity: 0;
-  transform: translate(-50%, -40%) scale(1.05);
+  transform: translateY(calc(-50% - 12px));
   transition:
     opacity 600ms ease,
     transform 600ms ease;
 }
 .codex-register-toast__value {
   font-family: var(--font-impact);
-  font-size: 3.0rem;
+  font-size: 2.0rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: #ffe9a8;
-  text-shadow:
-    0 0 14px rgba(255, 217, 106, 0.55),
-    0 0 28px rgba(255, 169, 77, 0.32),
-    0 2px 6px rgba(0, 0, 0, 0.6);
-  line-height: 1;
-  margin-bottom: 0.4rem;
+  /* ★ Day 41 — 흰 배경 위에서 잘 보이도록 검은~짙은 황금 톤 */
+  color: #1a1a1a;
+  line-height: 1.1;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 0.8rem;
 }
 .codex-register-toast__label {
   font-family: var(--font-base);
   font-size: 1.05rem;
   font-weight: 500;
-  letter-spacing: 0.20em;
-  color: rgba(255, 233, 168, 0.88);
-  text-shadow: 0 0 8px rgba(0, 0, 0, 0.55);
+  letter-spacing: 0.16em;
+  /* ★ Day 41 — 흰 배경 위 진한 회색 */
+  color: #555555;
+  display: inline-block;
+  vertical-align: middle;
 }

@@ -19,8 +19,8 @@
    ============================================ */
 
 const ANIMATION_TOTAL_MS = 1800;     // 모션 끝 + 안전 여유
-const TEXT_MAX_FONT_PX = 64;         // 최대 글자 크기 (작은 수일 때)
-const TEXT_MIN_FONT_PX = 26;         // 최소 글자 크기 (매우 큰 수일 때 안전)
+const TEXT_MAX_FONT_PX = 100;         // 최대 글자 크기 (작은 수일 때)
+const TEXT_MIN_FONT_PX = 50;         // 최소 글자 크기 (매우 큰 수일 때 안전)
 const CHAR_WIDTH_RATIO = 0.62;       // Pretendard ExtraBold 한 글자 폭 비율 추정
 const GRID_USABLE_RATIO = 0.92;      // 그리드 폭의 92% 까지 글자 차지
 

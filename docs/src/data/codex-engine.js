@@ -19,6 +19,11 @@ import {
   loadCodexNewFishNames,
   saveCodexNewFishNames,
   clearCodexNewFishNames,
+  clearCodexNewFishNamesByList,
+  loadCodexNewBestFishNames,
+  addCodexNewBestFishName,
+  clearCodexNewBestFishNames,
+  clearCodexNewBestFishNamesByList,
 } from '../core/storage.js';
 
 import {
@@ -96,6 +101,12 @@ export function registerFishCatch(fishName, weightKg) {
     }
   }
 
+  // ★ Day 39 — 새 최고기록 갱신 시 NEW BEST 큐에 추가 (도감 우측 하단 NEW 배지 + 빨간점 트리거).
+  //   isNew=true 케이스도 bestUpdated=true 이므로 포함됨 (Q2-D: 우측 상단 NEW + 하단 NEW 동시 표시).
+  if (bestUpdated) {
+    addCodexNewBestFishName(fishName);
+  }
+
   return { isNew, bestUpdated };
 }
 
@@ -107,6 +118,28 @@ export function getNewlyRegisteredFishNames() {
 /** 미확인 모두 확인 처리 (도감 물고기 탭 진입/이탈 시 호출). */
 export function markAllFishNewSeen() {
   clearCodexNewFishNames();
+}
+
+/* ★ Day 39 — 새 최고기록 NEW 시스템 export */
+
+/** 미확인 새 최고기록 물고기 이름 목록. */
+export function getNewlyRegisteredBestFishNames() {
+  return loadCodexNewBestFishNames();
+}
+
+/** 새 최고기록 모두 확인 처리. */
+export function markAllFishNewBestSeen() {
+  clearCodexNewBestFishNames();
+}
+
+/** 특정 이름 목록만 NEW (신규 등록) 확인 처리 — 서브 탭 부분 clear 용. */
+export function markFishNewSeenByList(names) {
+  clearCodexNewFishNamesByList(names);
+}
+
+/** 특정 이름 목록만 NEW BEST (새 최고기록) 확인 처리 — 서브 탭 부분 clear 용. */
+export function markFishNewBestSeenByList(names) {
+  clearCodexNewBestFishNamesByList(names);
 }
 
 /** 도감에 등록된 물고기 이름 set 반환. */
@@ -381,7 +414,10 @@ export function buildSortedEquipmentList(inventoryItems) {
 /**
  * 현재 등록된 장비 도감 → 누적 보너스.
  *
- * @returns {{ fishWeightPct: number, comboWeightPct: number, dropRatePct: number }}
+ * ★ Day 41 (대표 결정) — 반환 키 변경: dropRatePct → kabikabiBonusPct.
+ *   cosmetic 카테고리 보상을 장비 발견 +확률에서 까비까비 보너스로 변경.
+ *
+ * @returns {{ fishWeightPct: number, comboWeightPct: number, kabikabiBonusPct: number }}
  */
 export function getCodexBonuses() {
   const codex = loadEquipmentCodex();

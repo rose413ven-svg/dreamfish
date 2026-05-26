@@ -21,7 +21,7 @@
    ============================================ */
 
 import { OPTIONS } from '../data/equipment-options.js';
-import { getActiveOptions } from '../data/equipment-effects.js';
+import { getActiveOptions, CRITICAL_BASE_RATE, COMBO_STAGE_CAP, COMBO_STAGE_PER_HIT } from '../data/equipment-effects.js';
 // Day 10 v2 — 세트 효과 (대표 결정 변경): STATS 위쪽 별도 영역 삭제 →
 //   옵션 7종 안의 weight_bonus 행에 세트 무게 % 합산 +
 //   신규 행 '장비 발견 추가 확률' 추가 (총 8행)
@@ -30,7 +30,8 @@ import { GEAR_GRADES } from '../data/gear-grades.js';
 import { loadInventory, loadNickname } from '../core/storage.js';
 // Day 17 후속 v2 (대표 보고 — 도감 보너스가 내정보 수치에 미반영):
 //   getActiveOptions 두 번째 인자로 codexBonuses 전달 필요 (stats-bar.js / slot.js 패턴과 동일).
-//   장비 발견 추가 확률 행에도 도감 dropRatePct 합산.
+//   ★ Day 41 (대표 결정) — 도감 cosmetic 카테고리 변경: dropRatePct → kabikabiBonusPct.
+//     장비 발견 추가 확률 행에서 도감 분 제거 (세트+레벨만), 까비까비 보너스 행은 active.kabikabi_bonus 자동 반영.
 import { getCodexBonuses } from '../data/codex-engine.js';
 // Day 18 — 레벨 시스템 도입:
 //   - 닉네임 옆 'Lv. N' 표시
@@ -110,26 +111,70 @@ function buildStatRows(comboCount) {
   //   getCodexBonuses() 두 번째 인자 전달 → weight_bonus / combo_bonus 에 도감 분 자동 합산.
   const codexBonuses = getCodexBonuses();
   const active = getActiveOptions(inv, codexBonuses) || {};
-  const stageBonus = comboCount > 0 ? comboCount * 10 : 0;
+  // ★ Day 38 (대표 결정) — 콤보 단계 보너스 5%, 30콤보 캡 (=150% 상한).
+  //   콤보 카운트 자체는 무한 누적 가능하나 보너스 표시는 30에서 정지.
+  //   장비 combo_bonus 는 이 캡과 별개 (active.combo_bonus 그대로 합산).
+  const stageBonus = comboCount > 0
+    ? Math.min(comboCount, COMBO_STAGE_CAP) * (COMBO_STAGE_PER_HIT * 100)  // 0.05 × 100 = 5%
+    : 0;
 
   // Day 10 v2 — 세트 효과 캐싱 (모달 열린 시점 4부위 등급 기준)
   const setGrade           = getSetGrade(inv);
   const setWeightBonusPct  = getSetWeightBonus(setGrade);                 // 0/10/20/30/50
   const setDropRatePct     = setGrade ? (getSetDropRateBonus(setGrade) * 100) : 0;  // 0/3/5/10/15
-  // Day 17 후속 v2 — 도감 장비 발견 추가 확률 분 (% 단위, set 과 별도 합산)
-  const codexDropRatePct   = codexBonuses.dropRatePct || 0;
+  // ★ Day 41 (대표 결정) — 도감 cosmetic 카테고리 보상 변경 (장비 발견 → 까비까비 보너스).
+  //   이전: 도감 dropRatePct 가 장비 발견 추가 확률에 합산됨.
+  //   변경: 도감 kabikabiBonusPct 는 equipment-effects.getActiveOptions 가 active.kabikabi_bonus 에 자동 합산.
+  //         장비 발견 추가 확률 = 세트 효과 + 레벨 누적만 (도감 분 제거).
 
   // Day 18 — 레벨 누적 보너스.
   //   ⚠️ fish/golden/rainbow/rock/orb/weight/combo 7종은 equipment-effects.getActiveOptions
   //      내부에서 자동 합산됨 (active 결과에 이미 포함). 여기선 set_drop_rate 만 별도 사용.
   const levelBonuses = getLevelBonuses();
+  const levelDropPct = levelBonuses.set_drop_rate || 0;
+  const totalDropPct = setDropRatePct + levelDropPct;   // ★ Day 41 — 도감 dropRatePct 제거
 
-  // 1. 기존 옵션 7종 행 (weight_bonus 에 세트 무게 합산).
-  //    Day 18: 레벨 보너스는 active 가 이미 합산해서 옴 (equipment-effects 통합).
-  //    ★ Day 26: kabikabi_bonus 는 여기서 제외 (가장 마지막 행으로 별도 push — 대표 결정).
-  const rows = Object.keys(OPTIONS)
-    .filter(key => key !== 'kabikabi_bonus')  // ★ Day 26 — 까비까비는 별도 처리
-    .map(key => {
+  /* ★ Day 38 후속 (대표 결정) — STATS 표시 순서 명시 배열 + 2개씩 grid 배치.
+   *
+   *  순서 (총 13개, 2 columns × 7 rows, 마지막 행은 우측 빈칸):
+   *    1행: 검은물고기 입질 / 황금물고기 입질
+   *    2행: 분홍물고기 입질 / 하얀물고기 입질
+   *    3행: 물고기 kg 보너스 / 콤보 kg 보너스
+   *    4행: 까비까비 보너스 / 럭키럭키 발동
+   *    5행: 크리티컬 확률 / X 등장 확률
+   *    6행: 물고기 속도 / 잡기시간 증가
+   *    7행: 장비 발견 추가 확률 / (빈칸)
+   *
+   *  이전 (Day 25~37): Object.keys(OPTIONS) 순회 + sub tier(입질 4종 들여쓰기) — 폐기.
+   *  현재 (Day 38)   : 명시적 STAT_ORDER 배열 + 모든 행 main tier 동일 처리 (sub 제거).
+   */
+  const STAT_ORDER = [
+    'fish_rate',         // 검은물고기 입질
+    'golden_rate',       // 황금물고기 입질
+    'rainbow_rate',      // 분홍물고기 입질
+    'twinkle_rate',      // 하얀물고기 입질
+    'weight_bonus',      // 물고기 kg 보너스
+    'combo_bonus',       // 콤보 kg 보너스
+    'kabikabi_bonus',    // 까비까비 보너스
+    'lucky_rate',        // 럭키럭키 발동
+    'critical_rate',     // 크리티컬 확률
+    'rock_rate',         // X 등장 확률
+    'orb_speed',         // 물고기 속도
+    'catch_time_bonus',  // 잡기시간 증가
+    'set_drop_rate',     // 장비 발견 추가 확률 (가상 키 — 세트+도감+레벨)
+  ];
+
+  return STAT_ORDER.map(key => {
+    // set_drop_rate 는 OPTIONS 에 없는 가상 키 → 별도 처리
+    if (key === 'set_drop_rate') {
+      return {
+        key:       'set_drop_rate',
+        name:      '장비 발견 추가 확률',
+        valueText: formatBonus(totalDropPct, '+', 'set_drop_rate'),
+        hasBonus:  totalDropPct > 0,
+      };
+    }
+
     const opt = OPTIONS[key];
     let value = active[key] || 0;
 
@@ -141,36 +186,18 @@ function buildStatRows(comboCount) {
     if (key === 'weight_bonus' && setWeightBonusPct > 0) {
       value = Math.round((value + setWeightBonusPct) * 10) / 10;
     }
+    // ★ Day 32 (대표 결정) — critical_rate 에 기본 확률 3% 합산.
+    //   장비 없어도 기본 3% 가 항상 적용되므로 STATS 에도 합산해서 표시 (시작 시 3% 보임).
+    if (key === 'critical_rate') {
+      value = Math.round((value + CRITICAL_BASE_RATE) * 10) / 10;
+    }
     return {
       key,
-      name: opt.displayName,
+      name:      opt.displayName,
       valueText: formatBonus(value, opt.sign, key),
-      hasBonus: value > 0,
+      hasBonus:  value > 0,
     };
   });
-
-  // 2. 신규 8번째 행 — 장비 발견 추가 확률 (세트 + 도감 + Day 18 레벨 합산)
-  // 세트/도감/레벨 모두 0이어도 표시 (대표 결정 — 항상 표시).
-  const levelDropPct = levelBonuses.set_drop_rate || 0;
-  const totalDropPct = setDropRatePct + codexDropRatePct + levelDropPct;
-  rows.push({
-    key:       'set_drop_rate',
-    name:      '장비 발견 추가 확률',
-    valueText: formatBonus(totalDropPct, '+', 'set_drop_rate'),  // % 단위 (NO_PERCENT_KEYS X)
-    hasBonus:  totalDropPct > 0,
-  });
-
-  // 3. ★ Day 26 — 까비까비 보너스 행 (가장 마지막, 대표 결정).
-  //    찌 희귀+ 등급에서만 옵션 추첨됨. 옵션 없으면 0 표시 (다른 행과 동일 일관성).
-  const kabikabiValue = active.kabikabi_bonus || 0;
-  rows.push({
-    key:       'kabikabi_bonus',
-    name:      OPTIONS.kabikabi_bonus.displayName,
-    valueText: formatBonus(kabikabiValue, OPTIONS.kabikabi_bonus.sign, 'kabikabi_bonus'),
-    hasBonus:  kabikabiValue > 0,
-  });
-
-  return rows;
 }
 
 /**
@@ -309,9 +336,9 @@ export function createProfileModal(opts = {}) {
     const rows = buildStatRows(comboCount);
     statsList.innerHTML = '';
 
-    // ★ Day 25 Phase 3 — 스탯 리스트 최상단에 "상상력" 행 추가 (검은물고기 입질 위쪽).
-    //   상위 (main) 메뉴 = 옅은 분홍 라벨 색 (대표 명세 — 동급 메뉴들 시각 통일).
-    //   하위 (sub) 메뉴 = 입질 4종 = 들여쓰기 + 색 그대로 (대표 명세).
+    // ★ Day 25 Phase 3 / ★ Day 38 후속 — 스탯 리스트 최상단에 "상상력" 행 (종합점수 강조).
+    //   Day 38 변경: 종합점수 느낌 살리기 — grid 전체 폭 차지 + 큰 글씨 + 강조 박스.
+    //   (CSS .profile-stat-row--imagination 에서 처리)
     const imaginationRow = document.createElement('div');
     imaginationRow.className = 'profile-stat-row profile-stat-row--main profile-stat-row--imagination';
     imaginationRow.dataset.key = 'imagination';
@@ -325,14 +352,12 @@ export function createProfileModal(opts = {}) {
     imaginationRow.appendChild(imgValue);
     statsList.appendChild(imaginationRow);
 
-    // ★ Day 25 Phase 3 — 입질 4종 = 상상력 하위 메뉴 (sub tier — 들여쓰기, 색 그대로).
-    const SUB_TIER_KEYS = new Set(['fish_rate', 'golden_rate', 'rainbow_rate', 'twinkle_rate']);
-
+    // ★ Day 38 후속 (대표 결정) — 모든 행 main tier 동일 처리.
+    //   이전 (Day 25): 입질 4종은 sub tier (들여쓰기 + 색 다름).
+    //   변경 (Day 38): 입질 4종도 다른 옵션과 동일 main tier (분홍 라벨) — 2개씩 grid 배치 일관성.
     for (const r of rows) {
       const row = document.createElement('div');
-      // ★ Day 25 Phase 3 — tier 분기: 입질 4종 = sub, 그 외 = main
-      const tier = SUB_TIER_KEYS.has(r.key) ? 'sub' : 'main';
-      row.className = `profile-stat-row profile-stat-row--${tier}`;
+      row.className = 'profile-stat-row profile-stat-row--main';
       row.dataset.key = r.key;
 
       const name = document.createElement('span');

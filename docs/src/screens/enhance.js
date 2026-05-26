@@ -21,11 +21,16 @@ import { Screen, navigate } from '../core/router.js';
 import { loadInventory } from '../core/storage.js';
 import { findEquipmentById } from '../data/inventory.js';
 import { getCatalogEntry } from '../data/equipment-catalog.js';
-import { OPTIONS } from '../data/equipment-options.js';
-import { ENHANCE_MAX_LEVEL, getEnhanceBonus } from '../data/equipment-meta.js';
+import { OPTIONS, getFixedOptionCount } from '../data/equipment-options.js';
+import { ENHANCE_MAX_LEVEL, getEnhanceBonus, ENHANCE_OUTCOME_TABLE, hasDowngradeRisk } from '../data/equipment-meta.js';
 import { canEnhance, tryEnhance } from '../data/enhance-engine.js';
 import { createGearIcon } from '../ui/gear-icons.js';
 import { renderFishSVG } from '../ui/fish-svg.js';
+// ★ Day 41 (대표 결정) — 강화 결과 카드 노출 시점에 상상력 변동 팝업 표시 (기존: 가방 닫혀야 표시되던 늦은 시점)
+//   v2 (Day 41 후속) — storage 의존 제거. 진입 시점 imaginationBefore 모듈 변수로 정확한 diff 계산.
+import { showImaginationChangePopup } from '../ui/imagination-change-popup.js';
+import { getCurrentImagination } from '../data/imagination.js';
+import { savePreviousImagination } from '../core/storage.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -148,8 +153,8 @@ function buildEnhanceScreen(itemId) {
   // 5. 옵션 비교 표
   root.appendChild(buildOptionsTable(item, entry, info.currentLevel, info.nextLevel, isMax));
 
-  // 6. 성공률 (MAX 면 숨김)
-  if (!isMax) root.appendChild(buildSuccessRow(info.successRate));
+  // 6. 성공률 (MAX 면 숨김) — ★ Day 41: +6강 이상이면 성공/유지/하락 3행 표시
+  if (!isMax) root.appendChild(buildSuccessRow(info.successRate, info.nextLevel));
 
   // 7. 게이지 (빈 상태)
   root.appendChild(buildGauge());
@@ -290,54 +295,139 @@ function buildOptionsTable(item, entry, currentLevel, nextLevel, isMax) {
 
   if (!Array.isArray(item.options) || item.options.length === 0) return wrap;
 
-  // 옵션 표시 순서 = OPTIONS 정의 순 (보트 같은 랜덤 풀도 항상 같은 순서)
-  const displayKeys = Object.keys(OPTIONS).filter(k => item.options.some(o => o.key === k));
+  // ★ Day 30 (대표 결정) — fixed/random 그룹 분리:
+  //   인덱스 < fixedCount = fixed (위쪽 일반색)
+  //   인덱스 >= fixedCount = random 풀 옵션 (아래쪽 황금색)
+  //   부위/등급별 fixedCount 는 getFixedOptionCount() 로 조회 (배는 0).
+  const fixedCount = getFixedOptionCount(entry.slotId, entry.grade);
+  const fixedOpts = [];
+  const randomOpts = [];
+  item.options.forEach((o, idx) => {
+    if (!o || !o.key) return;
+    if (idx < fixedCount) fixedOpts.push(o);
+    else randomOpts.push(o);
+  });
 
-  for (const key of displayKeys) {
-    const opt = item.options.find(o => o.key === key);
-    const def = OPTIONS[key];
-    if (!opt || !def) continue;
+  /**
+   * 한 그룹(fixed 또는 random)을 키별로 묶어서 별도 N줄 렌더링.
+   * 강화 보너스는 키별 1회만 → fixed 그룹 첫 인스턴스에 합산.
+   *   fixed 에 없고 random 에만 있는 키는 random 첫 인스턴스에 합산 (예: rod 의 무게/콤보/까비).
+   *
+   * @param {Array} opts            그룹 옵션 배열
+   * @param {boolean} isRandomGroup true 면 황금색 클래스 추가
+   */
+  function renderGroup(opts, isRandomGroup) {
+    // 키별 인스턴스 그룹화 + OPTIONS 정의 순서로 키 정렬
+    const byKey = Object.create(null);
+    for (const o of opts) {
+      if (!byKey[o.key]) byKey[o.key] = [];
+      byKey[o.key].push(o);
+    }
+    const groupKeys = Object.keys(OPTIONS).filter(k => k in byKey);
 
-    const baseValue = opt.value || 0;
-    const curBonus  = getEnhanceBonus(key, entry.slotId, entry.grade, currentLevel);
-    const nextBonus = isMax ? curBonus : getEnhanceBonus(key, entry.slotId, entry.grade, nextLevel);
-    const curTotal  = baseValue + curBonus;
-    const nextTotal = baseValue + nextBonus;
+    for (const key of groupKeys) {
+      const def = OPTIONS[key];
+      if (!def) continue;
+      const insts = byKey[key];
 
-    const unit = NO_PERCENT_KEYS.has(key) ? '' : '%';
+      // ★ Day 38 후속 (대표 결정 — 강화 효과 인스턴스마다 적용 변경) ★
+      //   이전 (균등 분배): 그룹 강화 +N 을 인스턴스 수로 나눠 분배.
+      //   변경: 각 인스턴스마다 강화 +N 그대로 적용 → 합산은 N × 인스턴스 수만큼 증폭.
+      //   applyEnhanceHere 가드 제거 — fixed/random 무관 모든 인스턴스에 강화 적용.
+      //   (equipment-effects.js getActiveOptions 의 인스턴스마다 적용과 일관.)
+      const curBonus  = getEnhanceBonus(key, entry.slotId, entry.grade, currentLevel);
+      const nextBonus = isMax ? curBonus : getEnhanceBonus(key, entry.slotId, entry.grade, nextLevel);
+      const hasEnhanceData = curBonus > 0 || nextBonus > 0;  // 강화 데이터가 정의된 키만 화살표 표시
+      const unit = NO_PERCENT_KEYS.has(key) ? '' : '%';
 
-    const row = document.createElement('div');
-    row.className = 'enhance-options__row';
+      insts.forEach((opt, idx) => {
+        const baseValue = opt.value || 0;
+        // ★ Day 38 후속 — 각 인스턴스 = baseValue + 강화 그대로 (분배 X)
+        const curTotal  = baseValue + curBonus;
+        const nextTotal = baseValue + nextBonus;
 
-    const name = document.createElement('span');
-    name.className = 'enhance-options__name';
-    name.textContent = def.displayName;
-    row.appendChild(name);
+        const row = document.createElement('div');
+        row.className = 'enhance-options__row';
+        if (isRandomGroup) {
+          row.classList.add('enhance-options__row--random');  // ★ Day 30 황금색
+        }
 
-    const cur = document.createElement('span');
-    cur.className = 'enhance-options__current';
-    cur.textContent = `${signedStr(curTotal, def.sign, key)}${unit}`;
-    row.appendChild(cur);
+        const name = document.createElement('span');
+        name.className = 'enhance-options__name';
+        name.textContent = def.displayName;
+        row.appendChild(name);
 
-    const arrow = document.createElement('span');
-    arrow.className = 'enhance-options__arrow';
-    arrow.textContent = isMax ? '' : '→';
-    row.appendChild(arrow);
+        const cur = document.createElement('span');
+        cur.className = 'enhance-options__current';
+        cur.textContent = `${signedStr(curTotal, def.sign, key)}${unit}`;
+        row.appendChild(cur);
 
-    const next = document.createElement('span');
-    next.className = 'enhance-options__next';
-    next.textContent = isMax ? '—' : `${signedStr(nextTotal, def.sign, key)}${unit}`;
-    row.appendChild(next);
+        const arrow = document.createElement('span');
+        arrow.className = 'enhance-options__arrow';
+        // 강화 데이터 정의된 키만 화살표 (옵션 키 중 강화 매트릭스 없는 경우 빈 칸)
+        arrow.textContent = (isMax || !hasEnhanceData) ? '' : '→';
+        row.appendChild(arrow);
 
-    wrap.appendChild(row);
+        const next = document.createElement('span');
+        next.className = 'enhance-options__next';
+        if (isMax) {
+          next.textContent = '—';
+        } else if (!hasEnhanceData) {
+          // 강화 데이터 없는 키 → next 칸 비움
+          next.textContent = '';
+        } else {
+          next.textContent = `${signedStr(nextTotal, def.sign, key)}${unit}`;
+        }
+        row.appendChild(next);
+
+        wrap.appendChild(row);
+      });
+    }
   }
+
+  // ★ Day 30 — fixed 위쪽 / random 아래쪽 (황금색).
+  renderGroup(fixedOpts, false);
+  renderGroup(randomOpts, true);
 
   return wrap;
 }
 
 /* ── 6. 성공률 ─────────────────────────────── */
 
-function buildSuccessRow(successRate) {
+/**
+ * 강화 확률 표시.
+ * - +5 이하: 기존 "성공 확률 N%" 1행 (단순 분기)
+ * - +6 이상 (★ Day 41): 성공/유지/하락 3행 표시 (ENHANCE_OUTCOME_TABLE)
+ */
+function buildSuccessRow(successRate, nextLevel) {
+  const wrap = document.createElement('div');
+  wrap.className = 'enhance-success-rows';
+
+  // ── 3분기 (+6강 이상) ──
+  if (hasDowngradeRisk(nextLevel)) {
+    const t = ENHANCE_OUTCOME_TABLE[nextLevel];
+    const rows = [
+      { label: '성공 확률', value: t.success,   modifier: 'success'   },
+      { label: '유지 확률', value: t.maintain,  modifier: 'maintain'  },
+      { label: '하락 확률', value: t.downgrade, modifier: 'downgrade' },
+    ];
+    for (const r of rows) {
+      const row = document.createElement('div');
+      row.className = 'enhance-success-row enhance-success-row--' + r.modifier;
+      const label = document.createElement('span');
+      label.className = 'enhance-success-row__label';
+      label.textContent = r.label;
+      row.appendChild(label);
+      const value = document.createElement('span');
+      value.className = 'enhance-success-row__value';
+      value.textContent = `${Math.round((r.value || 0) * 100)}%`;
+      row.appendChild(value);
+      wrap.appendChild(row);
+    }
+    return wrap;
+  }
+
+  // ── 기존 1행 (+5 이하) ──
   const row = document.createElement('div');
   row.className = 'enhance-success-row';
   if (successRate < 0.30) row.classList.add('enhance-success-row--low');
@@ -352,7 +442,8 @@ function buildSuccessRow(successRate) {
   value.textContent = `${Math.round((successRate || 0) * 100)}%`;
   row.appendChild(value);
 
-  return row;
+  wrap.appendChild(row);
+  return wrap;
 }
 
 /* ── 7. 게이지 (빈 상태) ───────────────────── */
@@ -513,8 +604,11 @@ function buildRevealOverlay() {
   const front = document.createElement('div');
   front.className = 'enhance-reveal-card__front';
 
-  // 좌상단 +N (성공 시 새 단계, 실패 시 기존 단계)
-  const displayLevel = pendingResult.success ? pendingResult.newLevel : pendingResult.oldLevel;
+  // 좌상단 +N — ★ Day 41: pendingResult.newLevel 직접 사용
+  //   success  → 새 단계 (+1)
+  //   maintain → 기존 단계 (변동 X)
+  //   downgrade → 감소된 단계 (-1)
+  const displayLevel = pendingResult.newLevel;
   if (displayLevel > 0) {
     const lv = document.createElement('span');
     lv.className = 'enhance-reveal-card__level';
@@ -600,8 +694,12 @@ function handleRevealClick(event) {
   // 2. 안내 텍스트 hide
   overlay.dataset.phase = 'revealing';
 
-  // 3. 결과 분기 outcome 부착 — CSS 가 초록 글로우 펄스 (success) / 빨강 번쩍+흔들림+어두워짐 (fail)
-  card.dataset.outcome = pendingResult?.success ? 'success' : 'fail';
+  // 3. 결과 분기 outcome 부착 — CSS 가 outcome별 연출 분기
+  //   ★ Day 41 (대표 결정) — outcome 3종:
+  //     'success'   → 기존 초록 글로우 펄스
+  //     'maintain'  → 기존 fail 빨강 번쩍+흔들림+어두워짐 (텍스트만 "등급 유지" 로 변경)
+  //     'downgrade' → 새 회색 베일 + 부드러운 페이드 + 살짝 흔들림 (CSS .enhance-reveal-card[data-outcome="downgrade"])
+  card.dataset.outcome = pendingResult?.outcome || (pendingResult?.success ? 'success' : 'maintain');
 
   // 4. 700ms 후 RESULT 단계 — 결과 텍스트 + 확인 버튼 등장
   revealTimer = setTimeout(() => {
@@ -619,15 +717,28 @@ function enterResult() {
   const resultText = currentRoot.querySelector('.enhance-result-text');
   if (!overlay || !resultText) return;
 
-  // 결과 텍스트 채우기 (영문 + 한글 두 줄)
-  resultText.innerHTML = pendingResult.success
-    ? '<span class="enhance-result-text__en">SUCCEED</span>'
-    + '<span class="enhance-result-text__ko">강화 성공</span>'
-    : '<span class="enhance-result-text__en">FAILED</span>'
-    + '<span class="enhance-result-text__ko">강화 실패</span>';
+  // 결과 텍스트 채우기 (영문 + 한글 두 줄) — ★ Day 41: outcome 3분기
+  const outcome = pendingResult?.outcome || (pendingResult?.success ? 'success' : 'maintain');
+  let en, ko;
+  if (outcome === 'success') {
+    en = 'SUCCEED';
+    ko = '강화 성공';
+  } else if (outcome === 'downgrade') {
+    en = 'DOWNGRADE';
+    ko = '강화 하락';
+  } else {
+    en = 'MAINTAIN';
+    ko = '등급 유지';
+  }
+  resultText.innerHTML =
+    `<span class="enhance-result-text__en">${en}</span>` +
+    `<span class="enhance-result-text__ko">${ko}</span>`;
 
   overlay.dataset.phase = 'result';
   // CSS 가 phase=result 에서 결과 텍스트 + 확인 버튼 등장 애니메이션 자동 발동
+
+  // ★ Day 41 (대표 결정 v3) — 상상력 변동 팝업은 확인 버튼 클릭 시점(handleConfirmClick)으로 이동.
+  //   이유: 결과 카드 떠 있는 동안 팝업 띄우면 시각 충돌 가능 + 사용자가 결과 확인 후 진행 시점에 자연스러움.
 }
 
 /**
@@ -664,6 +775,25 @@ function handleConfirmClick(event) {
 
   // 성공 시 옵션 강조 (변경된 행에 잠시 글로우 — CSS 1.5초 자동 종료)
   if (wasSuccess) highlightChangedOptions();
+
+  // ★ Day 41 (대표 결정 v3) — 확인 버튼 클릭 시점에 상상력 변동 팝업 표시.
+  //   배경: enterResult 시점에 띄우니 카드 결과 화면과 충돌 가능 + 안 뜨는 케이스 발생.
+  //   해결: 사용자가 결과 카드 확인 후 [확인] 누르는 시점 (IDLE 복귀 직후) 에 표시.
+  //         이때 currentRoot 가 새 빌드 (IDLE 화면) 라 카드 오버레이는 사라진 상태 — 시각 충돌 X.
+  //   - 성공/실패 둘 다 호출 (실패면 diff=0 으로 팝업 안 뜸 — 자연스러움).
+  //   - 연속 강화 대응: 매 confirm 후 imaginationBefore 갱신 → 다음 강화 결과 시점에 정확한 diff.
+  //   - storage previous 도 갱신 → 가방 닫기 등 후속 hud.refreshImagination 자동 호출 시 중복 팝업 방지.
+  try {
+    const currentAfter = getCurrentImagination();
+    const diff = currentAfter - imaginationBefore;
+    if (diff !== 0) {
+      showImaginationChangePopup(currentAfter, diff);
+    }
+    imaginationBefore = currentAfter;
+    savePreviousImagination(currentAfter);
+  } catch (e) {
+    console.warn('[enhance] imagination popup on confirm failed:', e);
+  }
 }
 
 /** 성공 시 IDLE 복귀 직후 옵션 비교 표의 모든 행에 강조 클래스 부착.
@@ -684,6 +814,9 @@ let phase         = 'idle';
 let gaugeTimer    = null;
 let revealTimer   = null;
 let pendingResult = null;
+// ★ Day 41 (대표 결정) — 강화 시점별 imagination 추적 (storage 의존 X — 정확한 diff 계산).
+//   mount 시 진입 직전 값 저장, 매 강화 결과 후 갱신.
+let imaginationBefore = 0;
 
 export default {
   mount(el, params = {}) {
@@ -694,6 +827,12 @@ export default {
     }
     phase = 'idle';
     pendingResult = null;
+    // ★ Day 41 — 강화 화면 진입 시점 imagination 캡처 (storage 와 무관 — 정확성 보장).
+    try {
+      imaginationBefore = getCurrentImagination();
+    } catch (e) {
+      imaginationBefore = 0;
+    }
     currentRoot = buildEnhanceScreen(currentItemId);
     currentRoot.dataset.phase = 'idle';  // 초기 phase 명시 (CSS 가드 발동 기준)
     el.appendChild(currentRoot);

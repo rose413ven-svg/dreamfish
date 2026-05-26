@@ -63,10 +63,11 @@ function hexToGlow(hex, alpha = GLOW_ALPHA) {
  *                                    { name, id, grade, baseColor, baseSize, baseWeight }
  * @param {boolean} opts.registered   등록 여부
  * @param {number}  [opts.bestWeightKg]  등록된 경우 최고 무게
- * @param {boolean} [opts.isNew=false]   신규 NEW 배지 표시 여부
+ * @param {boolean} [opts.isNew=false]   신규 NEW 배지 표시 여부 (우측 상단 — 처음 등록)
+ * @param {boolean} [opts.isNewBest=false]  ★ Day 39 — 새 최고기록 NEW 배지 표시 여부 (우측 하단 — 초록)
  * @returns {{ root: HTMLElement }}
  */
-export function createFishCodexCell({ entry, registered, bestWeightKg = 0, isNew = false }) {
+export function createFishCodexCell({ entry, registered, bestWeightKg = 0, isNew = false, isNewBest = false }) {
   const root = document.createElement('article');
   root.className = 'codex-fish-cell';
   root.dataset.grade = entry.grade;
@@ -121,12 +122,21 @@ export function createFishCodexCell({ entry, registered, bestWeightKg = 0, isNew
   info.appendChild(nameLine);
   info.appendChild(weightLine);
 
-  /* NEW 배지 (캡처본 기준) */
+  /* NEW 배지 (캡처본 기준) — 우측 상단: 신규 등록 */
   if (isNew) {
     const newBadge = document.createElement('span');
     newBadge.className = 'codex-fish-cell__new-badge';
     newBadge.textContent = 'NEW';
     root.appendChild(newBadge);
+  }
+
+  /* ★ Day 39 — 새 최고기록 배지 — 우측 하단 (초록) — 신규 등록 NEW 와 동시 표시 가능 (Q2-D)
+     ★ Day 41 (대표 결정) — 텍스트 'NEW' → 'BEST' (신규 등록 NEW 와 헷갈리지 않도록 변경) */
+  if (isNewBest && registered) {
+    const newBestBadge = document.createElement('span');
+    newBestBadge.className = 'codex-fish-cell__newbest-badge';
+    newBestBadge.textContent = 'BEST';   // ★ Day 41 — NEW → BEST
+    root.appendChild(newBestBadge);
   }
 
   root.appendChild(symBox);

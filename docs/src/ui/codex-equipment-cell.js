@@ -22,11 +22,11 @@ const SLOT_NAME = Object.freeze(
   GEAR_SLOTS.reduce((acc, s) => { acc[s.id] = s.name || s.id; return acc; }, {})
 );
 
-/** 보상 종류 라벨 */
+/** 보상 종류 라벨 — ★ Day 41: dropRatePct(장비 발견) → kabikabiBonusPct(까비까비) */
 const REWARD_LABEL = Object.freeze({
-  fishWeightPct:  '물고기 kg',
-  comboWeightPct: '콤보 kg',
-  dropRatePct:    '장비 발견 +',
+  fishWeightPct:    '물고기 kg',
+  comboWeightPct:   '콤보 kg',
+  kabikabiBonusPct: '까비까비',  // ★ Day 41
 });
 
 /** PNG 이미지 경로 빌더 — 가방 셀(gear-icons.js)과 동일한 상대 경로.
@@ -153,10 +153,8 @@ function buildCellContent(root, opts) {
   rewardLine.className = 'codex-eq-cell__reward';
   const rewardLabel = REWARD_LABEL[reward.kind] || '보상';
   const valFixed = Number((reward.valuePct || 0).toFixed(3));
-  // "+" 표시 — drop 도 %p 형태 (+1.121%)
-  const rewardText = reward.kind === 'dropRatePct'
-    ? `${rewardLabel}${valFixed}%p`
-    : `${rewardLabel} +${valFixed}%`;
+  // ★ Day 41 — 카테고리 단위 통일 (모두 %). dropRatePct(%p) 분기 제거.
+  const rewardText = `${rewardLabel} +${valFixed}%`;
   rewardLine.textContent = rewardText;
 
   info.appendChild(titleLine);

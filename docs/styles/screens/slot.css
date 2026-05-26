@@ -874,7 +874,9 @@
 /* 텍스트 — 큰 글자 + 노랑 + scale pop (오버슈트) */
 .gain-burst__text {
   position: relative;
-  font-family: var(--font-base);
+  /* ★ Day 39 (대표 결정) — 게임 내 다른 강조 숫자(HUD/bite-alert/fish-result)와 폰트 통일.
+     이전 var(--font-base) → var(--font-impact). */
+  font-family: var(--font-impact);
   font-weight: 900;
   color: #FFD700;
   letter-spacing: 0.02em;
@@ -993,30 +995,132 @@
   will-change: transform, opacity;  /* Day 17 후속 v2 폰 최적화 — GPU 합성 레이어 사전 승격 */
 }
 
+/* ============================================
+   ★ Day 29 — 등급 Lucky Lucky 텍스트 연출 (slot 화면)
+   ============================================
+   bite-alert 위쪽에 단계별 화려 텍스트 팡.
+   결과팝업 변종 Lucky 연쇄(.fish-result__variant-lucky)와 시각 톤 동일.
+   ============================================ */
+.slot-lucky-lucky {
+  /* ★ Day 29 v3 (대표 결정) — bite-alert 의 자식 absolute. 등급 라벨 바로 위.
+     bottom: 100% = bite-alert 상단 가장자리 위. 폰 어떤 화면에서도 등급 위에 자동 정렬. */
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-bottom: 0.6rem;          /* 등급 라벨과의 간격 */
+  transform: translateX(-50%) scale(0.8);
+  font-family: var(--font-impact);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #FFE066;
+  text-shadow:
+    0 0 14px rgba(255, 224, 102, 1),
+    0 0 28px rgba(255, 180, 60, 0.9),
+    0 0 4px rgba(0, 0, 0, 1);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 35;
+  white-space: nowrap;
+  font-size: 4.0rem;
+}
+.slot-lucky-lucky.show {
+  animation: slot-lucky-lucky-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes slot-lucky-lucky-pop {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0.4); }
+  30%  { opacity: 1; transform: translateX(-50%) scale(1.2); }
+  60%  { opacity: 1; transform: translateX(-50%) scale(1.0); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1.0); }
+}
+
+/* 단계별 점진 화려 — 결과팝업 변종 Lucky 와 동일 톤.
+   ★ Day 30 (대표 결정) — Lucky Lucky 텍스트 크기 축소: 4.0 / 4.2 / 4.3 / 4.4 / 4.5rem
+   (Day 29 v2 의 6.0~11.1rem 3배 사이즈에서 축소 — 슬롯 화면 비례감 정리) */
+.slot-lucky-lucky[data-stage="1"] {
+  font-size: 4.0rem;
+  color: #FFE066;
+  text-shadow: 0 0 14px rgba(255, 224, 102, 1), 0 0 28px rgba(255, 180, 60, 0.9), 0 0 4px rgba(0, 0, 0, 1);
+}
+.slot-lucky-lucky[data-stage="2"] {
+  font-size: 4.2rem;
+  color: #FFD040;
+  text-shadow: 0 0 16px rgba(255, 208, 64, 1), 0 0 32px rgba(255, 160, 40, 0.95), 0 0 4px rgba(0, 0, 0, 1);
+}
+.slot-lucky-lucky[data-stage="3"] {
+  font-size: 4.3rem;
+  color: #FFA94D;
+  text-shadow: 0 0 18px rgba(255, 169, 77, 1), 0 0 36px rgba(255, 100, 60, 0.95), 0 0 4px rgba(0, 0, 0, 1);
+}
+.slot-lucky-lucky[data-stage="4"] {
+  font-size: 4.4rem;
+  color: #FF7AA8;
+  text-shadow: 0 0 20px rgba(255, 122, 168, 1), 0 0 40px rgba(255, 80, 140, 0.95), 0 0 4px rgba(0, 0, 0, 1);
+}
+.slot-lucky-lucky[data-stage="5"] {
+  font-size: 4.5rem;
+  color: #FF49A6;
+  text-shadow:
+    0 0 22px rgba(255, 73, 166, 1),
+    0 0 44px rgba(255, 100, 200, 0.95),
+    0 0 66px rgba(180, 100, 255, 0.7),
+    0 0 4px rgba(0, 0, 0, 1);
+  letter-spacing: 0.08em;
+}
+
+/* ★ Day 29 v2 (대표 결정) — bite-alert 등급 텍스트가 럭키 발동으로 바뀔 때 pop 연출.
+   slot.js handlePull 의 럭키 발동 분기에서 .grade-pop 클래스 추가 → animation 자동 제거. */
+.bite-alert__grade.grade-pop {
+  animation: bite-grade-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes bite-grade-pop {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(2.2); }   /* 엄청 커짐 (대표 결정) */
+  60%  { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
 /* 등급 라벨 (TINY/SMALL/MEDIUM/BIG/HUGE/BOSS/LEGEND/MYTHIC) — HIT 위쪽 작게
    Day 19 — 대문자 통일 (대표 결정). text-transform 도 같이 uppercase. */
 .bite-alert__grade {
-  font-family: var(--font-body);
-  font-size: 1.4rem;
-  letter-spacing: 0.32em;
+  /* ★ Day 39 (대표 결정) — 등급 라벨을 배지로 변경 (잘 안 보이던 문제 해결).
+   *   이전: 작은 텍스트 (1.4rem) + 등급별 color.
+   *   변경: 등급색 배경 + 흰 텍스트 + 키운 크기 + 검정 외곽선/그림자 (소형=흰 배경 케이스도 윤곽 보임). */
+  font-family: var(--font-base);
+  font-size: 1.9rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.78);
-  text-shadow: 0 0 10px rgba(0, 0, 0, 0.95),
-               0 0 4px rgba(0, 0, 0, 0.95);
+  color: #fff;
+  /* 흰 텍스트 + 검정 외곽선 (모든 배경색에서 글자 윤곽 보장 — 특히 소형 흰 배경) */
+  text-shadow:
+    0 0 2px rgba(0, 0, 0, 0.95),
+    0 1px 2px rgba(0, 0, 0, 0.85),
+    -1px 0 1px rgba(0, 0, 0, 0.75),
+    1px 0 1px rgba(0, 0, 0, 0.75),
+    0 -1px 1px rgba(0, 0, 0, 0.75);
+  /* 배지 모양 — padding/border-radius/배경은 등급별 셀렉터에서 background 적용 */
+  display: inline-block;
+  padding: 0.3rem 0.95rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.45),
+    0 0 1px rgba(0, 0, 0, 0.4);
   line-height: 1;
-  margin-bottom: 2px;
+  align-self: center;
 }
 
 /* Day 19 — 등급별 색 분기 (대표 결정 — 흰색 고정 → fish-result 와 동일 팔레트).
-   bite-alert.js 에서 dataset.topGrade 박아주면 여기서 색이 들어감. */
-.bite-alert[data-top-grade="치어"]    .bite-alert__grade { color: #B0DCFF; }
-.bite-alert[data-top-grade="소형"]    .bite-alert__grade { color: #FFFFFF; }
-.bite-alert[data-top-grade="중형"]    .bite-alert__grade { color: #C8E664; }
-.bite-alert[data-top-grade="월척"]    .bite-alert__grade { color: #7B61FF; }
-.bite-alert[data-top-grade="대물"]    .bite-alert__grade { color: #FFA94D; }
-.bite-alert[data-top-grade="보스"]    .bite-alert__grade { color: #E94560; }
-.bite-alert[data-top-grade="전설보스"] .bite-alert__grade { color: #FFD700; }
-.bite-alert[data-top-grade="신화보스"] .bite-alert__grade { color: #FF49A6; }
+   bite-alert.js 에서 dataset.topGrade 박아주면 여기서 색이 들어감.
+   ★ Day 39 (대표 결정) — 배지화 — color → background 로 변경 (배지 배경색). */
+.bite-alert[data-top-grade="치어"]    .bite-alert__grade { background: #B0DCFF; }
+.bite-alert[data-top-grade="소형"]    .bite-alert__grade { background: #FFFFFF; }
+.bite-alert[data-top-grade="중형"]    .bite-alert__grade { background: #C8E664; }
+.bite-alert[data-top-grade="월척"]    .bite-alert__grade { background: #7B61FF; }
+.bite-alert[data-top-grade="대물"]    .bite-alert__grade { background: #FFA94D; }
+.bite-alert[data-top-grade="보스"]    .bite-alert__grade { background: #E94560; }
+.bite-alert[data-top-grade="전설보스"] .bite-alert__grade { background: #FFD700; }
+.bite-alert[data-top-grade="신화보스"] .bite-alert__grade { background: #FF49A6; }
 
 .bite-alert__grade:empty {
   display: none;
@@ -1082,11 +1186,11 @@
    JS는 main.textContent='BOSS HIT' 한 줄로 처리하므로
    data-boss="true"일 때 main만 빨간 큰 글씨로
    Day 7-2: 글로우 톤다운 (blur radius / alpha 모두 줄임 — 눈 피로 ↓) ─── */
-.bite-alert[data-boss="true"] .bite-alert__grade {
+.bite-alert[data-boss="true"]:not([data-mythic-hit="true"]) .bite-alert__grade {
   display: none;
 }
 
-.bite-alert[data-boss="true"] .bite-alert__main {
+.bite-alert[data-boss="true"]:not([data-mythic-hit="true"]) .bite-alert__main {
   color: #FF4646;
   font-size: 11.6rem;
   text-shadow:
@@ -1849,9 +1953,11 @@
   justify-content: center;
   align-items: baseline;
   gap: 0.5rem;
-  /* Day 16 후속 (대표 결정): cast 버튼 쪽에 좀 더 가깝게 — 위 간격 늘려 아래로 밀어내림. */
-  margin-top: 0.3rem;
-  margin-bottom: -1.5rem;
+  /* ★ Day 38 후속 (대표 결정) — turn 위치 변경: gearRow→cast→turn (turn 이 cast 아래).
+     기존: margin-top 0.2rem / margin-bottom 1.6rem (gearRow 와 cast 사이에 있던 시절).
+     변경: margin-top 1.0rem (cast 와 살짝 띄움), margin-bottom 0 (가장 아래 요소가 됨). */
+  margin-top: 1.0rem;
+  margin-bottom: 0;
 }
 
 .turn-counter__label {
@@ -1873,15 +1979,38 @@
    14. 장비 + 던지다 버튼 row
    ============================================ */
 
+/* ★ Day 29 (대표 결정) — actionRow 단순화: leftCol/rightCol 폐기. cast 만 가운데.
+   기존 grid 3분할 → 단일 column (가운데 정렬). */
 .action-row {
-  display: grid;
-  grid-template-columns: var(--gear-slot-size) 1fr var(--gear-slot-size);
+  display: flex;
   align-items: center;
-  justify-items: center;
-  gap: 1.4rem;
+  justify-content: center;
   padding: 0;
 }
 
+/* ★ Day 29 신규 ★ — gear-row: 슬롯 그리드 아래/턴 위 6칸 한 줄.
+   대표 결정: 6칸 합친 가로 = 슬롯 그리드 가로보다 약간 작게.
+   순서: 낚시대 → 찌 → 바늘 → 옷 → 배 → 펫 (GEAR_SLOTS 배열 순). */
+.gear-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.4rem;
+  width: 65%;                /* 슬롯 그리드(보통 100%)보다 약간 작게 */
+  max-width: 32rem;          /* 큰 화면에서도 너무 넓어지지 않게 */
+  margin: 0.6rem auto;
+  padding: 0;
+  align-items: center;
+  justify-items: center;
+}
+.gear-row .gear-slot {
+  width: 100%;
+  max-width: var(--gear-slot-size, 5.6rem);
+  aspect-ratio: 1 / 1;
+  height: auto;              /* gear-row 안에서는 너비 기준 정사각 */
+}
+
+/* @deprecated Day 29 — gear-col 폐기 (좌우 코너 배치 → gear-row 한 줄로 이전).
+   DOM 에서 더 이상 생성되지 않음. CSS 는 호환성 위해 남겨두지만 미사용. */
 .gear-col {
   display: flex;
   flex-direction: column;
@@ -1896,7 +2025,7 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  border-radius: 10px;
+  border-radius: 5px;
   background: transparent;
   border: var(--line-thin) dashed rgba(200, 212, 240, 0.4);
   color: rgba(200, 212, 240, 0.55);
@@ -1941,7 +2070,7 @@
   top: 0.25rem;
   left: 0.25rem;
   font-family: var(--font-impact);
-  font-size: 2.5rem;          /* Day 13 추가 — 2.2rem → 1.8rem (대표 결정 — 조금 줄임) */
+  font-size: 1.3rem;          /* Day 13 추가 — 2.2rem → 1.8rem (대표 결정 — 조금 줄임) */
   line-height: 1;
   color: #fcff31;             /* 황금 → 순백 (등급색 6종 모두와 안 겹침) */
   letter-spacing: 0.01em;
@@ -2154,15 +2283,55 @@
   flex-direction: column;
   align-items: center;
   gap: 1.4rem;
-  padding: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
+  /* ★ Day 40 (대표 결정) — 결과팝업을 카드 형태로 변경 (stagemap-card 외곽 + 새벽안개호수 배경 그대로 차용).
+   *   카드 max-width 25rem (★ Day 40 후속 — 22rem → 25rem 조정, 텍스트 더 여유 있게 표시).
+   *   overflow: visible — 보스/전설/신화 등 큰 등급 물고기(.fish-result__fish 36~44rem)는 카드 밖으로 튀어나옴.
+   *     배경·테두리·별빛은 카드 안에 유지, 물고기만 카드 위·옆으로 시원하게 튀어나오는 시각 (대표 결정 옵션 B). */
+  width: calc(100% - 2rem);
+  max-width: 26rem;
+  padding: 1.6rem 1.2rem;
+  background:
+    radial-gradient(90% 70% at 50% 30%, rgba(180, 200, 220, 0.22), transparent 60%),
+    linear-gradient(180deg, #1c2530 0%, #0a1018 100%);
+  border: 1px solid rgba(200, 212, 240, 0.18);
+  border-radius: 4px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.55),
+    inset 0 0 60px rgba(0, 0, 0, 0.35);
+  overflow: visible;
   text-align: center;
   transform-origin: center center;
   transform: scale(0.5);
   opacity: 0;
   will-change: transform, opacity;  /* Day 17 후속 v2 폰 최적화 — pull-from-slot 애니메이션 GPU 가속 */
+}
+
+/* ★ Day 40 — 카드 안 별빛 입자 (stagemap-card 와 정확히 동일 시각).
+ *   SVG viewBox 0 0 400 600 + preserveAspectRatio xMidYMid slice → 카드 너비 22rem에 fit.
+ *   12개 circle (r=1.0 또는 1.6) + 4단계 색·딜레이 (--0~--3) + 3s twinkle.
+ *   overflow:hidden — 카드 panel 의 overflow:visible 와 무관하게 별빛은 카드 안에만 보이게 잘림. */
+.fish-result__stars {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.fish-result__star {
+  fill: rgba(255, 255, 255, 0.3);
+  animation: fish-result-star-twinkle 3s ease-in-out infinite;
+  transform-origin: center;
+}
+.fish-result__star--0 { animation-delay: 0s;    fill: rgba(255, 240, 200, 0.7); }
+.fish-result__star--1 { animation-delay: 0.8s;  fill: rgba(200, 220, 255, 0.6); }
+.fish-result__star--2 { animation-delay: 1.6s;  fill: rgba(255, 255, 255, 0.65); }
+.fish-result__star--3 { animation-delay: 2.2s;  fill: rgba(200, 240, 255, 0.55); }
+@keyframes fish-result-star-twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.85); }
+  50%      { opacity: 1.0; transform: scale(1.15); }
 }
 
 .fish-result.show .fish-result__panel {
@@ -2205,6 +2374,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.2rem;
+  position: relative;  /* ★ Day 30 — SIZE UPGRADE 배지 absolute 정렬 기준 */
 }
 .fish-result__grade-main {
   font-family: var(--font-impact);
@@ -2225,6 +2395,125 @@
   display: none;
 }
 
+/* ============================================
+   ★ Day 29 — 변종 Lucky Lucky 연쇄 overlay (시스템 A 연출)
+   ============================================
+   변종 + 단계마다 텍스트 팡 → 사라짐. 단계 ↑ 일수록 더 크고 화려.
+   - data-stage="1" ~ "5" 로 단계별 분기
+   - .show 추가 시 keyframes 애니메이션 1회 실행
+   - 위치: fish-result 중앙 상단 (등급 텍스트 위)
+   ============================================ */
+/* @deprecated Day 29 v3 — 결과팝업 Lucky Lucky 텍스트 폐기.
+   슬롯 럭키럭키 텍스트와 헷갈리지 않도록 변종 등급 텍스트(mainEl) 자체에 펑 연출 적용. */
+.fish-result__variant-lucky {
+  display: none;
+}
+
+/* ============================================
+   ★ Day 29 v3 (대표 결정) — 변종 등급 펑 연출
+   ============================================
+   결과팝업 진입 시 base 등급("TINY") 펑 → 변종 단계만큼 fade-out → 다음 등급 펑.
+   fish-result.js startVariantLuckyChain 이 mainEl 에 클래스 토글:
+     1. grade-pending: opacity 0 (펑 직전 숨김)
+     2. grade-pop:     scale 0.3 → 1.4 → 1, opacity 0 → 1 (펑 등장)
+     3. grade-fade-out: scale 1 → 0.6, opacity 1 → 0 (다음 단계 위해 사라짐)
+
+   마지막 단계 도달 후엔 forwards 로 scale 1 / opacity 1 유지.
+   ============================================ */
+.fish-result__grade-main.grade-pending {
+  /* ★ Day 39 (대표 결정) — base 등급 텍스트 간헐 깜빡임 근본 수정 [CSS 안전망 부분].
+     직전 잡기에서 .grade-pop / .grade-fade-in 의 animation forwards 가 element 에
+     남아 있으면 opacity:1 이 고정되어, .grade-pending 클래스만 추가해서는 opacity:0
+     이 안 먹는 문제가 있었음. animation:none 으로 잔존 forwards 를 명시적으로 끊어
+     어떤 진입 경로에서도 opacity:0 이 보장되도록 안전망 추가. */
+  animation: none;
+  opacity: 0;
+}
+.fish-result__grade-main.grade-pop {
+  animation: fish-result-grade-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.fish-result__grade-main.grade-fade-out {
+  animation: fish-result-grade-fade-out 0.2s ease-in forwards;
+}
+/* ★ Day 30 (대표 결정) — base 첫 등급 부드러운 페이드인 (펑 X, 깜박 X). */
+.fish-result__grade-main.grade-fade-in {
+  animation: fish-result-grade-fade-in 0.3s ease-out forwards;
+}
+@keyframes fish-result-grade-pop {
+  0%   { transform: scale(0.3); opacity: 0; }
+  40%  { transform: scale(2.2); opacity: 1; }   /* ★ Day 29 v4 — 더 크게 (1.4 → 2.2) */
+  70%  { transform: scale(0.95); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes fish-result-grade-fade-out {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.6); opacity: 0; }
+}
+/* ★ Day 30 — base 페이드인 (부드럽게, 깜박 X) */
+@keyframes fish-result-grade-fade-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* ★ Day 30 (대표 결정) — 변종 단계별 등급 텍스트 크기 (data-upgrade-step) + 글로우 강화.
+   색은 등급 본래 색 유지 (currentColor) — data-grade 셀렉터의 색 그대로. */
+.fish-result__grade-main[data-upgrade-step="0"] { font-size: 3.2rem; }   /* base */
+.fish-result__grade-main[data-upgrade-step="1"] {
+  font-size: 3.4rem;
+  text-shadow: 0 0 0.5em currentColor, 0 0 0.2em rgba(0, 0, 0, 0.7);
+}
+.fish-result__grade-main[data-upgrade-step="2"] {
+  font-size: 3.6rem;
+  text-shadow: 0 0 0.7em currentColor, 0 0 0.3em currentColor, 0 0 0.2em rgba(0, 0, 0, 0.7);
+}
+.fish-result__grade-main[data-upgrade-step="3"] {
+  font-size: 3.7rem;
+  text-shadow: 0 0 0.9em currentColor, 0 0 0.4em currentColor, 0 0 0.2em rgba(0, 0, 0, 0.7);
+}
+.fish-result__grade-main[data-upgrade-step="4"] {
+  font-size: 3.8rem;
+  text-shadow: 0 0 1.1em currentColor, 0 0 0.5em currentColor, 0 0 0.2em rgba(0, 0, 0, 0.7);
+}
+.fish-result__grade-main[data-upgrade-step="5"] {
+  font-size: 4.2rem;
+  text-shadow: 0 0 1.3em currentColor, 0 0 0.6em currentColor, 0 0 0.2em rgba(0, 0, 0, 0.7);
+}
+
+/* ★ Day 30 (대표 결정) — SIZE UPGRADE 배지 (변종 1단+ 등장 시 함께 뿅)
+   - 1단: 'SIZE UPGRADE' / 2~5단: 'X2'/'X3'/'X4'/'X5'
+   - 흰 바탕 + 흰 테두리 + 흰 글로우 + 검은 글자
+   - 등급 텍스트 위 (.fish-result__grade 컨테이너 안 absolute)
+   - 펑 패턴: scale 0 → 1.18 → 1, rotate -6° → 3° → 0° (NEW RECORD 패턴 차용)
+   - 자동 제거: SIZE_UPGRADE_HOLD_MS (800ms) 후 (fish-result.js setTimeout) */
+.fish-result__size-upgrade {
+  position: absolute;
+  top: -2em;
+  left: 50%;
+  transform: translate(-50%, 0);
+  font-family: var(--font-impact);
+  font-weight: 900;
+  font-size: 3.0rem;
+  letter-spacing: 0.1em;
+  padding: 0.2em 0.8em;
+  border: 0.08em solid #FFF;
+  border-radius: 0.3em;
+  background: #FFF;
+  color: #000;
+  box-shadow:
+    0 0 1.5em rgba(255, 255, 255, 0.85),
+    0 0 0.5em rgba(255, 255, 255, 1);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  animation: fish-result-size-upgrade-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes fish-result-size-upgrade-pop {
+  0%   { opacity: 0; transform: translate(-50%, 0) scale(0)    rotate(-6deg); }
+  35%  { opacity: 1; transform: translate(-50%, 0) scale(1.18) rotate(3deg);  }
+  60%  { opacity: 1; transform: translate(-50%, 0) scale(1)    rotate(0deg);  }
+  100% { opacity: 1; transform: translate(-50%, 0) scale(1)    rotate(0deg);  }
+}
+
 /* Day 4: 다중매칭 multihit 라벨 — 등급 색 무시, 매칭 마리 수에 따른 색
    Day 7: grade-main 으로 셀렉터 변경 (sub 등급명은 별도)
    Day 18 후속 (대표 결정) — font-size 베이스(3.2rem) 통일 됨 → 여기선 색/letter-spacing 만
@@ -2232,8 +2521,12 @@
      이전: hit-count 2~5 각자 다른 색 (연두/파랑/보라/분홍) — 물고기/장비 등급 색과 혼동.
      변경: 색 통일 + 반짝 효과(sparkle-stars)로 임팩트 보완. */
 .fish-result[data-multihit] .fish-result__grade-main {
-  letter-spacing: 0.22em;
-  opacity: 1;
+  /* ★ Day 39 (대표 결정) — 더블힛 깜빡임 + 텍스트 간격 통일.
+     이전: letter-spacing 0.22em + opacity:1 명시.
+       문제 1) opacity:1 의 specificity (0,2,1) 가 .grade-pending (0,2,0) 의 opacity:0 을 이김
+              → 더블힛 일 때만 fadeInBase 시작 전 텍스트 즉시 노출 → 깜빡임 (일반은 옵션 D 로 고침).
+       문제 2) letter-spacing 0.22em 이 일반(0.08em) 보다 넓어 더블힛만 글자 간격 다름.
+     수정: opacity:1 + letter-spacing 0.22em 모두 제거 → 일반 부모 셀렉터 값 그대로 상속. */
   font-family: var(--font-impact);
   color: var(--accent-warm);
   text-shadow: 0 0 14px rgba(255, 217, 160, 0.9),
@@ -2279,14 +2572,19 @@
   filter: drop-shadow(0 0 14px rgba(0, 0, 0, 0.8));
 }
 
-.fish-result[data-grade="치어"]    .fish-result__fish { width: 18rem; height: 12rem; }
-.fish-result[data-grade="소형"]    .fish-result__fish { width: 18rem; height: 12rem; }
-.fish-result[data-grade="중형"]    .fish-result__fish { width: 24rem; height: 16rem; }
-.fish-result[data-grade="월척"]    .fish-result__fish { width: 30rem; height: 20rem; }
-.fish-result[data-grade="대물"]    .fish-result__fish { width: 30rem; height: 20rem; }
-.fish-result[data-grade="보스"]    .fish-result__fish { width: 36rem; height: 24rem; }
-.fish-result[data-grade="전설보스"] .fish-result__fish { width: 40rem; height: 27rem; }
-.fish-result[data-grade="신화보스"] .fish-result__fish { width: 44rem; height: 30rem; }   /* Day 16 — 가장 크게 */
+/* ★ Day 40 (대표 결정) — 결과팝업 등급별 물고기 크기 재조정.
+ *   카드 max-width 25rem (가용 ~22.6rem) 안에 대부분 fit 되도록 1.5:1 비율 유지.
+ *   기존: 치어/소형 18×12 / 중형 24×16 / 월척·대물 30×20 / 보스 36×24 / 전설 40×27 / 신화 44×30
+ *   변경: 치어 13×8.67 / 소형 14×9.33 / 중형 16×10.67 / 월척 18×12 / 대물 20×13.33
+ *         / 보스 22×14.67 / 전설보스 24×16 / 신화보스 25×16.67 */
+.fish-result[data-grade="치어"]    .fish-result__fish { width: 13rem;   height:  8.67rem; }
+.fish-result[data-grade="소형"]    .fish-result__fish { width: 14rem;   height:  9.33rem; }
+.fish-result[data-grade="중형"]    .fish-result__fish { width: 16rem;   height: 10.67rem; }
+.fish-result[data-grade="월척"]    .fish-result__fish { width: 18rem;   height: 12rem;    }
+.fish-result[data-grade="대물"]    .fish-result__fish { width: 20rem;   height: 13.33rem; }
+.fish-result[data-grade="보스"]    .fish-result__fish { width: 22rem;   height: 14.67rem; }
+.fish-result[data-grade="전설보스"] .fish-result__fish { width: 24rem;   height: 16rem;    }
+.fish-result[data-grade="신화보스"] .fish-result__fish { width: 25rem;   height: 16.67rem; }   /* Day 16 — 가장 크게 */
 
 .fish-result__shadow,
 .fish-result__real {
@@ -2476,14 +2774,14 @@
   letter-spacing: 0.04em;
   display: inline-block;          /* Day 16 — NEW 배지 부착 위해 inline 박스로 */
 }
-.fish-result[data-grade="치어"]    .fish-result__name { font-size: 1.8rem; }
-.fish-result[data-grade="소형"]    .fish-result__name { font-size: 1.8rem; }
-.fish-result[data-grade="중형"]    .fish-result__name { font-size: 2.2rem; }
-.fish-result[data-grade="월척"]    .fish-result__name { font-size: 2.6rem; }
-.fish-result[data-grade="대물"]    .fish-result__name { font-size: 2.6rem; }
-.fish-result[data-grade="보스"]    .fish-result__name { font-size: 3rem; }
-.fish-result[data-grade="전설보스"] .fish-result__name { font-size: 3.4rem; }
-.fish-result[data-grade="신화보스"] .fish-result__name { font-size: 3.4rem; }  /* Day 16 신규 */
+.fish-result[data-grade="치어"]    .fish-result__name { font-size: 2.0rem; }   /* ★ Day 40 — 1.8 → 2.6 (월척 통일) */
+.fish-result[data-grade="소형"]    .fish-result__name { font-size: 2.0rem; }   /* ★ Day 40 — 1.8 → 2.6 (월척 통일) */
+.fish-result[data-grade="중형"]    .fish-result__name { font-size: 2.0rem; }   /* ★ Day 40 — 2.2 → 2.6 (월척 통일) */
+.fish-result[data-grade="월척"]    .fish-result__name { font-size: 2.0rem; }
+.fish-result[data-grade="대물"]    .fish-result__name { font-size: 2.0rem; }
+.fish-result[data-grade="보스"]    .fish-result__name { font-size: 2.0rem; }   /* ★ Day 40 — 3 → 2.6 (월척 통일) */
+.fish-result[data-grade="전설보스"] .fish-result__name { font-size: 2.0rem; }   /* ★ Day 40 — 3.4 → 2.6 (월척 통일) */
+.fish-result[data-grade="신화보스"] .fish-result__name { font-size: 2.0rem; }   /* ★ Day 40 — 3.4 → 2.6 (월척 통일) */
 
 /* Day 16 — 잡기 성공 시 신규 등록 NEW 배지 (이름 우상단 단정한 fade-in).
    Day 18 후속 (대표 결정) — 위치 살짝 아래로 + 크기 축소. */
@@ -2569,31 +2867,65 @@
   60%  { opacity: 1; transform: scale(1.18); }
   100% { opacity: 1; transform: scale(1); }
 }
-.fish-result[data-grade="치어"]    .fish-result__weight-final { font-size: 2.2rem; }
-.fish-result[data-grade="소형"]    .fish-result__weight-final { font-size: 2.2rem; }
-.fish-result[data-grade="중형"]    .fish-result__weight-final { font-size: 3rem; }
+/* ★ Day 40 (대표 결정) — 치어/소형/중형 최종무게 텍스트를 월척(BIG) 기준 3.6rem 으로 통일.
+ *   기존: 치어 2.2 / 소형 2.2 / 중형 3rem → 모두 3.6rem (작은 등급도 시각 강조 ↑).
+ *   대물 이상은 그대로 유지. */
+.fish-result[data-grade="치어"]    .fish-result__weight-final { font-size: 3.6rem; }
+.fish-result[data-grade="소형"]    .fish-result__weight-final { font-size: 3.6rem; }
+.fish-result[data-grade="중형"]    .fish-result__weight-final { font-size: 3.6rem; }
 .fish-result[data-grade="월척"]    .fish-result__weight-final { font-size: 3.6rem; }
 .fish-result[data-grade="대물"]    .fish-result__weight-final { font-size: 3.6rem; }
-.fish-result[data-grade="보스"]    .fish-result__weight-final { font-size: 4.4rem; }
-.fish-result[data-grade="전설보스"] .fish-result__weight-final { font-size: 5.4rem; }
-.fish-result[data-grade="신화보스"] .fish-result__weight-final { font-size: 6rem; }    /* Day 16 — 가장 큼 */
+.fish-result[data-grade="보스"]    .fish-result__weight-final { font-size: 3.6rem; }   /* ★ Day 40 — 4.4 → 3.6 (월척 통일) */
+.fish-result[data-grade="전설보스"] .fish-result__weight-final { font-size: 3.6rem; }   /* ★ Day 40 — 5.4 → 3.6 (월척 통일) */
+.fish-result[data-grade="신화보스"] .fish-result__weight-final { font-size: 3.6rem; }   /* ★ Day 40 — 6 → 3.6 (월척 통일) */
 
 /* Day 7-2: 작은 줄 = 보너스 분해 표시 ("1.000 kg + (0.350 kg + 0.050 kg)")
    - 한 줄 nowrap (줄바꿈 방지)
    - 수치별 색 분리: 기본=흰색 / 콤보=연두 / 장비=황금 / 연산자=흐림 */
+/* ★ Day 39 (대표 결정 옵션 A) — 산식 표시 영역: 각 숫자 위에 라벨 추가 + 폰트 키움.
+   레이아웃: flex 가로 배치, 각 항목은 group(column flex — 라벨 위/숫자 아래).
+   숫자(base/kabikabi/combo/equip) 라인 baseline 정렬. */
 .fish-result__weight-breakdown {
   font-family: var(--font-impact);
-  font-size: 1.0rem;
+  font-size: 1.4rem;                /* ★ Day 39 — 1.0 → 1.4rem (키움). 라벨은 em 상대로 작게. */
   letter-spacing: 0.05em;
   white-space: nowrap;
   text-shadow: 0 0 6px rgba(0, 0, 0, 0.95);
   line-height: 1;
+  display: flex;
+  align-items: flex-end;            /* 숫자 라인이 아래쪽에 모이도록 정렬 (라벨은 위로 떠 있음) */
+  justify-content: center;
+  gap: 0.4em;
 }
 .fish-result__weight-breakdown:empty {
   display: none;
 }
 
-/* 분해 색 분리 */
+/* 각 항목 그룹 — 라벨(위, 작게) + 숫자(아래, 크게) 세로 스택 */
+.fish-result__weight-group {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15em;
+  line-height: 1;
+}
+
+/* 라벨 (위, 작은 글씨) — 색은 항목별 셀렉터에서 따로 적용 */
+.fish-result__weight-label {
+  font-family: var(--font-base);
+  font-size: 0.58em;                /* 숫자의 ~58% 크기 (~0.81rem 효과) */
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  opacity: 0.82;                    /* 살짝 톤다운 — 숫자가 메인이 되도록 */
+}
+
+/* 항목별 라벨 색 (숫자 색과 동일하게 — 대표 명시) */
+.fish-result__weight-group--base     .fish-result__weight-label { color: rgba(255, 255, 255, 0.92); }
+.fish-result__weight-group--kabikabi .fish-result__weight-label { color: #00FFE0; }
+.fish-result__weight-group--combo    .fish-result__weight-label { color: #b0ff5a; }
+.fish-result__weight-group--equip    .fish-result__weight-label { color: #ffd96a; }
+
+/* 분해 색 분리 (숫자 — 기존 유지) */
 .fish-result__weight-base {
   color: rgba(255, 255, 255, 0.92);
   text-shadow: 0 0 6px rgba(255, 255, 255, 0.4), 0 0 4px rgba(0, 0, 0, 0.95);
@@ -2606,23 +2938,34 @@
   color: #ffd96a;
   text-shadow: 0 0 8px rgba(255, 217, 106, 0.85), 0 0 4px rgba(0, 0, 0, 0.95);
 }
+/* ★ Day 31 — 까비까비 무게 분해 표시 (검은 HIT + 까비까비 동시 발생 시) */
+.fish-result__weight-kabikabi {
+  color: #00FFE0;                         /* 까비까비 시그니처 사이언 (kabikabi-text 색 1 과 동일) */
+  text-shadow: 0 0 8px rgba(0, 255, 224, 0.85), 0 0 4px rgba(0, 0, 0, 0.95);
+}
 .fish-result__weight-op {
   color: rgba(255, 255, 255, 0.45);
+  /* 숫자 라인에 맞춤 — 라벨 줄을 비우고 숫자 라인 가운데에 위치하도록 padding-top 으로 라벨 높이만큼 밀기.
+     라벨이 0.58em + gap 0.15em ≒ 0.73em 만큼 차지 → op 도 그만큼 아래로 내려야 baseline 정렬. */
+  padding-top: 0.73em;
+  align-self: flex-end;
 }
 
 /* Day 4: 다중매칭 무게 옆 부수 표기 — 예: "3.42 kg ×2"
-   Day 7: 연두색 + 더 크게 + 팍 등장 (overshoot 애니메이션) */
+   Day 7: 연두색 + 더 크게 + 팍 등장 (overshoot 애니메이션)
+   ★ Day 40 (대표 결정) — 옵션 C: 메인 무게 옆 inline → 별도 줄로 줄바꿈 (큰 등급에서 카드 22rem 안 fit).
+                          색 #b0ff5a(형광 연두) → #E8C870(황금, 크리티컬과 동일 톤). */
 .fish-result__weight-multi {
-  display: inline-block;
-  margin-left: 0.5em;
-  font-size: 1.4em;                   /* 메인 무게보다 크게 (이전 0.55em → 1.4em) */
+  display: block;                     /* ★ Day 40 — inline-block → block (별도 줄) */
+  margin-left: 0;                     /* ★ Day 40 — 옆 간격 → 위 간격으로 */
+  margin-top: 0.15rem;                /* ★ Day 40 — 메인 무게와의 위쪽 간격 */
+  font-size: 1.4em;                   /* 메인 무게 대비 1.4배 (등급별 자동 비례) */
   letter-spacing: 0.12em;
-  vertical-align: middle;
   font-weight: 700;
-  color: #b0ff5a;                     /* 형광 연두 */
+  color: #E8C870;                     /* ★ Day 40 — 황금 (크리티컬 색과 일치) */
   text-shadow:
-    0 0 12px rgba(176, 255, 90, 0.95),
-    0 0 22px rgba(176, 255, 90, 0.55),
+    0 0 12px rgba(232, 200, 112, 0.95),
+    0 0 22px rgba(232, 200, 112, 0.55),
     0 0 6px rgba(0, 0, 0, 0.85);
   font-family: var(--font-impact);
   animation: weight-multi-pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -3005,6 +3348,359 @@
 .twinkle-intro__btn:hover {
   background: #FFFFFF;
   color: var(--bg-deepest);
+}
+
+
+/* ============================================
+   ★ Day 35 (대표 결정 A-가) — 신화 트리거 진입 팝업 (mythic-intro)
+   ============================================
+   twinkle-intro CSS 의 황금빛꿈고래 톤 변경판. 텍스트 한 줄만 + 터치 시작 버튼.
+   - 색: 황금빛꿈고래 톤 #FFD700 (제목) / #E8C870 (버튼)
+   - 구조 동일: backdrop + panel + title + btn (아이콘/sub/description 없음)
+   ============================================ */
+
+.mythic-intro {
+  position: absolute;
+  inset: 0;
+  z-index: 160;                          /* hidden-intro(150) 보다 위 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--fade-easing);
+}
+
+.mythic-intro.show { opacity: 1; pointer-events: auto; }
+.mythic-intro.hide { opacity: 0; pointer-events: none; }
+
+.mythic-intro__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 19, 0.86);      /* 신화는 다른 인트로보다 살짝 더 어둠 (집중) */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.mythic-intro__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  padding: 0 2rem;
+  background: transparent;
+  border: none;
+  text-align: center;
+  transform: scale(0.92);
+  opacity: 0;
+}
+
+.mythic-intro.show .mythic-intro__panel {
+  animation: mythic-intro-pop 0.8s cubic-bezier(0.18, 0.89, 0.32, 1.18) forwards;
+}
+
+@keyframes mythic-intro-pop {
+  0%   { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+.mythic-intro__title {
+  font-family: var(--font-base);
+  font-weight: 700;
+  font-size: 2.6rem;
+  line-height: 1.4;
+  letter-spacing: 0.05em;
+  color: #FFD700;                        /* ★ Day 35 — 황금빛꿈고래 톤 진한 골드 */
+  text-shadow:
+    0 0 24px rgba(255, 215, 0, 0.85),
+    0 0 12px rgba(255, 215, 0, 0.45),
+    0 0 8px rgba(0, 0, 0, 0.95);
+}
+
+.mythic-intro__btn {
+  margin-top: 1.2rem;
+  padding: 0.6rem 2rem;
+  background: transparent;
+  border: none;
+  color: #E8C870;                        /* 황금색 — bite-alert HIT 톤과 일관 */
+  font-family: var(--font-base);
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  animation: intro-btn-fade 2.0s ease-in-out infinite;
+  text-shadow:
+    0 0 8px rgba(232, 200, 112, 0.6),
+    0 0 4px rgba(0, 0, 0, 0.85);
+  transition: color 0.2s var(--fade-easing);
+}
+
+.mythic-intro__btn:hover {
+  color: #FFFFFF;
+  background: transparent;
+}
+
+
+/* ============================================
+   ★ Day 35 (대표 결정 B-가) — 트윙클 타임 진행 중 트윙클 매칭 셀 두꺼운 황금 테두리
+   ★ Day 36 (대표 결정 정정) — 신화 트리거 대상(인접 클러스터 3+)인 셀만 황금 표시.
+                              흩어진 단독/소수(<3) 트윙클 셀은 기존 하늘색 그대로.
+                              글로우(box-shadow) 제거 — 테두리만 두꺼운 황금색.
+                              z-index 가장 위로 — 다른 효과 위에 잘 보이게.
+   ============================================
+   slot.js enterTwinkleAutoCast 에서 grid.root 에 .twinkle-time-active 부착.
+   exitTwinkleHitTime 에서 제거.
+   handleSpinCompleteTwinkleAutoCast 끝에서 markMythicCandidateCells:
+     - 누적된 lockedCells 중 인접 클러스터(3+) 셀에 data-mythic-candidate="true" 부착.
+     - 흩어진 단독/소수 셀은 dataset 없음 → 일반 트윙클 색.
+   ============================================ */
+
+/* 황금 테두리 — size 3+ 인접 클러스터 (Day 36~37 기존 동작 유지).
+   "이 셀들이 더 자라면 신화 트리거 후보다" 라는 시각 힌트. */
+.slot-grid.twinkle-time-active .slot-cell.matched-twinkle[data-mythic-candidate="true"] {
+  border-color: #E8C870 !important;          /* ★ Day 37 — !important 강화 (기존 .matched-twinkle 룰 덮어쓰기) */
+  border-width: 0.25rem !important;          /* 두꺼운 황금 테두리 */
+  border-style: solid !important;
+  box-shadow: none !important;               /* ★ Day 36 — 글로우 제거 (대표 명시) */
+  z-index: 10 !important;                    /* ★ Day 36 — 가장 위로 (대표 명시) */
+}
+
+/* ★ Day 39 (대표 결정 옵션 A + (가)) — 황금 배경은 size 15+ 도달한 신화 트리거 덩어리만.
+   slot.js markMythicCandidateCells 에서 cluster.length >= 15 일 때만 data-mythic-triggered="true" 부착.
+   매 spin 재계산 — 15+ 덩어리가 더 자라거나 다른 덩어리가 별도 15+ 도달해도 일관 표시 ((가) 방침). */
+.slot-grid.twinkle-time-active .slot-cell.matched-twinkle[data-mythic-triggered="true"] {
+  background: rgba(232, 200, 112, 0.55) !important;
+}
+
+
+/* ============================================
+   ★ Day 35 (대표 결정 C-다) — bite-alert 신화 트리거 색 분기
+   ============================================
+   isMythicHit + hasBoss 시:
+   - grade  자리 = "SPECIAL MYTHIC" — 황금빛꿈고래 톤 진한 골드 #FFD700
+   - main   자리 = "HIT"            — 황금색 #E8C870
+   기존 BOSS HIT 빨간 텍스트는 이 분기에서 대체됨.
+   ★ Day 36 — handleMythicTriggerHit 에서 showBiteAlert 호출 제거 → 이 분기 실질 미사용.
+              호환성 위해 룰은 유지 (다른 흐름에서 isMythicHit + hasBoss 셋업 시 동작).
+   ============================================ */
+
+
+/* ============================================
+   ★ Day 36 (대표 결정) — SPECIAL MYTHIC HIT 인트로
+   ★ Day 39 (대표 결정 A+B+D) — 임팩트 강화 — 백드롭 + 빛줄기 + 그라데이션 텍스트.
+   ============================================
+   꿈조각 보상 팝업 닫힘 → handleMythicTriggerHit 안에서 showSpecialMythicHitIntro 호출.
+   사용자 슬롯 cast(pull) 버튼 터치 → handlePull 안에서 hide + mythic-intro show.
+
+   구조 (Day 39):
+   - backdrop: 화면 전체 어두운 베일 + 가운데 황금 비네팅 (radial gradient)
+   - rays: 텍스트 뒤 회전하는 부채꼴 황금 빛줄기 (conic gradient + 회전)
+   - content: sparkle stars + grade(SPECIAL MYTHIC) + main(HIT)
+   - 텍스트: 황금 그라데이션 + 검정 외곽선 + 글로우 펄스
+   ============================================ */
+
+/* 전체 컨테이너 — 화면 전체로 확장 (이전 absolute 50%/50% center → inset:0 full screen) */
+.special-mythic-hit-intro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 35;
+  text-align: center;
+  will-change: opacity;
+  transition: opacity 0.3s var(--fade-easing);
+}
+
+.special-mythic-hit-intro.show {
+  opacity: 1;
+}
+
+.special-mythic-hit-intro.hide {
+  opacity: 0;
+}
+
+/* (A) 어두운 백드롭 + 황금 비네팅 — 화면 전체 베일 + 가운데로 황금빛 모임 */
+.special-mythic-hit-intro__backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(255, 215, 0, 0.30) 0%,
+      rgba(255, 184, 0, 0.18) 18%,
+      rgba(0, 0, 0, 0.55) 55%,
+      rgba(0, 0, 0, 0.82) 100%
+    );
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* (B) 빛줄기 — 텍스트 뒤에서 회전하는 부채꼴 황금 광선 */
+.special-mythic-hit-intro__rays {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 140vmin;
+  height: 140vmin;
+  transform: translate(-50%, -50%);
+  background:
+    conic-gradient(
+      from 0deg,
+      rgba(255, 215, 0, 0.55) 0deg,
+      rgba(255, 215, 0, 0) 8deg,
+      rgba(255, 200, 80, 0.45) 30deg,
+      rgba(255, 215, 0, 0) 38deg,
+      rgba(255, 215, 0, 0.50) 60deg,
+      rgba(255, 215, 0, 0) 68deg,
+      rgba(255, 200, 80, 0.40) 90deg,
+      rgba(255, 215, 0, 0) 98deg,
+      rgba(255, 215, 0, 0.55) 120deg,
+      rgba(255, 215, 0, 0) 128deg,
+      rgba(255, 200, 80, 0.40) 150deg,
+      rgba(255, 215, 0, 0) 158deg,
+      rgba(255, 215, 0, 0.50) 180deg,
+      rgba(255, 215, 0, 0) 188deg,
+      rgba(255, 200, 80, 0.45) 210deg,
+      rgba(255, 215, 0, 0) 218deg,
+      rgba(255, 215, 0, 0.55) 240deg,
+      rgba(255, 215, 0, 0) 248deg,
+      rgba(255, 200, 80, 0.40) 270deg,
+      rgba(255, 215, 0, 0) 278deg,
+      rgba(255, 215, 0, 0.50) 300deg,
+      rgba(255, 215, 0, 0) 308deg,
+      rgba(255, 200, 80, 0.45) 330deg,
+      rgba(255, 215, 0, 0) 338deg,
+      rgba(255, 215, 0, 0.55) 360deg
+    );
+  /* 가운데로 페이드 (중심부는 텍스트 가독성 위해 투명, 바깥쪽은 라이트 강조) */
+  mask-image: radial-gradient(circle, transparent 12%, rgba(0,0,0,0.55) 28%, rgba(0,0,0,1) 60%, transparent 95%);
+  -webkit-mask-image: radial-gradient(circle, transparent 12%, rgba(0,0,0,0.55) 28%, rgba(0,0,0,1) 60%, transparent 95%);
+  animation: special-mythic-rays-rotate 14s linear infinite;
+  opacity: 0.85;
+  filter: blur(0.5px);
+}
+
+@keyframes special-mythic-rays-rotate {
+  0%   { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* content — sparkle + 텍스트 가운데 묶음, 등장 시 scale pop */
+.special-mythic-hit-intro__content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  will-change: transform;
+}
+
+.special-mythic-hit-intro.show .special-mythic-hit-intro__content {
+  animation: special-mythic-hit-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes special-mythic-hit-pop {
+  0%   { transform: scale(0.4) rotate(-2deg); opacity: 0; }
+  35%  { transform: scale(1.18) rotate(1deg); opacity: 1; }
+  60%  { transform: scale(0.96) rotate(0deg); opacity: 1; }
+  100% { transform: scale(1)    rotate(0deg); opacity: 1; }
+}
+
+/* (D) SPECIAL MYTHIC 텍스트 — 황금 그라데이션 + 검정 외곽선 + 글로우 펄스 */
+.special-mythic-hit-intro__grade {
+  font-family: var(--font-impact);
+  font-weight: 900;
+  font-size: 3.4rem;
+  letter-spacing: 0.18em;
+  /* 황금 그라데이션 — background-clip text 로 텍스트 채움 (연한 골드 → 진한 골드 → 연한 골드) */
+  background: linear-gradient(180deg, #FFF6BC 0%, #FFD700 35%, #E8B800 65%, #FFE680 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  /* 검정 외곽선 — 윤곽 보장 (그라데이션이 배경 어두움과 어울리지 않게 흩어지지 않도록) */
+  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.85);
+  /* 글로우 펄스는 text-shadow 가 아니라 별도 filter drop-shadow 로 (background-clip text 와 호환) */
+  filter:
+    drop-shadow(0 0 10px rgba(255, 215, 0, 0.85))
+    drop-shadow(0 0 4px rgba(0, 0, 0, 0.9));
+  white-space: nowrap;
+  line-height: 1;
+  animation: special-mythic-grade-glow 1.6s ease-in-out infinite;
+}
+
+/* HIT 텍스트 — 황금 그라데이션 + 외곽선 + 큰 임팩트 */
+.special-mythic-hit-intro__main {
+  font-family: var(--font-impact);
+  font-weight: 900;
+  font-size: 10.2rem;
+  letter-spacing: 0.16em;
+  background: linear-gradient(180deg, #FFFFE0 0%, #FFD700 30%, #E8C870 55%, #FFB400 80%, #FFE680 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  -webkit-text-stroke: 1.2px rgba(0, 0, 0, 0.85);
+  filter:
+    drop-shadow(0 0 22px rgba(255, 215, 0, 0.9))
+    drop-shadow(0 0 12px rgba(232, 200, 112, 0.6))
+    drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* ★ Day 37/Day 39 — 글로우 펄스 keyframe (SPECIAL MYTHIC 텍스트) — filter 기반으로 변경 */
+@keyframes special-mythic-grade-glow {
+  0%, 100% {
+    filter:
+      drop-shadow(0 0 8px rgba(255, 215, 0, 0.7))
+      drop-shadow(0 0 4px rgba(0, 0, 0, 0.9));
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 18px rgba(255, 215, 0, 1))
+      drop-shadow(0 0 10px rgba(255, 200, 80, 0.7))
+      drop-shadow(0 0 4px rgba(0, 0, 0, 0.9));
+  }
+}
+
+
+/* ============================================
+   ★ Day 35 (대표 결정 C-다) — bite-alert 신화 트리거 색 분기
+   ★ Day 37 (대표 결정 정정) — 황금빛꿈고래(SPECIAL MYTHIC)만 황금 색 + 글로우 펄스.
+                              일반 신화(검은/분홍/하얀/황금 10+) = "기존이랑 똑같이" (대표 명시).
+                              → grade 만 마젠타 (data-top-grade="신화보스" 자동 처리, 별도 룰 X).
+                              → main 은 기본 황금 (--accent-warm) 유지.
+   ============================================ */
+
+/* 황금빛꿈고래(mythic_01) — SPECIAL MYTHIC + HIT 황금 톤 + 글로우 펄스 */
+/* ★ Day 39 — 배지화: color → background (텍스트는 본체 셀렉터의 흰색 + 검정 외곽선 그대로 유지) */
+.bite-alert[data-mythic-hit="true"][data-golden-dream-whale="true"] .bite-alert__grade {
+  background: #FFD700 !important;
+  /* ★ Day 39 — 황금 글로우 + 본체 검정 외곽선 결합 (이전엔 글로우만, 흰 텍스트 윤곽 약했음) */
+  text-shadow:
+    0 0 14px rgba(255, 215, 0, 0.95),
+    0 0 8px rgba(255, 215, 0, 0.5),
+    0 0 2px rgba(0, 0, 0, 0.95),
+    0 1px 2px rgba(0, 0, 0, 0.85),
+    -1px 0 1px rgba(0, 0, 0, 0.75),
+    1px 0 1px rgba(0, 0, 0, 0.75) !important;
+  display: block;
+  opacity: 1;
+  animation: special-mythic-grade-glow 1.6s ease-in-out infinite;
+}
+
+.bite-alert[data-mythic-hit="true"][data-golden-dream-whale="true"] .bite-alert__main {
+  color: #E8C870;
+  text-shadow:
+    0 0 18px rgba(232, 200, 112, 0.95),
+    0 0 10px rgba(232, 200, 112, 0.55),
+    0 0 6px rgba(0, 0, 0, 0.95);
 }
 
 
@@ -3753,6 +4449,80 @@
   text-shadow: 0 0 0.8rem rgba(255, 217, 106, 0.8);
   animation: golden-hit-text-pulse 1.4s ease-in-out infinite;
 }
+
+/* ★ Day 37 (대표 결정) — 황금빛꿈고래(mythic_01) 결과팝업 SPECIAL MYTHIC 톤.
+   - 서브 텍스트 "SPECIAL MYTHIC" 황금색 (#FFD700) + 글로우 펄스 (특별 연출)
+   - 등급 텍스트(메인 'MYTHIC')도 황금으로 오버라이드 (기본 마젠타 #FF49A6 덮어씀)
+   - 물고기 SVG 황금 글로우 (기본 마젠타 글로우 → 황금)
+*/
+.fish-result[data-ending-mythic="true"] .fish-result__grade-main {
+  color: #FFD700 !important;
+  text-shadow:
+    0 0 24px rgba(255, 215, 0, 0.95),
+    0 0 14px rgba(255, 215, 0, 0.55),
+    0 0 6px rgba(0, 0, 0, 0.95) !important;
+  animation: ending-mythic-grade-glow 1.6s ease-in-out infinite;
+}
+.fish-result[data-ending-mythic="true"] .fish-result__grade-sub {
+  color: #FFD700;
+  font-family: var(--font-impact);
+  letter-spacing: 0.18em;
+  font-size: 1.4rem;
+  opacity: 1.0;
+  font-weight: 900;
+  text-shadow:
+    0 0 14px rgba(255, 215, 0, 0.95),
+    0 0 8px rgba(255, 215, 0, 0.5);
+  animation: ending-mythic-sub-pulse 1.4s ease-in-out infinite;
+}
+.fish-result[data-ending-mythic="true"] .fish-result__name {
+  color: #FFD96A;
+  text-shadow: 0 0 1rem rgba(255, 215, 0, 0.7);
+}
+.fish-result[data-ending-mythic="true"].revealed .fish-result__fish {
+  filter:
+    drop-shadow(0 0 1.4rem rgba(255, 215, 0, 0.9))
+    drop-shadow(0 0 2.8rem rgba(255, 215, 0, 0.5));
+  animation: ending-mythic-fish-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes ending-mythic-grade-glow {
+  0%, 100% {
+    text-shadow:
+      0 0 18px rgba(255, 215, 0, 0.85),
+      0 0 10px rgba(255, 215, 0, 0.45),
+      0 0 6px rgba(0, 0, 0, 0.95);
+  }
+  50% {
+    text-shadow:
+      0 0 32px rgba(255, 215, 0, 1),
+      0 0 22px rgba(255, 215, 0, 0.9),
+      0 0 14px rgba(255, 200, 80, 0.6),
+      0 0 6px rgba(0, 0, 0, 0.95);
+  }
+}
+@keyframes ending-mythic-sub-pulse {
+  0%, 100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+@keyframes ending-mythic-fish-glow {
+  0%, 100% {
+    filter:
+      drop-shadow(0 0 1.2rem rgba(255, 215, 0, 0.8))
+      drop-shadow(0 0 2.4rem rgba(255, 215, 0, 0.4));
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 1.8rem rgba(255, 215, 0, 1))
+      drop-shadow(0 0 3.6rem rgba(255, 215, 0, 0.6));
+  }
+}
 .fish-result[data-golden-hit="true"] .fish-result__name {
   color: #FFD96A;                       /* 황금어 이름 = 황금 */
   text-shadow: 0 0 1rem rgba(255, 217, 106, 0.6);
@@ -3797,10 +4567,8 @@
    (이전 빨간색 #FF3B30 → 황금 #FFE090)
    !important: data-boss="true" 빨강 + data-hit-count 등급별 색 모두 오버라이드 */
 .bite-alert[data-golden-hit="true"] .bite-alert__grade {
-  color: #FFE090 !important;
-  text-shadow:
-    0 0 1.0rem rgba(255, 224, 144, 0.85),
-    0 0 0.4rem rgba(0, 0, 0, 0.95) !important;
+  /* ★ Day 39 — 배지화: 황금 톤 배경 (텍스트 흰색 + 외곽선은 본체 셀렉터에서) */
+  background: #FFE090 !important;
 }
 .bite-alert[data-golden-hit="true"] .bite-alert__prefix,
 .bite-alert[data-golden-hit="true"] .bite-alert__main {
@@ -3815,10 +4583,8 @@
    !important: data-boss / data-hit-count 등급별 색 모두 오버라이드
    (트윙클 매칭은 cluster.js findTwinkleClusters 단일 매칭 — 보스/등급 분기 없음) */
 .bite-alert[data-twinkle-hit="true"] .bite-alert__grade {
-  color: #FFFFFF !important;
-  text-shadow:
-    0 0 1.0rem rgba(215, 239, 255, 0.85),
-    0 0 0.4rem rgba(0, 0, 0, 0.95) !important;
+  /* ★ Day 39 — 배지화: 트윙클 흰 배경 (텍스트 흰색 + 외곽선이 윤곽 확보) */
+  background: #FFFFFF !important;
 }
 .bite-alert[data-twinkle-hit="true"] .bite-alert__prefix,
 .bite-alert[data-twinkle-hit="true"] .bite-alert__main {
@@ -3838,10 +4604,8 @@
   display: none !important;
 }
 .bite-alert[data-hidden-hit="true"] .bite-alert__grade {
-  color: #FFE0EE !important;
-  text-shadow:
-    0 0 1.0rem rgba(255, 224, 238, 0.85),
-    0 0 0.4rem rgba(0, 0, 0, 0.95) !important;
+  /* ★ Day 39 — 배지화: 히든 분홍 배경 (텍스트 흰색 + 외곽선은 본체 셀렉터에서) */
+  background: #FFE0EE !important;
 }
 .bite-alert[data-hidden-hit="true"] .bite-alert__main {
   color: #FFE0EE !important;

@@ -49,8 +49,8 @@ import { rollCosmeticColor } from './equipment-meta.js';
 /** 가방 기본 크기 (7×10) */
 export const INVENTORY_CAPACITY = 70;
 
-/** 강화석 1칸 stack 한도 */
-export const ENHANCE_STONE_STACK_MAX = 100;
+/** 강화석 1칸 stack 한도 — ★ Day 41 (대표 결정) — 100 → 999 (가방 효율 ↑) */
+export const ENHANCE_STONE_STACK_MAX = 999;
 
 /** 다음 인스턴스 id 생성용 시퀀스 (LocalStorage 갱신 시 같이 저장됨) */
 let _idSeq = 0;
@@ -83,7 +83,8 @@ export function makeEquipment(catalogId, opts = {}) {
     locked:        opts.locked        ?? false,
     equipped:      opts.equipped      ?? false,
     // Day 6 장비 시스템 — 옵션/꾸미기 자동 추첨
-    options:       opts.options       ?? rollOptions(entry.slotId, entry.grade),
+    // ★ Day 41 (대표 결정) — opts.stageId 전달 시 3종 옵션(weight/combo/kabikabi)에 지역 multiplier 적용
+    options:       opts.options       ?? rollOptions(entry.slotId, entry.grade, opts.stageId),
     // Day 12 합성 시스템 — 합성 추가 옵션 (성공시 20% 확률로 weight_bonus 부착)
     // 구조: [{ key, value, source: 'compose' }, ...] — 향후 확장 대비 배열
     extraOptions:  opts.extraOptions  ?? [],
@@ -191,10 +192,11 @@ export function countEnhanceStones(inv) {
    변경 헬퍼 (불변성 보장 — 호출 측에서 saveInventory 호출 필요)
    ============================================ */
 
-/** 가방에 장비 추가 (가득 차면 false 반환) */
-export function addEquipment(inv, catalogId) {
+/** 가방에 장비 추가 (가득 차면 false 반환).
+ *  ★ Day 41 — opts.stageId 전달 시 makeEquipment 가 3종 옵션에 지역 multiplier 적용. */
+export function addEquipment(inv, catalogId, opts = {}) {
   if (isFull(inv)) return false;
-  const item = makeEquipment(catalogId);
+  const item = makeEquipment(catalogId, opts);
   if (!item) return false;
   inv.items.push(item);
   return true;

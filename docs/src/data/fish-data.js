@@ -41,34 +41,34 @@ export const TINY_BASE = [
   { id: 'tiny_base_04', name: '토톡 모래무지',      baseWeight: 0.14, color: '#D0C8B8', size: 0.46 },
 ];
 export const TINY_P1 = [
-  { id: 'tiny_p1_01', name: '까꿍 미꾸리',          baseWeight: 0.11, color: '#C0B098', size: 0.43 },
-  { id: 'tiny_p1_02', name: '또박 어린각시붕어',    baseWeight: 0.13, color: '#E8D8E0', size: 0.45 },
-  { id: 'tiny_p1_03', name: '빠끔 새끼쉬리',        baseWeight: 0.10, color: '#D8C8B8', size: 0.42 },
-  { id: 'tiny_p1_04', name: '동글 새끼떡붕어',      baseWeight: 0.15, color: '#D0D8E0', size: 0.47 },
+  { id: 'tiny_p1_01', name: '까꿍 미꾸리',          baseWeight: 0.135, color: '#C0B098', size: 0.43 },
+  { id: 'tiny_p1_02', name: '또박 어린각시붕어',    baseWeight: 0.162, color: '#E8D8E0', size: 0.45 },
+  { id: 'tiny_p1_03', name: '빠끔 새끼쉬리',        baseWeight: 0.108, color: '#D8C8B8', size: 0.42 },
+  { id: 'tiny_p1_04', name: '동글 새끼떡붕어',      baseWeight: 0.189, color: '#D0D8E0', size: 0.47 },
 ];
 export const TINY_P2 = [
-  { id: 'tiny_p2_01', name: '살랑 어린납자루',      baseWeight: 0.12, color: '#C8D0D8', size: 0.43 },
-  { id: 'tiny_p2_02', name: '종알 어린각시고기',    baseWeight: 0.14, color: '#E0C8D0', size: 0.45 },
-  { id: 'tiny_p2_03', name: '폴짝 어린납지리',      baseWeight: 0.13, color: '#D0E0C0', size: 0.44 },
-  { id: 'tiny_p2_04', name: '도란 어린버들치',      baseWeight: 0.16, color: '#C0D8C8', size: 0.46 },
+  { id: 'tiny_p2_01', name: '살랑 어린납자루',      baseWeight: 0.185, color: '#C8D0D8', size: 0.43 },
+  { id: 'tiny_p2_02', name: '종알 어린각시고기',    baseWeight: 0.222, color: '#E0C8D0', size: 0.45 },
+  { id: 'tiny_p2_03', name: '폴짝 어린납지리',      baseWeight: 0.148, color: '#D0E0C0', size: 0.44 },
+  { id: 'tiny_p2_04', name: '도란 어린버들치',      baseWeight: 0.259, color: '#C0D8C8', size: 0.46 },
 ];
 export const TINY_P3 = [
-  { id: 'tiny_p3_01', name: '사르륵 새벽미꾸리',    baseWeight: 0.14, color: '#B8C0D8', size: 0.44 },
-  { id: 'tiny_p3_02', name: '또로록 안개붕어',      baseWeight: 0.16, color: '#D8D0E0', size: 0.46 },
-  { id: 'tiny_p3_03', name: '살그머니 꿈자락각시',  baseWeight: 0.15, color: '#C8B8D0', size: 0.45 },
-  { id: 'tiny_p3_04', name: '어룽 안갯빛쉬리',      baseWeight: 0.18, color: '#B8D0E0', size: 0.47 },
+  { id: 'tiny_p3_01', name: '사르륵 새벽미꾸리',    baseWeight: 0.255, color: '#B8C0D8', size: 0.44 },
+  { id: 'tiny_p3_02', name: '또로록 안개붕어',      baseWeight: 0.306, color: '#D8D0E0', size: 0.46 },
+  { id: 'tiny_p3_03', name: '살그머니 꿈자락각시',  baseWeight: 0.204, color: '#C8B8D0', size: 0.45 },
+  { id: 'tiny_p3_04', name: '어룽 안갯빛쉬리',      baseWeight: 0.357, color: '#B8D0E0', size: 0.47 },
 ];
 export const TINY_P4 = [
-  { id: 'tiny_p4_01', name: '노을빛 어린별붕어',    baseWeight: 0.17, color: '#FFB888', size: 0.45 },
-  { id: 'tiny_p4_02', name: '가물가물 안개각시',    baseWeight: 0.19, color: '#A8B0C8', size: 0.47 },
-  { id: 'tiny_p4_03', name: '별총총 어린은빛피라미', baseWeight: 0.18, color: '#D0E0FF', size: 0.46 },
-  { id: 'tiny_p4_04', name: '어슴푸레 꿈빛쉬리',    baseWeight: 0.22, color: '#C0A8E0', size: 0.48 },
+  { id: 'tiny_p4_01', name: '노을빛 어린별붕어',    baseWeight: 0.36, color: '#FFB888', size: 0.45 },
+  { id: 'tiny_p4_02', name: '가물가물 안개각시',    baseWeight: 0.432, color: '#A8B0C8', size: 0.47 },
+  { id: 'tiny_p4_03', name: '별총총 어린은빛피라미', baseWeight: 0.288, color: '#D0E0FF', size: 0.46 },
+  { id: 'tiny_p4_04', name: '어슴푸레 꿈빛쉬리',    baseWeight: 0.504, color: '#C0A8E0', size: 0.48 },
 ];
 export const TINY_P5 = [
-  { id: 'tiny_p5_01', name: '은하결 새끼별고기',    baseWeight: 0.22, color: '#B0C0FF', size: 0.47 },
-  { id: 'tiny_p5_02', name: '꿈자락 새끼달피라미',  baseWeight: 0.25, color: '#FFE8B0', size: 0.49 },
-  { id: 'tiny_p5_03', name: '안개결 어린별쉬리',    baseWeight: 0.23, color: '#A8C8E0', size: 0.48 },
-  { id: 'tiny_p5_04', name: '별눈물 새끼은하각시',  baseWeight: 0.28, color: '#D8B8FF', size: 0.50 },
+  { id: 'tiny_p5_01', name: '은하결 새끼별고기',    baseWeight: 0.5, color: '#B0C0FF', size: 0.47 },
+  { id: 'tiny_p5_02', name: '꿈자락 새끼달피라미',  baseWeight: 0.6, color: '#FFE8B0', size: 0.49 },
+  { id: 'tiny_p5_03', name: '안개결 어린별쉬리',    baseWeight: 0.4, color: '#A8C8E0', size: 0.48 },
+  { id: 'tiny_p5_04', name: '별눈물 새끼은하각시',  baseWeight: 0.7, color: '#D8B8FF', size: 0.50 },
 ];
 
 /* ============================================
@@ -81,34 +81,34 @@ export const SML_BASE = [
   { id: 'sml_base_04', name: '살랑 가시고기',       baseWeight: 0.46, color: '#A8C8B0', size: 0.62 },
 ];
 export const SML_P1 = [
-  { id: 'sml_p1_01', name: '졸졸 쉬리',             baseWeight: 0.52, color: '#D8B8A8', size: 0.65 },
-  { id: 'sml_p1_02', name: '또박 각시붕어',         baseWeight: 0.40, color: '#E0B8C8', size: 0.58 },
-  { id: 'sml_p1_03', name: '살금 떡붕어',           baseWeight: 0.44, color: '#C0C8D0', size: 0.60 },
-  { id: 'sml_p1_04', name: '도란 모래무지',         baseWeight: 0.38, color: '#D8C0A8', size: 0.57 },
+  { id: 'sml_p1_01', name: '졸졸 쉬리',             baseWeight: 0.432, color: '#D8B8A8', size: 0.65 },
+  { id: 'sml_p1_02', name: '또박 각시붕어',         baseWeight: 0.567, color: '#E0B8C8', size: 0.58 },
+  { id: 'sml_p1_03', name: '살금 떡붕어',           baseWeight: 0.486, color: '#C0C8D0', size: 0.60 },
+  { id: 'sml_p1_04', name: '도란 모래무지',         baseWeight: 0.621, color: '#D8C0A8', size: 0.57 },
 ];
 export const SML_P2 = [
-  { id: 'sml_p2_01', name: '폴짝 납자루',           baseWeight: 0.50, color: '#B8D0E0', size: 0.63 },
-  { id: 'sml_p2_02', name: '동글 각시고기',         baseWeight: 0.46, color: '#D8B8D0', size: 0.61 },
-  { id: 'sml_p2_03', name: '사르락 안개송사리',     baseWeight: 0.55, color: '#A8B8D0', size: 0.64 },
-  { id: 'sml_p2_04', name: '보송 안개피라미',       baseWeight: 0.60, color: '#D8D0B0', size: 0.65 },
+  { id: 'sml_p2_01', name: '폴짝 납자루',           baseWeight: 0.592, color: '#B8D0E0', size: 0.63 },
+  { id: 'sml_p2_02', name: '동글 각시고기',         baseWeight: 0.777, color: '#D8B8D0', size: 0.61 },
+  { id: 'sml_p2_03', name: '사르락 안개송사리',     baseWeight: 0.666, color: '#A8B8D0', size: 0.64 },
+  { id: 'sml_p2_04', name: '보송 안개피라미',       baseWeight: 0.851, color: '#D8D0B0', size: 0.65 },
 ];
 export const SML_P3 = [
-  { id: 'sml_p3_01', name: '어룽 꿈빛빙어',         baseWeight: 0.62, color: '#B0D0E8', size: 0.65 },
-  { id: 'sml_p3_02', name: '살푸시 안개쉬리',       baseWeight: 0.70, color: '#C8B0A0', size: 0.66 },
-  { id: 'sml_p3_03', name: '노을빛 송사리',         baseWeight: 0.68, color: '#FFA070', size: 0.66 },
-  { id: 'sml_p3_04', name: '반딧불 피라미',         baseWeight: 0.78, color: '#FFE070', size: 0.67 },
+  { id: 'sml_p3_01', name: '어룽 꿈빛빙어',         baseWeight: 0.816, color: '#B0D0E8', size: 0.65 },
+  { id: 'sml_p3_02', name: '살푸시 안개쉬리',       baseWeight: 1.07, color: '#C8B0A0', size: 0.66 },
+  { id: 'sml_p3_03', name: '노을빛 송사리',         baseWeight: 0.918, color: '#FFA070', size: 0.66 },
+  { id: 'sml_p3_04', name: '반딧불 피라미',         baseWeight: 1.17, color: '#FFE070', size: 0.67 },
 ];
 export const SML_P4 = [
-  { id: 'sml_p4_01', name: '별가루 빙어',           baseWeight: 0.85, color: '#D0E0FF', size: 0.68 },
-  { id: 'sml_p4_02', name: '무지개 가시고기',       baseWeight: 0.95, color: '#FF9DCB', size: 0.70 },
-  { id: 'sml_p4_03', name: '천둥결 송사리',         baseWeight: 0.88, color: '#7080B0', size: 0.69 },
-  { id: 'sml_p4_04', name: '안개결 피라미',         baseWeight: 1.00, color: '#9098A8', size: 0.70 },
+  { id: 'sml_p4_01', name: '별가루 빙어',           baseWeight: 1.15, color: '#D0E0FF', size: 0.68 },
+  { id: 'sml_p4_02', name: '무지개 가시고기',       baseWeight: 1.51, color: '#FF9DCB', size: 0.70 },
+  { id: 'sml_p4_03', name: '천둥결 송사리',         baseWeight: 1.3, color: '#7080B0', size: 0.69 },
+  { id: 'sml_p4_04', name: '안개결 피라미',         baseWeight: 1.66, color: '#9098A8', size: 0.70 },
 ];
 export const SML_P5 = [
-  { id: 'sml_p5_01', name: '은하결 별송사리',       baseWeight: 1.10, color: '#A0B8FF', size: 0.71 },
-  { id: 'sml_p5_02', name: '별눈물 피라미',         baseWeight: 1.20, color: '#E8C8FF', size: 0.72 },
-  { id: 'sml_p5_03', name: '꿈자락 빙어',           baseWeight: 1.15, color: '#FFD8E8', size: 0.71 },
-  { id: 'sml_p5_04', name: '안개결 별가시고기',     baseWeight: 1.30, color: '#B0A8D8', size: 0.73 },
+  { id: 'sml_p5_01', name: '은하결 별송사리',       baseWeight: 1.6, color: '#A0B8FF', size: 0.71 },
+  { id: 'sml_p5_02', name: '별눈물 피라미',         baseWeight: 2.1, color: '#E8C8FF', size: 0.72 },
+  { id: 'sml_p5_03', name: '꿈자락 빙어',           baseWeight: 1.8, color: '#FFD8E8', size: 0.71 },
+  { id: 'sml_p5_04', name: '안개결 별가시고기',     baseWeight: 2.3, color: '#B0A8D8', size: 0.73 },
 ];
 
 /* ============================================
@@ -121,34 +121,34 @@ export const MED_BASE = [
   { id: 'med_base_04', name: '폭포물 황어',         baseWeight:  22, color: '#E8C870', size: 0.78 },
 ];
 export const MED_P1 = [
-  { id: 'med_p1_01', name: '노을빛 누치',           baseWeight:  35, color: '#FFB070', size: 0.79 },
-  { id: 'med_p1_02', name: '번개무늬 청어',         baseWeight:  60, color: '#7090C8', size: 0.79 },
-  { id: 'med_p1_03', name: '별꿈 갈치',             baseWeight: 100, color: '#D0D8E8', size: 0.79 },
-  { id: 'med_p1_04', name: '잠빛 갈겨니',           baseWeight: 180, color: '#B0A8D0', size: 0.79 },
+  { id: 'med_p1_01', name: '노을빛 누치',           baseWeight:  8.1, color: '#FFB070', size: 0.79 },
+  { id: 'med_p1_02', name: '번개무늬 청어',         baseWeight:  12.15, color: '#7090C8', size: 0.79 },
+  { id: 'med_p1_03', name: '별꿈 갈치',             baseWeight: 18.9, color: '#D0D8E8', size: 0.79 },
+  { id: 'med_p1_04', name: '잠빛 갈겨니',           baseWeight: 29.7, color: '#B0A8D0', size: 0.79 },
 ];
 export const MED_P2 = [
-  { id: 'med_p2_01', name: '꿈비늘 잉어',           baseWeight: 250, color: '#FFE090', size: 0.80 },
-  { id: 'med_p2_02', name: '꿈안개 잉어',           baseWeight: 280, color: '#D8C8E8', size: 0.80 },
-  { id: 'med_p2_03', name: '새벽결 향어',           baseWeight: 320, color: '#A8C0A0', size: 0.80 },
-  { id: 'med_p2_04', name: '송알송알 농어',         baseWeight: 360, color: '#A8B0C0', size: 0.80 },
+  { id: 'med_p2_01', name: '꿈비늘 잉어',           baseWeight: 11.1, color: '#FFE090', size: 0.80 },
+  { id: 'med_p2_02', name: '꿈안개 잉어',           baseWeight: 16.65, color: '#D8C8E8', size: 0.80 },
+  { id: 'med_p2_03', name: '새벽결 향어',           baseWeight: 25.9, color: '#A8C0A0', size: 0.80 },
+  { id: 'med_p2_04', name: '송알송알 농어',         baseWeight: 40.7, color: '#A8B0C0', size: 0.80 },
 ];
 export const MED_P3 = [
-  { id: 'med_p3_01', name: '무지개 누치',           baseWeight: 420, color: '#FF9DCB', size: 0.81 },
-  { id: 'med_p3_02', name: '노을꽃 황어',           baseWeight: 500, color: '#FF8050', size: 0.81 },
-  { id: 'med_p3_03', name: '반딧불 청어',           baseWeight: 580, color: '#FFE060', size: 0.81 },
-  { id: 'med_p3_04', name: '별가루 갈치',           baseWeight: 680, color: '#D8E0FF', size: 0.81 },
+  { id: 'med_p3_01', name: '무지개 누치',           baseWeight: 15.3, color: '#FF9DCB', size: 0.81 },
+  { id: 'med_p3_02', name: '노을꽃 황어',           baseWeight: 22.95, color: '#FF8050', size: 0.81 },
+  { id: 'med_p3_03', name: '반딧불 청어',           baseWeight: 35.7, color: '#FFE060', size: 0.81 },
+  { id: 'med_p3_04', name: '별가루 갈치',           baseWeight: 56.1, color: '#D8E0FF', size: 0.81 },
 ];
 export const MED_P4 = [
-  { id: 'med_p4_01', name: '천둥결 잉어',           baseWeight: 800, color: '#5070A0', size: 0.82 },
-  { id: 'med_p4_02', name: '안개결 향어',           baseWeight: 950, color: '#90A098', size: 0.82 },
-  { id: 'med_p4_03', name: '별눈물 농어',           baseWeight:1100, color: '#A0B8FF', size: 0.82 },
-  { id: 'med_p4_04', name: '무지갯빛 갈겨니',       baseWeight:1300, color: '#FF80B0', size: 0.82 },
+  { id: 'med_p4_01', name: '천둥결 잉어',           baseWeight: 21.6, color: '#5070A0', size: 0.82 },
+  { id: 'med_p4_02', name: '안개결 향어',           baseWeight: 32.4, color: '#90A098', size: 0.82 },
+  { id: 'med_p4_03', name: '별눈물 농어',           baseWeight:50.4, color: '#A0B8FF', size: 0.82 },
+  { id: 'med_p4_04', name: '무지갯빛 갈겨니',       baseWeight:79.2, color: '#FF80B0', size: 0.82 },
 ];
 export const MED_P5 = [
-  { id: 'med_p5_01', name: '은하빛 별잉어',         baseWeight:1500, color: '#90A8FF', size: 0.83 },
-  { id: 'med_p5_02', name: '꿈자락 별향어',         baseWeight:1800, color: '#B8A0E8', size: 0.83 },
-  { id: 'med_p5_03', name: '별꿈 안개농어',         baseWeight:2100, color: '#A8B8E0', size: 0.83 },
-  { id: 'med_p5_04', name: '잠속 별갈치',           baseWeight:2500, color: '#7060A8', size: 0.83 },
+  { id: 'med_p5_01', name: '은하빛 별잉어',         baseWeight:30, color: '#90A8FF', size: 0.83 },
+  { id: 'med_p5_02', name: '꿈자락 별향어',         baseWeight:45, color: '#B8A0E8', size: 0.83 },
+  { id: 'med_p5_03', name: '별꿈 안개농어',         baseWeight:70, color: '#A8B8E0', size: 0.83 },
+  { id: 'med_p5_04', name: '잠속 별갈치',           baseWeight:110, color: '#7060A8', size: 0.83 },
 ];
 
 /* ============================================
@@ -161,34 +161,34 @@ export const BIG_BASE = [
   { id: 'big_base_04', name: '꿈자락 거대청새치',   baseWeight:  130, color: '#5FC9F7', size: 0.88 },
 ];
 export const BIG_P1 = [
-  { id: 'big_p1_01', name: '노을 대왕연어',         baseWeight:  220, color: '#FF8A50', size: 0.89 },
-  { id: 'big_p1_02', name: '천둥 거대다랑어',       baseWeight:  380, color: '#5070A0', size: 0.89 },
-  { id: 'big_p1_03', name: '심연 대왕문어',         baseWeight:  650, color: '#8050A0', size: 0.89 },
-  { id: 'big_p1_04', name: '잠속 대왕복어',         baseWeight: 1100, color: '#D8C0E8', size: 0.89 },
+  { id: 'big_p1_01', name: '노을 대왕연어',         baseWeight:  47.25, color: '#FF8A50', size: 0.89 },
+  { id: 'big_p1_02', name: '천둥 거대다랑어',       baseWeight:  74.25, color: '#5070A0', size: 0.89 },
+  { id: 'big_p1_03', name: '심연 대왕문어',         baseWeight:  108, color: '#8050A0', size: 0.89 },
+  { id: 'big_p1_04', name: '잠속 대왕복어',         baseWeight: 176, color: '#D8C0E8', size: 0.89 },
 ];
 export const BIG_P2 = [
-  { id: 'big_p2_01', name: '새벽결 거대향어',       baseWeight: 1400, color: '#A0B0D8', size: 0.90 },
-  { id: 'big_p2_02', name: '폭포물 대왕메기',       baseWeight: 1700, color: '#80B0A0', size: 0.90 },
-  { id: 'big_p2_03', name: '안갯빛 대왕가물치',     baseWeight: 2000, color: '#7888A0', size: 0.90 },
-  { id: 'big_p2_04', name: '꿈빛 거대청새치',       baseWeight: 2400, color: '#60BFFA', size: 0.90 },
+  { id: 'big_p2_01', name: '새벽결 거대향어',       baseWeight: 64.75, color: '#A0B0D8', size: 0.90 },
+  { id: 'big_p2_02', name: '폭포물 대왕메기',       baseWeight: 102, color: '#80B0A0', size: 0.90 },
+  { id: 'big_p2_03', name: '안갯빛 대왕가물치',     baseWeight: 148, color: '#7888A0', size: 0.90 },
+  { id: 'big_p2_04', name: '꿈빛 거대청새치',       baseWeight: 241, color: '#60BFFA', size: 0.90 },
 ];
 export const BIG_P3 = [
-  { id: 'big_p3_01', name: '노을꽃 대왕연어',       baseWeight: 2800, color: '#FF7040', size: 0.91 },
-  { id: 'big_p3_02', name: '천둥결 거대다랑어',     baseWeight: 3300, color: '#3050A0', size: 0.91 },
-  { id: 'big_p3_03', name: '심연결 대왕문어',       baseWeight: 3900, color: '#604098', size: 0.91 },
-  { id: 'big_p3_04', name: '잠빛 대왕복어',         baseWeight: 4600, color: '#C0A8E0', size: 0.91 },
+  { id: 'big_p3_01', name: '노을꽃 대왕연어',       baseWeight: 89.25, color: '#FF7040', size: 0.91 },
+  { id: 'big_p3_02', name: '천둥결 거대다랑어',     baseWeight: 140, color: '#3050A0', size: 0.91 },
+  { id: 'big_p3_03', name: '심연결 대왕문어',       baseWeight: 204, color: '#604098', size: 0.91 },
+  { id: 'big_p3_04', name: '잠빛 대왕복어',         baseWeight: 332, color: '#C0A8E0', size: 0.91 },
 ];
 export const BIG_P4 = [
-  { id: 'big_p4_01', name: '별가루 대왕향어',       baseWeight: 5300, color: '#B0C0FF', size: 0.92 },
-  { id: 'big_p4_02', name: '무지개 대왕메기',       baseWeight: 6200, color: '#FF9DCB', size: 0.92 },
-  { id: 'big_p4_03', name: '어둠빛 대왕가물치',     baseWeight: 7200, color: '#404858', size: 0.92 },
-  { id: 'big_p4_04', name: '별눈물 거대청새치',     baseWeight: 8500, color: '#80B0FF', size: 0.92 },
+  { id: 'big_p4_01', name: '별가루 대왕향어',       baseWeight: 126, color: '#B0C0FF', size: 0.92 },
+  { id: 'big_p4_02', name: '무지개 대왕메기',       baseWeight: 198, color: '#FF9DCB', size: 0.92 },
+  { id: 'big_p4_03', name: '어둠빛 대왕가물치',     baseWeight: 288, color: '#404858', size: 0.92 },
+  { id: 'big_p4_04', name: '별눈물 거대청새치',     baseWeight: 468, color: '#80B0FF', size: 0.92 },
 ];
 export const BIG_P5 = [
-  { id: 'big_p5_01', name: '은하결 대왕연어',       baseWeight: 9800, color: '#A0B0FF', size: 0.93 },
-  { id: 'big_p5_02', name: '벼락결 별다랑어',       baseWeight:11500, color: '#5060B0', size: 0.93 },
-  { id: 'big_p5_03', name: '잠속 별문어',           baseWeight:13500, color: '#704090', size: 0.93 },
-  { id: 'big_p5_04', name: '꿈자락 신비복어',       baseWeight:16000, color: '#D8B0F0', size: 0.93 },
+  { id: 'big_p5_01', name: '은하결 대왕연어',       baseWeight: 175, color: '#A0B0FF', size: 0.93 },
+  { id: 'big_p5_02', name: '벼락결 별다랑어',       baseWeight:275, color: '#5060B0', size: 0.93 },
+  { id: 'big_p5_03', name: '잠속 별문어',           baseWeight:400, color: '#704090', size: 0.93 },
+  { id: 'big_p5_04', name: '꿈자락 신비복어',       baseWeight:650, color: '#D8B0F0', size: 0.93 },
 ];
 
 /* ============================================
@@ -201,34 +201,34 @@ export const HUGE_BASE = [
   { id: 'huge_base_04', name: '무지개 폭포대왕',     baseWeight:  280, color: '#80D8F7', size: 0.92 },
 ];
 export const HUGE_P1 = [
-  { id: 'huge_p1_01', name: '노을꽃 대왕송어',       baseWeight:  450, color: '#FF7050', size: 0.93 },
-  { id: 'huge_p1_02', name: '천둥울림 대왕다랑어',   baseWeight:  760, color: '#4060A0', size: 0.93 },
-  { id: 'huge_p1_03', name: '별눈물 심해대왕',       baseWeight: 1300, color: '#7050B0', size: 0.93 },
-  { id: 'huge_p1_04', name: '잠속결 대왕복어',       baseWeight: 2200, color: '#C8B0E8', size: 0.93 },
+  { id: 'huge_p1_01', name: '노을꽃 대왕송어',       baseWeight:  94.5, color: '#FF7050', size: 0.93 },
+  { id: 'huge_p1_02', name: '천둥울림 대왕다랑어',   baseWeight:  162, color: '#4060A0', size: 0.93 },
+  { id: 'huge_p1_03', name: '별눈물 심해대왕',       baseWeight: 243, color: '#7050B0', size: 0.93 },
+  { id: 'huge_p1_04', name: '잠속결 대왕복어',       baseWeight: 378, color: '#C8B0E8', size: 0.93 },
 ];
 export const HUGE_P2 = [
-  { id: 'huge_p2_01', name: '새벽결 대왕잉어',       baseWeight: 2700, color: '#90A8C0', size: 0.94 },
-  { id: 'huge_p2_02', name: '풀잎 대왕거북',         baseWeight: 3200, color: '#80A060', size: 0.94 },
-  { id: 'huge_p2_03', name: '폭포결 대왕가물치',     baseWeight: 3800, color: '#7090A0', size: 0.94 },
-  { id: 'huge_p2_04', name: '안갯결 폭포대왕',       baseWeight: 4500, color: '#A0B8C8', size: 0.94 },
+  { id: 'huge_p2_01', name: '새벽결 대왕잉어',       baseWeight: 130, color: '#90A8C0', size: 0.94 },
+  { id: 'huge_p2_02', name: '풀잎 대왕거북',         baseWeight: 222, color: '#80A060', size: 0.94 },
+  { id: 'huge_p2_03', name: '폭포결 대왕가물치',     baseWeight: 333, color: '#7090A0', size: 0.94 },
+  { id: 'huge_p2_04', name: '안갯결 폭포대왕',       baseWeight: 518, color: '#A0B8C8', size: 0.94 },
 ];
 export const HUGE_P3 = [
-  { id: 'huge_p3_01', name: '별가루 대왕송어',       baseWeight: 5300, color: '#D0E0FF', size: 0.95 },
-  { id: 'huge_p3_02', name: '천둥결 대왕다랑어',     baseWeight: 6300, color: '#304080', size: 0.95 },
-  { id: 'huge_p3_03', name: '심연결 심해대왕',       baseWeight: 7500, color: '#503890', size: 0.95 },
-  { id: 'huge_p3_04', name: '잠속 신비복어',         baseWeight: 8900, color: '#B898E0', size: 0.95 },
+  { id: 'huge_p3_01', name: '별가루 대왕송어',       baseWeight: 179, color: '#D0E0FF', size: 0.95 },
+  { id: 'huge_p3_02', name: '천둥결 대왕다랑어',     baseWeight: 306, color: '#304080', size: 0.95 },
+  { id: 'huge_p3_03', name: '심연결 심해대왕',       baseWeight: 459, color: '#503890', size: 0.95 },
+  { id: 'huge_p3_04', name: '잠속 신비복어',         baseWeight: 714, color: '#B898E0', size: 0.95 },
 ];
 export const HUGE_P4 = [
-  { id: 'huge_p4_01', name: '무지개 대왕잉어',       baseWeight:10500, color: '#FF80C8', size: 0.96 },
-  { id: 'huge_p4_02', name: '노을빛 대왕거북',       baseWeight:12500, color: '#FF8050', size: 0.96 },
-  { id: 'huge_p4_03', name: '어둠결 대왕가물치',     baseWeight:14800, color: '#303848', size: 0.96 },
-  { id: 'huge_p4_04', name: '별눈물 폭포대왕',       baseWeight:17500, color: '#90B0FF', size: 0.96 },
+  { id: 'huge_p4_01', name: '무지개 대왕잉어',       baseWeight:252, color: '#FF80C8', size: 0.96 },
+  { id: 'huge_p4_02', name: '노을빛 대왕거북',       baseWeight:432, color: '#FF8050', size: 0.96 },
+  { id: 'huge_p4_03', name: '어둠결 대왕가물치',     baseWeight:648, color: '#303848', size: 0.96 },
+  { id: 'huge_p4_04', name: '별눈물 폭포대왕',       baseWeight:1008, color: '#90B0FF', size: 0.96 },
 ];
 export const HUGE_P5 = [
-  { id: 'huge_p5_01', name: '은하결 대왕송어',       baseWeight:20500, color: '#A0B8FF', size: 0.97 },
-  { id: 'huge_p5_02', name: '천둥결 별다랑어',       baseWeight:24000, color: '#404FA0', size: 0.97 },
-  { id: 'huge_p5_03', name: '별꿈 심해대왕',         baseWeight:28000, color: '#6040A8', size: 0.97 },
-  { id: 'huge_p5_04', name: '잠속 별복어',           baseWeight:33000, color: '#C0A0F0', size: 0.97 },
+  { id: 'huge_p5_01', name: '은하결 대왕송어',       baseWeight:350, color: '#A0B8FF', size: 0.97 },
+  { id: 'huge_p5_02', name: '천둥결 별다랑어',       baseWeight:600, color: '#404FA0', size: 0.97 },
+  { id: 'huge_p5_03', name: '별꿈 심해대왕',         baseWeight:900, color: '#6040A8', size: 0.97 },
+  { id: 'huge_p5_04', name: '잠속 별복어',           baseWeight:1400, color: '#C0A0F0', size: 0.97 },
 ];
 
 /* ============================================
@@ -241,34 +241,34 @@ export const BOSS_BASE = [
   { id: 'boss_base_04', name: '무지개 달빛송어',     baseWeight:  520, color: '#FF9DCB', size: 0.95 },
 ];
 export const BOSS_P1 = [
-  { id: 'boss_p1_01', name: '황혼 가오리',           baseWeight:  850, color: '#C868A0', size: 0.96 },
-  { id: 'boss_p1_02', name: '벼락무늬 상어',         baseWeight: 1500, color: '#E0E090', size: 0.96 },
-  { id: 'boss_p1_03', name: '별삼킨 돌고래',         baseWeight: 2500, color: '#9DB8E8', size: 0.96 },
-  { id: 'boss_p1_04', name: '은하수 향유고래',       baseWeight: 5000, color: '#A090E0', size: 0.96 },
+  { id: 'boss_p1_01', name: '황혼 가오리',           baseWeight:  189, color: '#C868A0', size: 0.96 },
+  { id: 'boss_p1_02', name: '벼락무늬 상어',         baseWeight: 297, color: '#E0E090', size: 0.96 },
+  { id: 'boss_p1_03', name: '별삼킨 돌고래',         baseWeight: 459, color: '#9DB8E8', size: 0.96 },
+  { id: 'boss_p1_04', name: '은하수 향유고래',       baseWeight: 702, color: '#A090E0', size: 0.96 },
 ];
 export const BOSS_P2 = [
-  { id: 'boss_p2_01', name: '새벽빛 별잉어',         baseWeight: 6200, color: '#D8E0F8', size: 0.97 },
-  { id: 'boss_p2_02', name: '풀잎결 대왕거북',       baseWeight: 7500, color: '#A8C898', size: 0.97 },
-  { id: 'boss_p2_03', name: '폭포결 비단잉어',       baseWeight: 9000, color: '#A0B8C0', size: 0.97 },
-  { id: 'boss_p2_04', name: '안갯빛 달빛송어',       baseWeight:11000, color: '#E0B8D0', size: 0.97 },
+  { id: 'boss_p2_01', name: '새벽빛 별잉어',         baseWeight: 259, color: '#D8E0F8', size: 0.97 },
+  { id: 'boss_p2_02', name: '풀잎결 대왕거북',       baseWeight: 407, color: '#A8C898', size: 0.97 },
+  { id: 'boss_p2_03', name: '폭포결 비단잉어',       baseWeight: 629, color: '#A0B8C0', size: 0.97 },
+  { id: 'boss_p2_04', name: '안갯빛 달빛송어',       baseWeight:962, color: '#E0B8D0', size: 0.97 },
 ];
 export const BOSS_P3 = [
-  { id: 'boss_p3_01', name: '천둥 황혼가오리',       baseWeight:13000, color: '#A05080', size: 0.98 },
-  { id: 'boss_p3_02', name: '별가루 무늬상어',       baseWeight:15500, color: '#D0E8FF', size: 0.98 },
-  { id: 'boss_p3_03', name: '노을 별삼킨돌고래',     baseWeight:18500, color: '#FF7090', size: 0.98 },
-  { id: 'boss_p3_04', name: '심연 향유고래',         baseWeight:22000, color: '#5040A0', size: 0.98 },
+  { id: 'boss_p3_01', name: '천둥 황혼가오리',       baseWeight:357, color: '#A05080', size: 0.98 },
+  { id: 'boss_p3_02', name: '별가루 무늬상어',       baseWeight:561, color: '#D0E8FF', size: 0.98 },
+  { id: 'boss_p3_03', name: '노을 별삼킨돌고래',     baseWeight:867, color: '#FF7090', size: 0.98 },
+  { id: 'boss_p3_04', name: '심연 향유고래',         baseWeight:1326, color: '#5040A0', size: 0.98 },
 ];
 export const BOSS_P4 = [
-  { id: 'boss_p4_01', name: '은하결 별잉어',         baseWeight:26000, color: '#A0B0FF', size: 0.98 },
-  { id: 'boss_p4_02', name: '천둥결 대왕거북',       baseWeight:31000, color: '#506098', size: 0.98 },
-  { id: 'boss_p4_03', name: '어둠결 비단잉어',       baseWeight:37000, color: '#382848', size: 0.98 },
-  { id: 'boss_p4_04', name: '별눈물 달빛송어',       baseWeight:44000, color: '#90A8FF', size: 0.98 },
+  { id: 'boss_p4_01', name: '은하결 별잉어',         baseWeight:504, color: '#A0B0FF', size: 0.98 },
+  { id: 'boss_p4_02', name: '천둥결 대왕거북',       baseWeight:792, color: '#506098', size: 0.98 },
+  { id: 'boss_p4_03', name: '어둠결 비단잉어',       baseWeight:1224, color: '#382848', size: 0.98 },
+  { id: 'boss_p4_04', name: '별눈물 달빛송어',       baseWeight:1872, color: '#90A8FF', size: 0.98 },
 ];
 export const BOSS_P5 = [
-  { id: 'boss_p5_01', name: '별꿈 황혼가오리',       baseWeight:52000, color: '#B070C0', size: 0.99 },
-  { id: 'boss_p5_02', name: '잠속 무늬상어',         baseWeight:61000, color: '#7060A8', size: 0.99 },
-  { id: 'boss_p5_03', name: '은하결 별삼킨돌고래',   baseWeight:72000, color: '#A8C0FF', size: 0.99 },
-  { id: 'boss_p5_04', name: '꿈자락 향유고래',       baseWeight:85000, color: '#C8B0F0', size: 0.99 },
+  { id: 'boss_p5_01', name: '별꿈 황혼가오리',       baseWeight:700, color: '#B070C0', size: 0.99 },
+  { id: 'boss_p5_02', name: '잠속 무늬상어',         baseWeight:1100, color: '#7060A8', size: 0.99 },
+  { id: 'boss_p5_03', name: '은하결 별삼킨돌고래',   baseWeight:1700, color: '#A8C0FF', size: 0.99 },
+  { id: 'boss_p5_04', name: '꿈자락 향유고래',       baseWeight:2600, color: '#C8B0F0', size: 0.99 },
 ];
 
 /* ============================================
@@ -281,34 +281,34 @@ export const LEGEND_BASE = [
   { id: 'legend_base_04', name: '별을 빚은 신어',       baseWeight: 16000, color: '#A0C0FF', size: 0.98 },
 ];
 export const LEGEND_P1 = [
-  { id: 'legend_p1_01', name: '잠의 정령',              baseWeight: 24000, color: '#C0A8F0', size: 0.99 },
-  { id: 'legend_p1_02', name: '꿈을 깨운 신어',         baseWeight: 33000, color: '#E8C8FF', size: 0.99 },
-  { id: 'legend_p1_03', name: '무지개를 짠 신어',       baseWeight: 44000, color: '#FF9DCB', size: 0.99 },
-  { id: 'legend_p1_04', name: '풀잎바람 신어',          baseWeight: 56000, color: '#A0D098', size: 0.99 },
+  { id: 'legend_p1_01', name: '잠의 정령',              baseWeight: 5400, color: '#C0A8F0', size: 0.99 },
+  { id: 'legend_p1_02', name: '꿈을 깨운 신어',         baseWeight: 8775, color: '#E8C8FF', size: 0.99 },
+  { id: 'legend_p1_03', name: '무지개를 짠 신어',       baseWeight: 13500, color: '#FF9DCB', size: 0.99 },
+  { id: 'legend_p1_04', name: '풀잎바람 신어',          baseWeight: 21600, color: '#A0D098', size: 0.99 },
 ];
 export const LEGEND_P2 = [
-  { id: 'legend_p2_01', name: '별가루 신어',            baseWeight: 70000, color: '#D0E0FF', size: 0.99 },
-  { id: 'legend_p2_02', name: '노을꽃 신어',            baseWeight: 86000, color: '#FF8060', size: 0.99 },
-  { id: 'legend_p2_03', name: '안갯결 신어',            baseWeight:105000, color: '#A8B8C8', size: 0.99 },
-  { id: 'legend_p2_04', name: '폭포결 신어',            baseWeight:128000, color: '#80B0E0', size: 0.99 },
+  { id: 'legend_p2_01', name: '별가루 신어',            baseWeight: 7400, color: '#D0E0FF', size: 0.99 },
+  { id: 'legend_p2_02', name: '노을꽃 신어',            baseWeight: 12025, color: '#FF8060', size: 0.99 },
+  { id: 'legend_p2_03', name: '안갯결 신어',            baseWeight:18500, color: '#A8B8C8', size: 0.99 },
+  { id: 'legend_p2_04', name: '폭포결 신어',            baseWeight:29600, color: '#80B0E0', size: 0.99 },
 ];
 export const LEGEND_P3 = [
-  { id: 'legend_p3_01', name: '천둥울림 신어',          baseWeight:155000, color: '#4060B0', size: 1.00 },
-  { id: 'legend_p3_02', name: '심연 정령',              baseWeight:185000, color: '#5040A8', size: 1.00 },
-  { id: 'legend_p3_03', name: '은빛 정령',              baseWeight:220000, color: '#E0E8F0', size: 1.00 },
-  { id: 'legend_p3_04', name: '노을 정령',              baseWeight:265000, color: '#FF7050', size: 1.00 },
+  { id: 'legend_p3_01', name: '천둥울림 신어',          baseWeight:10200, color: '#4060B0', size: 1.00 },
+  { id: 'legend_p3_02', name: '심연 정령',              baseWeight:16575, color: '#5040A8', size: 1.00 },
+  { id: 'legend_p3_03', name: '은빛 정령',              baseWeight:25500, color: '#E0E8F0', size: 1.00 },
+  { id: 'legend_p3_04', name: '노을 정령',              baseWeight:40800, color: '#FF7050', size: 1.00 },
 ];
 export const LEGEND_P4 = [
-  { id: 'legend_p4_01', name: '별눈물 신어',            baseWeight:315000, color: '#A0B8FF', size: 1.00 },
-  { id: 'legend_p4_02', name: '무지갯빛 신어',          baseWeight:380000, color: '#FF80C8', size: 1.00 },
-  { id: 'legend_p4_03', name: '어둠결 신어',            baseWeight:455000, color: '#302848', size: 1.00 },
-  { id: 'legend_p4_04', name: '새벽빛 정령',            baseWeight:545000, color: '#D0D8F0', size: 1.00 },
+  { id: 'legend_p4_01', name: '별눈물 신어',            baseWeight:14400, color: '#A0B8FF', size: 1.00 },
+  { id: 'legend_p4_02', name: '무지갯빛 신어',          baseWeight:23400, color: '#FF80C8', size: 1.00 },
+  { id: 'legend_p4_03', name: '어둠결 신어',            baseWeight:36000, color: '#302848', size: 1.00 },
+  { id: 'legend_p4_04', name: '새벽빛 정령',            baseWeight:57600, color: '#D0D8F0', size: 1.00 },
 ];
 export const LEGEND_P5 = [
-  { id: 'legend_p5_01', name: '은하결 신어',            baseWeight: 650000, color: '#90A8FF', size: 1.00 },
-  { id: 'legend_p5_02', name: '별꿈 정령',              baseWeight: 780000, color: '#C8B0FF', size: 1.00 },
-  { id: 'legend_p5_03', name: '잠속 정령',              baseWeight: 935000, color: '#6040A0', size: 1.00 },
-  { id: 'legend_p5_04', name: '꿈자락 신어',            baseWeight:1120000, color: '#FFB0E0', size: 1.00 },
+  { id: 'legend_p5_01', name: '은하결 신어',            baseWeight: 20000, color: '#90A8FF', size: 1.00 },
+  { id: 'legend_p5_02', name: '별꿈 정령',              baseWeight: 32500, color: '#C8B0FF', size: 1.00 },
+  { id: 'legend_p5_03', name: '잠속 정령',              baseWeight: 50000, color: '#6040A0', size: 1.00 },
+  { id: 'legend_p5_04', name: '꿈자락 신어',            baseWeight:80000, color: '#FFB0E0', size: 1.00 },
 ];
 
 /* ============================================
@@ -342,7 +342,7 @@ export const HIDDEN_FISH = [
    - 도감 특수어종 탭에 표시 (히든과 함께)
    ============================================ */
 export const GOLDEN_FISH = [
-  { id: 'golden_01', name: '황금꿈잉어',            baseWeight: 5000, color: '#FFE090', size: 1.00 },
+  { id: 'golden_01', name: '황금빛꿈잉어',          baseWeight: 5000, color: '#FFE090', size: 1.00 },
 ];
 
 /* ============================================
@@ -400,12 +400,21 @@ const GRADE_TO_POOL = Object.freeze({
   '황금어':     GOLDEN_FISH,  // ★ Day 27
 });
 
+import { pickStageVariant } from './stages.js';
+
 /**
- * 등급 매칭 시 어종 픽 (★ Day 27 — stageId 기반 변종 풀 선택).
+ * ★ Day 29 — 등급 매칭 시 어종 픽 (시스템 A — 지역별 변종 확률 분포).
+ *
+ * 변경 배경 (대표 결정):
+ *   - 기존 (Day 27): 지역마다 변종 1개 고정 (1~2=base, 3~4=p1, ..., 11=p5)
+ *   - 신규 (Day 29): 모든 지역에서 모든 (해금된) 변종 가능 — 확률 분포 추첨
+ *                    저렙 도파민 보강 + 월척+ 도감 채우기 가능
  *
  * 동작:
- *   1. stageId → STAGE_TO_TIER[stageId] → 변종 (예: 5→'p2')
- *   2. GRADE_TIER_TO_POOL[grade][tier] → 변종 풀 (예: 5지역 '중형' → MED_P2)
+ *   1. stageId → pickStageVariant(stageId) → 변종 추첨 (stages.STAGE_VARIANT_DIST)
+ *      예: 1지역 → 92% 'base' / 8% 'p1'
+ *      예: 11지역 → 8% 'base' / 12% 'p1' / 18% 'p2' / 22% 'p3' / 22% 'p4' / 18% 'p5'
+ *   2. GRADE_TIER_TO_POOL[grade][tier] → 변종 풀 (예: 11지역 '치어' tier='p5' → TINY_P5)
  *   3. 변종 풀에서 균등 랜덤 픽
  *
  * 신화/히든/황금어는 변종 없음 — GRADE_TO_POOL 직접 사용 (안전망).
@@ -418,12 +427,16 @@ const GRADE_TO_POOL = Object.freeze({
 export function pickFishByGrade(stageId, grade) {
   // 변종 시스템 — stageId + 일반 등급
   if (stageId && GRADE_TIER_TO_POOL[grade]) {
-    const tier = STAGE_TO_TIER[stageId];
-    if (tier) {
-      const tierPool = GRADE_TIER_TO_POOL[grade][tier];
-      if (tierPool && tierPool.length > 0) {
-        return tierPool[Math.floor(Math.random() * tierPool.length)];
-      }
+    // ★ Day 29 — 지역별 확률 분포로 변종 추첨 (기존 STAGE_TO_TIER 고정 매핑 폐기)
+    const tier = pickStageVariant(stageId);
+    const tierPool = GRADE_TIER_TO_POOL[grade][tier];
+    if (tierPool && tierPool.length > 0) {
+      return tierPool[Math.floor(Math.random() * tierPool.length)];
+    }
+    // 변종 풀이 비어있는 비정상 케이스 — 안전망: base 풀
+    const baseFallback = GRADE_TIER_TO_POOL[grade]['base'];
+    if (baseFallback && baseFallback.length > 0) {
+      return baseFallback[Math.floor(Math.random() * baseFallback.length)];
     }
   }
   // 안전망 (신화/히든/황금어 또는 stageId 없을 때)
@@ -510,25 +523,37 @@ export function fishDisplayGrade(fishId) {
 }
 
 /**
- * ★ Day 27 — 신화 어종 추첨 (트리거별 다른 풀).
+ * ★ Day 29 — 신화 어종 추첨 (재설계).
  *
- * 대표 결정 (Q-I B안):
- * - 검은 25+ 매칭 (triggerSymbol='fish') → **mythic_01 (황금빛꿈고래)** 고정 — 게임 엔딩 상징
- * - 분홍/황금/하얀 10+ 매칭 → **mythic_02~04 중 무작위** (황금빛꿈고래 제외)
+ * 변경 배경:
+ *   - 기존 (Day 27): 검은(fish) 25+ = mythic_01 황금빛꿈고래 / 그 외 = mythic_02~04
+ *   - 신규 (Day 29): 검은 10+ 포함 모든 일반 신화 트리거 = mythic_02~04 무작위
+ *                    황금빛꿈고래(mythic_01)는 트윙클 타임 중 트윙클 15+ 전용 (별도 함수)
+ *
+ * 일반 신화 트리거 (모든 지역):
+ *   - 검은 10+        : 등급 결정 자체가 신화보스 → 이 함수로
+ *   - 황금 10+        : 골든힛 스킵 → 이 함수로
+ *   - 분홍 10+        : HIDDEN HIT 스킵 → 이 함수로
+ *   - 트윙클 10+ 일반 슬롯 : 트윙클 카드 게임 스킵 → 이 함수로
  *
  * 보상은 4종 모두 동일 (대표 결정 — 무게 + 전설/신화템 50:50).
- * 차별점: 황금빛꿈고래만 별도 엔딩 영상 + 잡기 애니메이션 (추후 추가).
  *
- * @param {'fish'|'rainbow'|'golden'|'twinkle'} triggerSymbol  매칭 트리거 심볼
- * @returns {object|null}  mythic fish entry
+ * @returns {object}  mythic_02 ~ mythic_04 중 무작위 1종
  */
-export function pickMythicFish(triggerSymbol) {
-  // 검은 매칭 (검은 25+) = 황금빛꿈고래 고정 (엔딩 상징)
-  if (triggerSymbol === 'fish') {
-    return MYTHIC_FISH[0];  // mythic_01 황금빛꿈고래
-  }
-  // 분홍/황금/하얀 10+ = 나머지 3종 무작위 (mythic_02~04)
+export function pickMythicFish() {
   const candidates = MYTHIC_FISH.slice(1);  // [mythic_02, mythic_03, mythic_04]
-  if (candidates.length === 0) return MYTHIC_FISH[0];
+  if (candidates.length === 0) return MYTHIC_FISH[0];  // 안전망
   return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+/**
+ * ★ Day 29 — 황금빛꿈고래(mythic_01) 추첨 (트윙클 타임 중 트윙클 15+ 전용).
+ *
+ * 게임 엔딩 상징 — 트윙클 타임 자동 캐스트 중에 트윙클 15셀 이상이 한 번에 인접 클러스터로
+ * 매칭됐을 때만 등장. 별도 엔딩 영상/잡기 애니메이션 (추후 추가).
+ *
+ * @returns {object}  mythic_01 황금빛꿈고래
+ */
+export function pickGoldenDreamWhale() {
+  return MYTHIC_FISH[0];  // mythic_01 황금빛꿈고래
 }

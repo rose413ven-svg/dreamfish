@@ -113,6 +113,202 @@ function multiHitLabelOf(n) {
   return MULTI_HIT_LABEL[n] || null;
 }
 
+/* ============================================
+   ★ Day 29 v3 — 변종 등급 펑 연출 (대표 결정)
+   ============================================
+   기존 (v1/v2): Lucky Lucky 텍스트 overlay 별도 element
+   신규 (v3): Lucky Lucky 텍스트 폐기. 변종 등급 텍스트(mainEl) 자체에 펑 연출.
+
+   흐름:
+   1. 결과팝업 등장 후 INITIAL_DELAY (500ms) 대기
+   2. popStep(0): base 등급("TINY") 펑 등장 (scale 0.3 → 1.4 → 1)
+   3. POP_HOLD (600ms) 유지 후 fadeStep: 기존 등급 사라짐 (scale 1 → 0.6, opacity 1 → 0)
+   4. popStep(1): "TINY+" 펑 등장
+   5. ... 반복 (plusCount 까지) ...
+   6. 마지막 단계 도달 후 그대로 유지 (forwards)
+
+   슬롯 럭키럭키 텍스트와 헷갈리지 않도록 결과팝업에는 Lucky 텍스트 X.
+   ============================================ */
+
+const POP_INITIAL_DELAY    = 500;    // 결과팝업 등장 후 base 등급 페이드인 시작까지
+const BASE_FADE_IN_MS      = 300;    // ★ Day 30 — base 첫 등급 부드러운 페이드인 (펑 X, 깜박 X)
+const BASE_HOLD_MS         = 500;    // ★ Day 30 — base 페이드인 후 다음 단계까지 유지
+const SIZE_UPGRADE_HOLD_MS = 800;    // ★ Day 30 — 1단+ 펑 + 배지 표시 유지 (단계 사이 텀 완화)
+const FADE_OUT_MS          = 200;    // fade out duration
+const POP_DURATION_MS      = 500;    // 펑 animation duration (CSS keyframes 와 일치)
+const BADGE_DURATION_MS    = 500;    // SIZE UPGRADE 배지 펑 animation 길이 (CSS 와 일치)
+
+/**
+ * 변종 등급 펑 연쇄 — base 등급부터 변종 단계까지 mainEl 텍스트 교체하며 연출.
+ *
+ * ★ Day 29 v4 — onComplete 콜백 추가: 마지막 단계 완료 후 호출 (산식/무게 표시 트리거).
+ *
+ * ★ Day 30 (대표 결정) — 흐름 재설계:
+ *   - step 0 (base, 예: 'TINY'): 부드러운 페이드인 0.3초 (펑 X, 깜박임 X — grade-fade-in 클래스).
+ *   - step 1+ : 등급 텍스트 펑 (grade-pop) + SIZE UPGRADE 배지 동시 등장.
+ *     · 1단 = 'SIZE UPGRADE' / 2단 = 'X2' / 3단 = 'X3' / 4단 = 'X4' / 5단 = 'X5'
+ *     · 등급 텍스트 단계별 크기: 3.2 / 3.4 / 3.6 / 3.7 / 3.8 / 4.2 rem (data-upgrade-step="N")
+ *     · 색은 등급 본래 색 유지 + 글로우만 단계별 강화 (CSS currentColor)
+ *
+ * 멱등성: 동일 결과팝업 재호출 시 이전 연쇄 자동 중단 (el._stopVariantLuckyChain).
+ *
+ * @param {HTMLElement} el            fish-result 루트
+ * @param {HTMLElement} mainEl        등급 텍스트 element (.fish-result__grade-main)
+ * @param {string}      baseEnGrade   base 등급 영문 (예: 'TINY')
+ * @param {number}      plusCount     0~5 (0=base 만 / 1+=base 후 SIZE UPGRADE 연쇄)
+ * @param {Function}    [onComplete]  마지막 단계 완료 후 콜백 (대표 결정 — 산식/무게 표시 트리거)
+ */
+function startVariantLuckyChain(el, mainEl, baseEnGrade, plusCount, onComplete) {
+  // 이전 연쇄 중단 (멱등성)
+  if (el._stopVariantLuckyChain) el._stopVariantLuckyChain();
+
+  // ★ Day 39 (대표 결정) — base 등급 텍스트 *진짜* 근본 원인 수정 (연속힛 깜빡임).
+  //   원인: 직전 _stopVariantLuckyChain 이 grade-pending 까지 제거 → mainEl.opacity 기본값 1.
+  //         호출부에서 grade-pending 추가했더라도 위 줄에서 즉시 무력화.
+  //         → .show 추가 시 텍스트가 opacity:1 로 즉시 노출 → 깜빡 → 그 후 fadeInBase 가
+  //           POP_INITIAL_DELAY (500ms) 뒤에야 opacity:0 으로 다시 숨겼다 페이드인.
+  //   첫 힛 OK / 연속힛 깜빡 패턴 정확히 이 흐름과 일치 (첫 힛은 _stopVariantLuckyChain 미정의).
+  //   변경: _stopVariantLuckyChain 직후 grade-pending + dataset.upgradeStep='0' 즉시 복구.
+  //         이전 forwards animation 잔존(.grade-pop/.grade-fade-in)은 _stopVariantLuckyChain
+  //         이 이미 깨끗하게 정리하므로 grade-pending 의 opacity:0 이 확실히 적용됨.
+  mainEl.classList.add('grade-pending');
+  mainEl.dataset.upgradeStep = '0';
+
+  const timers = [];
+  let cancelled = false;
+
+  /** ★ Day 30 — SIZE UPGRADE 배지 표시 헬퍼.
+   *  ★ Day 38 후속 (대표 결정):
+   *    - [5] 2단+ 텍스트 'X2' → 'SIZE UPGRADE ×2' 풀텍스트로 통일.
+   *    - [4] isLast=true 시 자동 제거 timeout 등록 X (마지막 배지는 팝업 닫힐 때까지 유지).
+   */
+  const showSizeUpgradeBadge = (step, isLast = false) => {
+    if (cancelled) return;
+    const gradeBox = el.querySelector('.fish-result__grade');
+    if (!gradeBox) return;
+    // 기존 배지 제거 (다음 단계 연쇄 시 잔존 방지)
+    gradeBox.querySelectorAll('.fish-result__size-upgrade').forEach(b => b.remove());
+    const badge = document.createElement('div');
+    badge.className = 'fish-result__size-upgrade';
+    // ★ Day 38 후속 [5] — 1단 'SIZE UPGRADE' / 2단+ 'SIZE UPGRADE ×N' 풀텍스트
+    badge.textContent = step === 1 ? 'SIZE UPGRADE' : `SIZE UPGRADE ×${step}`;
+    gradeBox.appendChild(badge);
+    // ★ Day 38 후속 [4] — 마지막 단계 배지는 자동 제거 X (팝업 닫힐 때까지 유지)
+    if (!isLast) {
+      timers.push(setTimeout(() => badge.remove(), SIZE_UPGRADE_HOLD_MS));
+    }
+  };
+
+  el._stopVariantLuckyChain = () => {
+    cancelled = true;
+    timers.forEach(id => clearTimeout(id));
+    mainEl.classList.remove('grade-pending', 'grade-pop', 'grade-fade-out', 'grade-fade-in');
+    delete mainEl.dataset.upgradeStep;
+    el.querySelectorAll('.fish-result__size-upgrade').forEach(b => b.remove());
+  };
+
+  /** ★ Day 30 — base 등급 페이드인 (펑 X, 깜박 X).
+   *  ★ Day 38 후속 (대표 결정 — [2] 깜빡임 수정):
+   *    기존: textContent 교체 → remove(...) → reflow → add('grade-fade-in') 순서.
+   *    문제: grade-pending 이 호출부에서 명시적으로 부여되지 않은 케이스 (예: 이전 결과 잔존)
+   *          + reflow 사이에 한 프레임 텍스트 노출 → 간헐적 깜빡임.
+   *    변경:
+   *      1) 모든 호출에서 grade-pending 강제 부여 (opacity:0 보장).
+   *      2) animation 시작 직후 다음 프레임에서 grade-pending 제거 (덮어쓰기 충돌 방지).
+   *      3) textContent 교체는 grade-pending 이 active 인 상태에서만 (안 보이는 동안).
+   */
+  const fadeInBase = () => {
+    if (cancelled) return;
+    // [2] grade-pending 강제 (opacity 0 보장) — 텍스트 교체가 안 보이는 상태에서 일어나도록
+    mainEl.classList.add('grade-pending');
+    mainEl.classList.remove('grade-pop', 'grade-fade-out', 'grade-fade-in');
+    mainEl.textContent = baseEnGrade;
+    mainEl.dataset.upgradeStep = '0';
+    void mainEl.offsetWidth;  // reflow
+    mainEl.classList.add('grade-fade-in');
+    // animation 시작 후 다음 프레임에서 grade-pending 제거
+    //   (남겨두면 opacity:0 이 grade-fade-in animation 과 충돌해 일부 브라우저에서 깜빡 가능)
+    requestAnimationFrame(() => {
+      if (cancelled) return;
+      mainEl.classList.remove('grade-pending');
+    });
+  };
+
+  /** 1단+ 펑 등장 — 텍스트 교체 + grade-pop animation + SIZE UPGRADE 배지.
+   *  ★ Day 38 후속 — isLast 전달: 마지막 step 의 배지는 자동 제거 X. */
+  const popStep = (step, isLast = false) => {
+    if (cancelled) return;
+    mainEl.textContent = baseEnGrade + '+'.repeat(step);
+    mainEl.classList.remove('grade-pending', 'grade-fade-out', 'grade-pop', 'grade-fade-in');
+    mainEl.dataset.upgradeStep = String(step);
+    void mainEl.offsetWidth;
+    mainEl.classList.add('grade-pop');
+    // 동시 등장 — SIZE UPGRADE 배지 (마지막 단계면 자동 제거 X)
+    showSizeUpgradeBadge(step, isLast);
+  };
+
+  /** fade out — 다음 단계로 가기 직전 텍스트 사라짐 */
+  const fadeOutStep = () => {
+    if (cancelled) return;
+    mainEl.classList.remove('grade-pop', 'grade-fade-in');
+    void mainEl.offsetWidth;
+    mainEl.classList.add('grade-fade-out');
+  };
+
+  /** 단계 N 진행 */
+  const runStep = (step) => {
+    if (cancelled) return;
+
+    if (step === 0) {
+      // ★ Day 30 — base 등급은 펑 X, 페이드인만
+      fadeInBase();
+      if (plusCount === 0) {
+        // base 만 (변종 없음) — 페이드인 끝나면 onComplete
+        timers.push(setTimeout(() => {
+          if (cancelled) return;
+          onComplete?.();
+        }, BASE_FADE_IN_MS + BASE_HOLD_MS));
+        return;
+      }
+      // base 페이드인 → 잠시 유지 → fade out → 1단 시작
+      timers.push(setTimeout(() => {
+        if (cancelled) return;
+        fadeOutStep();
+        timers.push(setTimeout(() => {
+          runStep(step + 1);
+        }, FADE_OUT_MS));
+      }, BASE_FADE_IN_MS + BASE_HOLD_MS));
+      return;
+    }
+
+    // step 1+ — 펑 + SIZE UPGRADE 배지
+    // ★ Day 38 후속 [4] — 마지막 단계면 isLast=true → 배지 자동 제거 X
+    const isLast = (step >= plusCount);
+    popStep(step, isLast);
+
+    // 마지막 단계 — 펑 끝나면 onComplete (산식/무게 표시)
+    if (isLast) {
+      timers.push(setTimeout(() => {
+        if (cancelled) return;
+        onComplete?.();
+      }, POP_DURATION_MS));
+      return;
+    }
+
+    // SIZE_UPGRADE_HOLD 후 fade out → FADE_OUT 후 다음 단계
+    timers.push(setTimeout(() => {
+      if (cancelled) return;
+      fadeOutStep();
+      timers.push(setTimeout(() => {
+        runStep(step + 1);
+      }, FADE_OUT_MS));
+    }, SIZE_UPGRADE_HOLD_MS));
+  };
+
+  // 결과팝업 등장 후 잠시 뒤 base 페이드인 시작
+  timers.push(setTimeout(() => runStep(0), POP_INITIAL_DELAY));
+}
+
 const SCALE_MAP = {
   '치어':     0.7,   // Day 15: 소형보다 작게
   '소형':     0.9,
@@ -153,9 +349,21 @@ const POPUP_FADE_IN_MS = 1000;
 export function createFishResult({ onConfirm, onAccumulate }) {
   const el = document.createElement('div');
   el.className = 'fish-result';
+  // ★ Day 40 (대표 결정) — 결과팝업을 카드 형태로 변경 + 카드 안 별빛 입자 (stagemap-card 와 동일 시각).
+  //   12개 circle 좌표 / r 값 / 4단계 색·delay 모두 stage-map.js 와 동일 (별 크기 픽셀 단위까지 일치하도록
+  //   카드 max-width: 22rem + SVG viewBox 0 0 400 600 + preserveAspectRatio xMidYMid slice 사용).
+  const STAR_POSITIONS = [
+    [40, 80], [120, 50], [200, 120], [310, 70], [360, 180],
+    [60, 230], [150, 320], [280, 280], [340, 380],
+    [80, 440], [220, 470], [360, 540],
+  ];
+  const starsSvg = STAR_POSITIONS.map(([cx, cy], i) =>
+    `<circle cx="${cx}" cy="${cy}" r="${i % 3 === 0 ? 1.6 : 1.0}" class="fish-result__star fish-result__star--${i % 4}"/>`
+  ).join('');
   el.innerHTML = `
     <div class="fish-result__backdrop"></div>
     <div class="fish-result__panel">
+      <svg class="fish-result__stars" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${starsSvg}</svg>
       <div class="fish-result__grade">
         <div class="fish-result__grade-main"></div>
         <div class="fish-result__grade-sub"></div>
@@ -350,6 +558,7 @@ export function showFishResult(el, data) {
   const {
     fish, weight, tier, grade, missed = false, multiplier = 1,
     baseWeight = weight, comboBonus = 0, equipmentBonus = 0,
+    kabikabiBonus = 0,  // ★ Day 31 (대표 결정) — 까비까비 동시 발생 시 분배된 까비 무게
     dropPayload = null,  // Lucky-3
     isGoldenHit = false,  // Day 15: 골든힛 타임 single hit (true 면 등급 + GOLDEN HIT 라벨)
     cardMultiplier,       // ★ Day 22 Phase 7 후속 — HIDDEN HIT 카드 배수 (1/3/5)
@@ -496,27 +705,110 @@ export function showFishResult(el, data) {
 
   const mainEl = el.querySelector('.fish-result__grade-main');
   const subEl  = el.querySelector('.fish-result__grade-sub');
+  // ★ Day 29 v4 (대표 결정) — 변종 펑 활성 여부 (활성이면 REVEAL_DELAY 흐름 건너뜀,
+  //   산식/무게 표시는 펑 끝난 후 onComplete 콜백에서 트리거)
+  let variantChainActive = false;
+
   if (missed) {
     mainEl.textContent = 'MISSED';
     subEl.textContent = '';
   } else if (isMythicHit) {
-    // ★ Day 27 — 신화 매칭 — 메인: 등급 (MYTHIC), 서브: 'MYTHIC HIT' (황금빛꿈고래는 'GOLDEN DREAM')
+    // ★ Day 27 — 신화 매칭 — 메인: 등급 (MYTHIC), 서브: 'MYTHIC HIT'
+    // ★ Day 37 (대표 결정) — 황금빛꿈고래(mythic_01) → 서브 'SPECIAL MYTHIC' (황금 톤 + 글로우 펄스).
+    //   일반 신화 (mythic_02~04) → 서브 'MYTHIC HIT' (기존 마젠타 톤).
     mainEl.textContent = gradeEnDisplay(fish, grade, null);
-    subEl.textContent = (fish?.id === 'mythic_01') ? 'GOLDEN DREAM' : 'MYTHIC HIT';
+    subEl.textContent = (fish?.id === 'mythic_01') ? 'SPECIAL MYTHIC' : 'MYTHIC HIT';
   } else if (isGoldenHit) {
-    // Day 15: 골든힛 타임 single hit (Q8 답) — 메인 = 등급명, 서브 = GOLDEN HIT
-    // ★ Day 27 — 변종 + 포함 (예: BOSS++, LEGEND+++++)
-    mainEl.textContent = gradeEnDisplay(fish, grade, goldenHitInfo);
-    subEl.textContent  = 'GOLDEN HIT';
-  } else if (isMultiHit) {
-    // Day 18 후속 (대표 결정) — 멀티힛도 골든힛과 동일 배치:
-    //   메인 = 등급명 (위 큰글씨), 서브 = 멀티힛 라벨 (아래 작은글씨)
-    mainEl.textContent = gradeEnDisplay(fish, grade, null);
-    subEl.textContent  = multiLabel;
-  } else {
+    // ★ Day 40 (대표 결정) — 골든힛도 일반힛과 동일한 사이즈 업그레이드 펑 연쇄 적용.
+    //   잡기게임 상단/물기 알림은 base만 표시 (예: 'GOLDEN BOSS') → 결과팝업에서만 변종 펑 노출:
+    //     GOLDEN BOSS (페이드인) → GOLDEN BOSS+ (펑) → GOLDEN BOSS++ → ... (plusCount 만큼).
+    //   baseEnGrade = 'GOLDEN ' + 일반 등급 영문 (예: 'GOLDEN BOSS').
+    //   plusCount   = goldenHitInfo.plusCount (0~5, GOLDEN_HIT_GRADE_TABLE 24구간 기준).
+    //   서브: 'GOLDEN HIT' (기존 유지).
+    //
+    // ★ Day 39 깜빡임 수정 패턴 동일 적용 (mainEl 클래스 정리 + grade-pending + textContent 교체 순서).
+    subEl.textContent = 'GOLDEN HIT';
+    const baseEnGrade = 'GOLDEN ' + (GRADE_EN[grade] ?? '');
+    const plusCount = goldenHitInfo?.plusCount ?? 0;
+    if (GRADE_EN[grade]) {
+      mainEl.classList.remove('grade-pop', 'grade-fade-in', 'grade-fade-out');
+      mainEl.classList.add('grade-pending');
+      mainEl.textContent = baseEnGrade;
+      mainEl.dataset.upgradeStep = '0';
+      variantChainActive = true;
+      startVariantLuckyChain(el, mainEl, baseEnGrade, plusCount, () => {
+        // ★ 등급 확정 — 산식/무게 표시 트리거 (일반힛과 동일 흐름)
+        if (!el.classList.contains('show')) return;
+        el.classList.add('revealed');
+        setTimeout(() => {
+          if (!el.classList.contains('show')) return;
+          if (reg && reg.bestUpdated && !finalEl.querySelector('.fish-result__record-badge')) {
+            const badge = document.createElement('span');
+            badge.className = 'fish-result__record-badge';
+            badge.textContent = 'NEW RECORD';
+            finalEl.appendChild(badge);
+          }
+          el.classList.add('final-reveal');
+        }, 500);
+      });
+    } else {
+      mainEl.textContent = baseEnGrade;
+    }
+  } else if (isMultiHit || (!isMythicHit && !isGoldenHit)) {
+    // ★ Day 38 후속 (대표 결정) — 더블힛/일반 분기 통합:
+    //   기존: 더블힛은 mainEl 텍스트만 즉시 표시 (변종 펑 연쇄 X, SIZE UPGRADE 배지 X)
+    //   변경: 더블힛도 변종 펑 연쇄 + 사이즈 업그레이드 배지 적용.
+    //         multiLabel 은 subEl 에 그대로 유지 (DOUBLE HIT 등 표시).
+    //
     // ★ Day 27 — 일반 매칭도 변종 + 포함 표시 (예: 치어 7지역 → 'TINY+++')
-    mainEl.textContent = gradeEnDisplay(fish, grade, null);
-    subEl.textContent = '';
+    // ★ Day 29 v3 (대표 결정) — Lucky Lucky 텍스트 폐기. 변종 등급 텍스트(mainEl) 자체에 펑 연출.
+    // ★ Day 29 v4 (대표 결정) — 산식/최종무게는 펑 연쇄 끝난 후 표시 (onComplete 콜백).
+    //
+    // ★ Day 29 — 임시 디버그 (대표 시각 검증용):
+    //   _DEBUG_FORCE_VARIANT_LUCKY = true 시 plusCount === 0 인 base 변종도 1단 연쇄.
+    //   ★ Day 38 후속 (대표 결정) — false 로 변경 (정상화).
+    const _DEBUG_FORCE_VARIANT_LUCKY = false;
+    const baseEnGrade = GRADE_EN[grade] ?? '';
+    const { plusCount } = getFishPlusCount(fish?.id);
+    const effectivePlusCount = (plusCount === 0 && _DEBUG_FORCE_VARIANT_LUCKY) ? 1 : plusCount;
+    if (baseEnGrade) {
+      // ★ Day 39 (대표 결정) — base 등급 텍스트 간헐 깜빡임 근본 수정 [JS 호출부 부분].
+      //   원인: 직전 잡기 결과에서 mainEl 에 남아 있던 .grade-pop / .grade-fade-in 의
+      //         animation forwards 가 opacity:1 을 고정 → 새 textContent 가 한 프레임 노출 →
+      //         POP_INITIAL_DELAY 뒤 fadeInBase 가 클래스 정리하며 사라졌다 다시 등장 = "깜빡".
+      //   "간헐적" 이유: 직전 잡기 분기에 따라 잔존 클래스 유무가 달라짐.
+      //   변경:
+      //     1) textContent 변경 *전* 에 grade-pop / grade-fade-in / grade-fade-out 모두 제거
+      //        → animation forwards 해제.
+      //     2) grade-pending 먼저 추가 (opacity:0 확실히 적용) → 그 다음 textContent 교체.
+      //     3) dataset.upgradeStep='0' 명시 초기화 (이전 변종 단계 폰트 크기 잔존 방지).
+      //   ※ CSS 안전망(.grade-pending 에 animation:none) 도 함께 적용 — slot.css 참조.
+      mainEl.classList.remove('grade-pop', 'grade-fade-in', 'grade-fade-out');
+      mainEl.classList.add('grade-pending');   // 펑 직전까지 opacity 0 (이제 animation 해제됨 → 확실히 적용)
+      mainEl.textContent = baseEnGrade;
+      mainEl.dataset.upgradeStep = '0';
+      variantChainActive = true;               // ★ REVEAL_DELAY 흐름 건너뛰기 표시
+      startVariantLuckyChain(el, mainEl, baseEnGrade, effectivePlusCount, () => {
+        // ★ 등급 확정 — 산식/무게 표시 트리거 (기존 REVEAL_DELAY 흐름 동작 이전)
+        if (!el.classList.contains('show')) return;  // 팝업 이미 닫힘
+        el.classList.add('revealed');
+        setTimeout(() => {
+          if (!el.classList.contains('show')) return;
+          // record-badge append (bestUpdated 시만 — 신기록 갱신 또는 첫 등록)
+          if (reg && reg.bestUpdated && !finalEl.querySelector('.fish-result__record-badge')) {
+            const badge = document.createElement('span');
+            badge.className = 'fish-result__record-badge';
+            badge.textContent = 'NEW RECORD';
+            finalEl.appendChild(badge);
+          }
+          el.classList.add('final-reveal');
+        }, 500);
+      });
+    } else {
+      mainEl.textContent = gradeEnDisplay(fish, grade, null);
+    }
+    // ★ Day 38 후속 — 더블힛이면 multiLabel 유지, 일반이면 빈 문자열
+    subEl.textContent = isMultiHit ? multiLabel : '';
   }
 
   const nameEl = el.querySelector('.fish-result__name');
@@ -568,21 +860,54 @@ export function showFishResult(el, data) {
     finalEl.textContent = '';
     finalEl.style.color = '';
   } else {
+    // ★ Day 31 (대표 결정) — 산식: 기본무게 + 까비까비무게 + (콤보보너스 + 물고기무게보너스)
+    //   - 까비까비무게는 옵션 (검은 HIT + 까비까비 동시 발생 시에만 > 0)
+    //   - 물고기무게보너스 / 콤보보너스는 (기본무게 + 까비까비무게) 적용베이스 기준 (slot.js 에서 계산됨)
+    //   - 까비 단독 / 골든·히든·트윙클 + 까비 동시 시에는 kabikabiBonus = 0 (즉시 보상으로 별도 처리됨)
+    // ★ Day 39 (대표 결정 옵션 A) — 각 숫자 위에 작은 라벨 추가.
+    //   각 항목을 fish-result__weight-group 으로 감싸고, 라벨(작은 글씨, 위) + 숫자(큰 글씨, 아래) 배치.
+    //   괄호는 제거 — 라벨로 의미 명확하니 평탄 합산 표시 (수학적으로도 평탄 합산).
+    //   라벨 텍스트: "기본무게" / "까비까비" / "콤보보너스" / "무게보너스".
     const totalBonus = (comboBonus || 0) + (equipmentBonus || 0);
-    if (totalBonus > 0.0005) {
+    const hasKabikabi = (kabikabiBonus || 0) > 0.0005;
+    if (totalBonus > 0.0005 || hasKabikabi) {
       const parts = [
-        `<span class="fish-result__weight-base">${formatWeight(baseWeight)}</span>`,
-        `<span class="fish-result__weight-op"> + (</span>`,
+        // 기본무게 그룹 — 흰
+        `<span class="fish-result__weight-group fish-result__weight-group--base">` +
+          `<span class="fish-result__weight-label">기본무게</span>` +
+          `<span class="fish-result__weight-base">${formatWeight(baseWeight)}</span>` +
+        `</span>`,
       ];
-      const inner = [];
+      // 까비 (있을 때만) — 사이언
+      if (hasKabikabi) {
+        parts.push(`<span class="fish-result__weight-op">+</span>`);
+        parts.push(
+          `<span class="fish-result__weight-group fish-result__weight-group--kabikabi">` +
+            `<span class="fish-result__weight-label">까비까비</span>` +
+            `<span class="fish-result__weight-kabikabi">${formatWeight(kabikabiBonus)}</span>` +
+          `</span>`
+        );
+      }
+      // 콤보보너스 — 연두
       if (comboBonus > 0.0005) {
-        inner.push(`<span class="fish-result__weight-combo">${formatWeight(comboBonus)}</span>`);
+        parts.push(`<span class="fish-result__weight-op">+</span>`);
+        parts.push(
+          `<span class="fish-result__weight-group fish-result__weight-group--combo">` +
+            `<span class="fish-result__weight-label">콤보보너스</span>` +
+            `<span class="fish-result__weight-combo">${formatWeight(comboBonus)}</span>` +
+          `</span>`
+        );
       }
+      // 무게보너스 — 황금
       if (equipmentBonus > 0.0005) {
-        inner.push(`<span class="fish-result__weight-equip">${formatWeight(equipmentBonus)}</span>`);
+        parts.push(`<span class="fish-result__weight-op">+</span>`);
+        parts.push(
+          `<span class="fish-result__weight-group fish-result__weight-group--equip">` +
+            `<span class="fish-result__weight-label">무게보너스</span>` +
+            `<span class="fish-result__weight-equip">${formatWeight(equipmentBonus)}</span>` +
+          `</span>`
+        );
       }
-      parts.push(inner.join(`<span class="fish-result__weight-op"> + </span>`));
-      parts.push(`<span class="fish-result__weight-op">)</span>`);
       breakdownEl.innerHTML = parts.join('');
     } else {
       breakdownEl.innerHTML = '';
@@ -609,7 +934,9 @@ export function showFishResult(el, data) {
   void el.offsetWidth;
   el.classList.add('show');
 
-  if (!missed) {
+  if (!missed && !variantChainActive) {
+    // ★ Day 29 v4 — 변종 펑 연쇄가 활성이면 산식/무게 표시는 onComplete 콜백에서 처리.
+    //   변종 펑 미활성 (mythic/golden/multi 등) 분기만 여기 기존 REVEAL_DELAY 흐름.
     const delay = REVEAL_DELAY[grade] ?? 500;
     setTimeout(() => {
       el.classList.add('revealed');
@@ -646,4 +973,6 @@ function hide(el) {
   el.dataset.dropPhase = '';
   delete el.dataset.dropColor;
   delete el.dataset.dropBagfull;
+  // ★ Day 29 — 변종 Lucky Lucky 연쇄 진행 중이면 중단 (다음 팝업에 잔영 방지)
+  if (el._stopVariantLuckyChain) el._stopVariantLuckyChain();
 }
